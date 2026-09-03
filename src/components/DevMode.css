@@ -5,9 +5,9 @@
   z-index: 40;
   width: 288px;
   padding: 12px;
-  border: 2px solid var(--ega-bright-magenta);
-  background: var(--ega-black);
-  color: var(--ega-gray);
+  border: 2px solid var(--synth-border);
+  background: var(--fill);
+  color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--font-s);
   line-height: 1;
@@ -18,7 +18,7 @@
   font-family: var(--font-display);
   font-size: var(--font-s);
   font-weight: 400;
-  color: var(--ega-yellow);
+  color: var(--lime);
 }
 
 .dev-mode__row {
@@ -29,26 +29,35 @@
   margin-bottom: 8px;
 }
 
+.dev-mode__row--opacity {
+  grid-template-columns: 1fr 72px 48px;
+}
+
+.dev-mode__range {
+  width: 100%;
+  accent-color: var(--lime);
+}
+
 .dev-mode__swatch {
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 2px solid var(--ega-bright-magenta);
+  border: 2px solid var(--synth-border);
   background: transparent;
   cursor: pointer;
 }
 
 .dev-mode__label {
-  color: var(--ega-white);
+  color: var(--muted);
 }
 
 .dev-mode__hex {
   width: 100%;
   box-sizing: border-box;
   padding: 2px 4px;
-  border: 2px solid var(--ega-bright-magenta);
-  background: var(--ega-black);
-  color: var(--ega-white);
+  border: 2px solid var(--synth-border);
+  background: var(--black);
+  color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--font-s);
   line-height: 1;
@@ -57,7 +66,7 @@
 
 .dev-mode__hex:focus-visible,
 .dev-mode__copy:focus-visible {
-  outline: 2px solid var(--ega-yellow);
+  outline: 2px solid var(--lime);
   outline-offset: 2px;
 }
 
@@ -66,9 +75,9 @@
   width: 100%;
   margin-top: 4px;
   padding: 8px 12px;
-  border: 2px solid var(--ega-magenta);
-  background: var(--ega-magenta);
-  color: var(--ega-white);
+  border: 2px solid var(--lime);
+  background: var(--lime);
+  color: var(--on-chrome);
   font-family: var(--font-display);
   font-size: var(--font-s);
   line-height: 1;

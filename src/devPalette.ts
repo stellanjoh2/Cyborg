@@ -1,41 +1,37 @@
 export const PALETTE_KEYS = [
-  'ega-black',
-  'ega-blue',
-  'ega-cyan',
-  'ega-red',
-  'ega-magenta',
-  'ega-gray',
-  'ega-bright-magenta',
-  'ega-yellow',
-  'ega-white',
+  'lime',
+  'purple',
+  'blue',
+  'pink',
+  'black',
+  'fill',
+  'stroke',
 ] as const
 
 export type PaletteKey = (typeof PALETTE_KEYS)[number]
 export type Palette = Record<PaletteKey, string>
 
 export const DEFAULT_PALETTE: Palette = {
-  'ega-black': '#000000',
-  'ega-blue': '#0000aa',
-  'ega-cyan': '#00aaaa',
-  'ega-red': '#aa0000',
-  'ega-magenta': '#aa00aa',
-  'ega-gray': '#aaaaaa',
-  'ega-bright-magenta': '#ff55ff',
-  'ega-yellow': '#ffff55',
-  'ega-white': '#ffffff',
+  lime: '#C4FF00',
+  purple: '#3B00FF',
+  blue: '#00C4FF',
+  pink: '#FF00C4',
+  black: '#0E0E0E',
+  fill: '#131313',
+  stroke: '#FFFFFF',
 }
 
 export const PALETTE_LABELS: Record<PaletteKey, string> = {
-  'ega-black': 'black',
-  'ega-blue': 'blue',
-  'ega-cyan': 'cyan',
-  'ega-red': 'red',
-  'ega-magenta': 'magenta',
-  'ega-gray': 'gray',
-  'ega-bright-magenta': 'bright magenta',
-  'ega-yellow': 'yellow',
-  'ega-white': 'white',
+  lime: 'lime',
+  purple: 'purple',
+  blue: 'blue',
+  pink: 'pink',
+  black: 'black',
+  fill: 'fill',
+  stroke: 'stroke',
 }
+
+export const DEFAULT_STROKE_OPACITY = 0.1
 
 const HEX = /^#[0-9a-fA-F]{6}$/
 
@@ -50,6 +46,20 @@ export function applyPalette(palette: Palette) {
   }
 }
 
-export function formatPalette(palette: Palette): string {
-  return PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`).join('\n')
+export function applyStrokeOpacity(opacity: number) {
+  const next = Math.min(1, Math.max(0, opacity))
+  document.documentElement.style.setProperty(
+    '--section-stroke-opacity',
+    String(next),
+  )
+}
+
+export function formatPalette(
+  palette: Palette,
+  strokeOpacity = DEFAULT_STROKE_OPACITY,
+): string {
+  return [
+    ...PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`),
+    `--section-stroke-opacity: ${strokeOpacity};`,
+  ].join('\n')
 }

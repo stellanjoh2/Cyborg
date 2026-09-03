@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DevMode } from './components/DevMode'
 import { Knob } from './components/Knob'
+import { MasterStrip } from './components/MasterStrip'
 import {
   DEFAULT_POST_PROCESS_UI,
   formatBitcrushBits,
@@ -16,18 +17,17 @@ import {
   formatReverbDecay,
   formatReverbRoomSize,
   mapUiToPostProcess,
+  postProcessMatches,
   type PostProcessUiState,
 } from './postProcess'
 import { resolveHumanRobotBlend } from './resolveHumanRobot'
 import {
   DEFAULT_VOCODER_UI,
-  formatBandPan,
   formatCarrierCutoff,
   formatCarrierMix,
   formatCarrierResonance,
   formatSigned63,
   mapUiToVocoder,
-  VOCODER_BAND_COUNT,
   type VocoderUiState,
 } from './vocoderParams'
 import {
@@ -36,11 +36,24 @@ import {
   setSamLoop,
   speakSam,
   stopSamSpeech,
+  pauseSamSpeech,
+  resumeSamSpeech,
   updateSamLiveParams,
 } from './samSpeech'
+import { MASTER_GAIN_MAX_DB } from './speechSynthEngine'
 import { preloadPronunciationDictionary } from './samPronunciation'
 import { cancelSpeechPlayback } from './speechPlayback'
-import { getPresetById, VOICE_PRESETS, type VoiceId } from './voicePresets'
+import {
+  clonePresetVocoder,
+  getPresetById,
+  presetMatches,
+  carrierMatches,
+  vocoderMatches,
+  voiceMatches,
+  VOICE_PRESETS,
+  type VoiceId,
+} from './voicePresets'
+import { LoopIcon, PauseIcon, PlayIcon, StopIcon } from './ui/icons'
 import './SpeechApp.css'
 
 const DEFAULT_TEXT =
@@ -54,11 +67,14 @@ export default function App() {
   const [humanRobot, setHumanRobot] = useState(0)
   const [postUi, setPostUi] = useState<PostProcessUiState>(DEFAULT_POST_PROCESS_UI)
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
-  const [betterEnglish, setBetterEnglish] = useState(true)
   const [isLooping, setIsLooping] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [masterVolume, setMasterVolume] = useState(100)
+  const [masterGain, setMasterGain] = useState(0)
+  const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
 
   const livePlan = useMemo(
     () => resolveHumanRobotBlend(humanRobot, speed, pitch),
@@ -69,28 +85,10 @@ export default function App() {
   const vocoder = useMemo(() => mapUiToVocoder(vocoderUi), [vocoderUi])
 
   const setVocoderKnob =
-    (
-      key: keyof Omit<VocoderUiState, 'bandLevels' | 'bandPans'>,
-    ) =>
+    (key: keyof VocoderUiState) =>
     (value: number) => {
       setVocoderUi((current) => ({ ...current, [key]: value }))
     }
-
-  const setBandLevel = (index: number) => (value: number) => {
-    setVocoderUi((current) => {
-      const bandLevels = [...current.bandLevels]
-      bandLevels[index] = value
-      return { ...current, bandLevels }
-    })
-  }
-
-  const setBandPan = (index: number) => (value: number) => {
-    setVocoderUi((current) => {
-      const bandPans = [...current.bandPans]
-      bandPans[index] = value
-      return { ...current, bandPans }
-    })
-  }
 
   const setPostKnob =
     (key: keyof PostProcessUiState) => (value: number) => {
@@ -124,23 +122,88 @@ export default function App() {
     })
   }, [isSpeaking, postProcess])
 
+  useEffect(() => {
+    updateSamLiveParams({
+      masterVolume: masterVolume / 100,
+      masterGainDb,
+    })
+  }, [masterVolume, masterGainDb])
+
+  const activePresetId = voiceId === 'custom' ? 'default' : voiceId
+  const activePreset = getPresetById(activePresetId)
+  const voiceDirty = !voiceMatches(activePreset, { speed, pitch, humanRobot })
+  const vocoderDirty = !vocoderMatches(activePreset, vocoderUi)
+  const carrierDirty = !carrierMatches(activePreset, vocoderUi)
+  const fxDirty = !postProcessMatches(postUi)
+  const masterDirty = masterVolume !== 100 || masterGain !== 0
+  const templateDirty =
+    !presetMatches(activePreset, {
+      speed,
+      pitch,
+      humanRobot,
+      vocoder: vocoderUi,
+    }) ||
+    fxDirty ||
+    masterDirty
+
+  const applyVoicePreset = (nextVoiceId: Exclude<VoiceId, 'custom'>) => {
+    const preset = getPresetById(nextVoiceId)
+    setVoiceId(nextVoiceId)
+    setSpeed(preset.speed)
+    setPitch(preset.pitch)
+    setHumanRobot(preset.humanRobot)
+    setVocoderUi(clonePresetVocoder(preset))
+  }
+
   const handleVoiceChange = (nextVoiceId: VoiceId) => {
     if (nextVoiceId === 'custom') {
       setVoiceId('custom')
       return
     }
 
-    const preset = getPresetById(nextVoiceId)
-    setVoiceId(nextVoiceId)
-    setSpeed(preset.speed)
-    setPitch(preset.pitch)
-    setHumanRobot(preset.humanRobot)
-    setVocoderUi({
-      ...DEFAULT_VOCODER_UI,
-      ...preset.vocoder,
-      bandLevels: [...preset.vocoder.bandLevels],
-      bandPans: [...preset.vocoder.bandPans],
-    })
+    applyVoicePreset(nextVoiceId)
+  }
+
+  const handleResetVoice = () => {
+    setSpeed(activePreset.speed)
+    setPitch(activePreset.pitch)
+    setHumanRobot(activePreset.humanRobot)
+  }
+
+  const handleResetVocoder = () => {
+    const preset = clonePresetVocoder(activePreset)
+    setVocoderUi((current) => ({
+      ...current,
+      cutoff: preset.cutoff,
+      resonance: preset.resonance,
+      efSense: preset.efSense,
+    }))
+  }
+
+  const handleResetCarrier = () => {
+    const preset = clonePresetVocoder(activePreset)
+    setVocoderUi((current) => ({
+      ...current,
+      carrierAmount: preset.carrierAmount,
+      carrierMix: preset.carrierMix,
+      carrierCutoff: preset.carrierCutoff,
+      carrierResonance: preset.carrierResonance,
+    }))
+  }
+
+  const handleResetPostProcess = () => {
+    setPostUi({ ...DEFAULT_POST_PROCESS_UI })
+  }
+
+  const handleResetMaster = () => {
+    setMasterVolume(100)
+    setMasterGain(0)
+  }
+
+  const handleResetTemplate = () => {
+    applyVoicePreset(activePresetId)
+    handleResetPostProcess()
+    handleResetMaster()
   }
 
   const handleStop = () => {
@@ -149,6 +212,21 @@ export default function App() {
     setIsLooping(false)
     setSamLoop(false)
     setIsSpeaking(false)
+    setIsPaused(false)
+  }
+
+  const handlePlayPause = () => {
+    if (isSpeaking && isPaused) {
+      resumeSamSpeech()
+      setIsPaused(false)
+      return
+    }
+    if (isSpeaking) {
+      pauseSamSpeech()
+      setIsPaused(true)
+      return
+    }
+    handlePlayback()
   }
 
   const handleLoopToggle = () => {
@@ -168,6 +246,7 @@ export default function App() {
     }
 
     setIsSpeaking(true)
+    setIsPaused(false)
     cancelSamSpeech()
     setSamLoop(isLooping)
 
@@ -178,11 +257,16 @@ export default function App() {
       metallic: livePlan.metallic,
       vocoder,
       postProcess,
-      betterEnglish,
+      masterVolume: masterVolume / 100,
+      masterGainDb,
       loop: isLooping,
-      onEnd: () => setIsSpeaking(false),
+      onEnd: () => {
+        setIsSpeaking(false)
+        setIsPaused(false)
+      },
       onError: (message) => {
         setIsSpeaking(false)
+        setIsPaused(false)
         setError(message)
       },
     })
@@ -206,7 +290,8 @@ export default function App() {
       metallic: livePlan.metallic,
       vocoder,
       postProcess,
-      betterEnglish,
+      masterVolume: masterVolume / 100,
+      masterGainDb,
     })
       .catch((err: unknown) => {
         const message =
@@ -221,198 +306,89 @@ export default function App() {
   return (
     <>
       <main className="speech-app">
+      <header className="speech-top">
       <h1 className="speech-title">
         Cyborg Dominance<span className="speech-title__tm">TM</span>
       </h1>
-
-      <label className="field">
-        <span className="field-label">Text</span>
-        <textarea
-          className="field-textarea"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type something..."
-          rows={5}
-        />
-      </label>
-
-      <label className="field">
-        <span className="field-label">Voice</span>
-        <select
-          className="field-select"
-          value={voiceId}
-          onChange={(e) => handleVoiceChange(e.target.value as VoiceId)}
+      <div className="speech-top__right">
+      <MasterStrip
+        volume={masterVolume}
+        gain={masterGain}
+        onVolumeChange={setMasterVolume}
+        onGainChange={setMasterGain}
+        onReset={handleResetMaster}
+        canReset={masterDirty}
+      />
+      <div className="actions">
+        <button
+          className="primary icon-btn"
+          type="button"
+          onClick={handlePlayPause}
+          title={isSpeaking && !isPaused ? 'Pause speech' : 'Play speech'}
+          aria-label={isSpeaking && !isPaused ? 'Pause' : 'Play'}
+          aria-pressed={isSpeaking && !isPaused}
         >
-          {VOICE_PRESETS.map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {preset.label}
-            </option>
-          ))}
-          <option value="custom">Custom</option>
-        </select>
-      </label>
+          {isSpeaking && !isPaused ? <PauseIcon /> : <PlayIcon />}
+        </button>
+        <button
+          className={`secondary icon-btn${isLooping ? ' is-active' : ''}`}
+          type="button"
+          onClick={handleLoopToggle}
+          title="Loop playback"
+          aria-label="Loop"
+          aria-pressed={isLooping}
+        >
+          <LoopIcon />
+        </button>
+        <button
+          className="secondary icon-btn"
+          type="button"
+          onClick={handleStop}
+          disabled={!isSpeaking}
+          title="Stop speech"
+          aria-label="Stop"
+        >
+          <StopIcon />
+        </button>
+        <button
+          className="secondary"
+          type="button"
+          onClick={handleExportWav}
+          disabled={isExporting || !text.trim()}
+          title="Render full mix with FX tails to WAV"
+        >
+          {isExporting ? 'Exporting...' : 'Export WAV'}
+        </button>
+        <button
+          className="secondary"
+          type="button"
+          onClick={handleResetTemplate}
+          disabled={!templateDirty}
+          title="Reset all sections to the selected template"
+        >
+          Reset to defaults
+        </button>
+      </div>
+      </div>
+      </header>
 
-      <section className="knob-panel">
-        <h2 className="section-title">Voice</h2>
-        <div className="knob-grid knob-grid--voice">
-          <Knob
-            label="Robot"
-            value={humanRobot}
-            min={0}
-            max={100}
-            step={1}
-            size="lg"
-            onChange={setHumanRobot}
-            format={(value) => String(Math.round(value))}
-          />
-          <Knob
-            label="Speed"
-            value={speed}
-            min={0.3}
-            max={2.5}
-            step={0.01}
-            size="lg"
-            onChange={setSpeed}
-            format={(value) => value.toFixed(2)}
-          />
-          <Knob
-            label="Pitch"
-            value={pitch}
-            min={0}
-            max={2}
-            step={0.01}
-            size="lg"
-            onChange={setPitch}
-            format={(value) => value.toFixed(2)}
-          />
-        </div>
-      </section>
-
-      <section className="vocoder-panel">
-        <h2 className="section-title">Vocoder</h2>
-
-        <div className="knob-grid vocoder-main">
-          <Knob
-            label="Cutoff"
-            value={vocoderUi.cutoff}
-            min={0}
-            max={126}
-            step={1}
-            size="md"
-            onChange={setVocoderKnob('cutoff')}
-            format={(value) => formatSigned63(value)}
-          />
-          <Knob
-            label="Resonance"
-            value={vocoderUi.resonance}
-            min={0}
-            max={127}
-            step={1}
-            size="md"
-            onChange={setVocoderKnob('resonance')}
-            format={(value) => String(Math.round(value))}
-          />
-          <Knob
-            label="E.F. sense"
-            value={vocoderUi.efSense}
-            min={0}
-            max={126}
-            step={1}
-            size="md"
-            onChange={setVocoderKnob('efSense')}
-            format={(value) => String(Math.round(value))}
-          />
-        </div>
-
-        <div className="fx-group vocoder-carrier">
-          <h3 className="fx-title">Carrier</h3>
-          <div className="knob-grid">
-            <Knob
-              label="Amount"
-              value={vocoderUi.carrierAmount}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setVocoderKnob('carrierAmount')}
-              format={(value) => String(Math.round(value))}
-            />
-            <Knob
-              label="SAW/SQR"
-              value={vocoderUi.carrierMix}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setVocoderKnob('carrierMix')}
-              format={(value) => formatCarrierMix(value)}
-            />
-            <Knob
-              label="Tone"
-              value={vocoderUi.carrierCutoff}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setVocoderKnob('carrierCutoff')}
-              format={(value) => formatCarrierCutoff(value)}
-            />
-            <Knob
-              label="Reso"
-              value={vocoderUi.carrierResonance}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setVocoderKnob('carrierResonance')}
-              format={(value) => formatCarrierResonance(value)}
-            />
-          </div>
-        </div>
-
-        <div className="band-grid">
-          {Array.from({ length: VOCODER_BAND_COUNT }, (_, index) => (
-            <div key={index} className="band-strip">
-              <span className="band-strip__label">Band {index + 1}</span>
-              <Knob
-                label="Level"
-                value={vocoderUi.bandLevels[index] ?? 100}
-                min={0}
-                max={127}
-                step={1}
-                size="md"
-                onChange={setBandLevel(index)}
-                format={(value) => String(Math.round(value))}
-              />
-              <Knob
-                label="Pan"
-                value={vocoderUi.bandPans[index] ?? 63}
-                min={0}
-                max={126}
-                step={1}
-                size="md"
-                onChange={setBandPan(index)}
-                format={(value) => formatBandPan(value)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <label className="field checkbox-field">
-        <input
-          type="checkbox"
-          checked={betterEnglish}
-          onChange={(e) => setBetterEnglish(e.target.checked)}
-        />
-        <span>
-          Better English (CMU dictionary + custom word fixes for SAM)
-        </span>
-      </label>
-
+      <div className="speech-board">
+      <div className="speech-col speech-col--fx">
       <section className="post-process">
-        <h2 className="section-title">Post-processing</h2>
+        <div className="section-head">
+          <h2 className="section-title">FX</h2>
+          <button
+            className="secondary section-reset"
+            type="button"
+            onClick={handleResetPostProcess}
+            disabled={!fxDirty}
+            title="Reset FX to the selected template"
+          >
+            Reset
+          </button>
+        </div>
 
+        <div className="fx-rack">
         <div className="fx-group">
           <h3 className="fx-title">White noise</h3>
           <div className="knob-grid">
@@ -664,46 +640,196 @@ export default function App() {
             />
           </div>
         </div>
+        </div>
       </section>
-
-      <div className="actions">
-        <button
-          className="primary"
-          type="button"
-          onClick={handlePlayback}
-          title={isSpeaking ? 'Restart speech' : 'Play speech'}
-        >
-          {isSpeaking ? 'Playing...' : 'Playback'}
-        </button>
-        <button
-          className={`secondary${isLooping ? ' is-active' : ''}`}
-          type="button"
-          onClick={handleLoopToggle}
-          title="Loop playback"
-        >
-          Loop
-        </button>
-        <button
-          className="secondary"
-          type="button"
-          onClick={handleStop}
-          disabled={!isSpeaking}
-          title="Stop speech"
-        >
-          Stop
-        </button>
-        <button
-          className="secondary"
-          type="button"
-          onClick={handleExportWav}
-          disabled={isExporting || !text.trim()}
-          title="Render full mix with FX tails to WAV"
-        >
-          {isExporting ? 'Exporting...' : 'Export WAV'}
-        </button>
       </div>
 
+      <div className="speech-col speech-col--voice">
+      <section className="knob-panel text-panel">
+        <div className="section-head">
+          <h2 className="section-title">Text</h2>
+        </div>
+        <textarea
+          className="field-textarea"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type something..."
+          rows={4}
+          aria-label="Text"
+        />
+      </section>
+
+      <section className="knob-panel">
+        <div className="section-head">
+          <div className="section-head__start">
+            <h2 className="section-title">Voice</h2>
+            <select
+              className="field-select field-select--inline"
+              value={voiceId}
+              onChange={(e) => handleVoiceChange(e.target.value as VoiceId)}
+              aria-label="Voice"
+            >
+              {VOICE_PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.label}
+                </option>
+              ))}
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <button
+            className="secondary section-reset"
+            type="button"
+            onClick={handleResetVoice}
+            disabled={!voiceDirty}
+            title="Reset Voice to the selected template"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="knob-grid knob-grid--voice">
+          <Knob
+            label="Robot"
+            value={humanRobot}
+            min={0}
+            max={100}
+            step={1}
+            size="lg"
+            onChange={setHumanRobot}
+            format={(value) => String(Math.round(value))}
+          />
+          <Knob
+            label="Speed"
+            value={speed}
+            min={0.3}
+            max={2.5}
+            step={0.01}
+            size="lg"
+            onChange={setSpeed}
+            format={(value) => value.toFixed(2)}
+          />
+          <Knob
+            label="Pitch"
+            value={pitch}
+            min={0}
+            max={2}
+            step={0.01}
+            size="lg"
+            onChange={setPitch}
+            format={(value) => value.toFixed(2)}
+          />
+        </div>
+      </section>
+
+      <section className="vocoder-panel">
+        <div className="section-head">
+          <h2 className="section-title">Vocoder</h2>
+          <button
+            className="secondary section-reset"
+            type="button"
+            onClick={handleResetVocoder}
+            disabled={!vocoderDirty}
+            title="Reset Vocoder to the selected template"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className="knob-grid vocoder-main">
+          <Knob
+            label="Cutoff"
+            value={vocoderUi.cutoff}
+            min={0}
+            max={126}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('cutoff')}
+            format={(value) => formatSigned63(value)}
+          />
+          <Knob
+            label="Resonance"
+            value={vocoderUi.resonance}
+            min={0}
+            max={127}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('resonance')}
+            format={(value) => String(Math.round(value))}
+          />
+          <Knob
+            label="E.F. sense"
+            value={vocoderUi.efSense}
+            min={0}
+            max={126}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('efSense')}
+            format={(value) => String(Math.round(value))}
+          />
+        </div>
+
+      </section>
+
+      <section className="knob-panel carrier-panel">
+        <div className="section-head">
+          <h2 className="section-title">Carrier</h2>
+          <button
+            className="secondary section-reset"
+            type="button"
+            onClick={handleResetCarrier}
+            disabled={!carrierDirty}
+            title="Reset Carrier to the selected template"
+          >
+            Reset
+          </button>
+        </div>
+        <div className="knob-grid">
+          <Knob
+            label="Amount"
+            value={vocoderUi.carrierAmount}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('carrierAmount')}
+            format={(value) => String(Math.round(value))}
+          />
+          <Knob
+            label="SAW/SQR"
+            value={vocoderUi.carrierMix}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('carrierMix')}
+            format={(value) => formatCarrierMix(value)}
+          />
+          <Knob
+            label="Tone"
+            value={vocoderUi.carrierCutoff}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('carrierCutoff')}
+            format={(value) => formatCarrierCutoff(value)}
+          />
+          <Knob
+            label="Reso"
+            value={vocoderUi.carrierResonance}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('carrierResonance')}
+            format={(value) => formatCarrierResonance(value)}
+          />
+        </div>
+      </section>
+
       {error ? <p className="error">{error}</p> : null}
+      </div>
+      </div>
       </main>
       <DevMode />
     </>

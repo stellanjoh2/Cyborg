@@ -1,47 +1,43 @@
-/* Ac437 Cordata PPC — VileR / int10h.org, CC BY-SA 4.0 */
-@font-face {
-  font-family: 'Ac437 Cordata PPC-21';
-  src: url('./assets/fonts/Ac437_Cordata_PPC-21.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-}
-
-@font-face {
-  font-family: 'Ac437 Cordata PPC-400';
-  src: url('./assets/fonts/Ac437_Cordata_PPC-400.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-}
-
 :root {
-  --ega-black: #000000;
-  --ega-blue: #0000aa;
-  --ega-cyan: #00aaaa;
-  --ega-red: #aa0000;
-  --ega-magenta: #aa00aa;
-  --ega-gray: #aaaaaa;
-  --ega-bright-magenta: #ff55ff;
-  --ega-yellow: #ffff55;
-  --ega-white: #ffffff;
+  --lime: #c4ff00;
+  --purple: #3b00ff;
+  --blue: #00c4ff;
+  --pink: #ff00c4;
+  --black: #0e0e0e;
+  --fill: #131313;
+  --stroke: #ffffff;
+  --section-stroke-opacity: 0.1;
+  --on-chrome: #0f0f0f;
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.45);
+  --panel-border: rgba(255, 255, 255, 0.1);
 
   --u: 12px;
-  --font-s: 15px;
-  --font-m: 30px;
-  --font-xl: 60px;
+  --section-gap: 24px;
+  --font-s: 16px;
+  --font-m: 20px;
+  --font-xl: 16px;
 
-  --text: var(--ega-gray);
-  --text-h: var(--ega-white);
-  --bg: var(--ega-black);
-  --border: var(--ega-bright-magenta);
-  --accent: var(--ega-yellow);
-  --accent-bg: var(--ega-blue);
-  --accent-border: var(--ega-bright-magenta);
-  --synth-shell: var(--ega-black);
+  --text-h: var(--lime);
+  --bg: var(--black);
+  --border: var(--panel-border);
+  --synth-border: var(--panel-border);
+  --knob: var(--lime);
+  --accent: var(--lime);
+  --accent-bg: var(--fill);
+  --accent-border: var(--panel-border);
+  --synth-shell: var(--black);
 
-  --font-ui: 'Ac437 Cordata PPC-21', monospace;
-  --font-display: 'Ac437 Cordata PPC-400', monospace;
+  --font-ui:
+    'Bitcount Grid Single Variable',
+    'Bitcount Grid Single',
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  --font-display: var(--font-ui);
   --sans: var(--font-ui);
 
   font-family: var(--font-ui);
@@ -51,11 +47,6 @@
   color-scheme: dark;
   color: var(--text);
   background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeSpeed;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: unset;
-  font-smooth: never;
 }
 
 *,
@@ -64,12 +55,15 @@
   box-sizing: border-box;
 }
 
-body {
+html,
+body,
+#root {
+  height: 100%;
   margin: 0;
 }
 
 #root {
-  min-height: 100svh;
+  overflow: hidden;
   background: var(--bg);
 }
 

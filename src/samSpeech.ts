@@ -2,12 +2,16 @@ import SamJs from 'sam-js'
 import { classicTextToPhonemes } from './samClassicReciter'
 import {
   cancelMetallicPlayback,
+  DEFAULT_MASTER_GAIN_DB,
+  DEFAULT_MASTER_VOLUME,
   DEFAULT_POST_PROCESS,
   mergePostProcess,
   renderSynthOffline,
   startSynthPlayback,
   setSynthLoop,
   stopSynthPlayback,
+  pauseSynthPlayback,
+  resumeSynthPlayback,
   updateLiveSynthParams,
   type LiveSynthParams,
   type PostProcessParams,
@@ -96,9 +100,19 @@ export function stopSamSpeech() {
   stopSynthPlayback()
 }
 
+export function pauseSamSpeech() {
+  pauseSynthPlayback()
+}
+
+export function resumeSamSpeech() {
+  resumeSynthPlayback()
+}
+
 export interface SamSpeakOptions extends SamSynthOptions {
   vocoder?: VocoderParams
   postProcess?: PostProcessParams
+  masterVolume?: number
+  masterGainDb?: number
   loop?: boolean
   onEnd?: () => void
   onError?: (message: string) => void
@@ -143,6 +157,8 @@ export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
     metallic: options.metallic,
     vocoder: normalizeVocoder(options.vocoder),
     postProcess: normalizePostProcess(options.postProcess),
+    masterVolume: options.masterVolume ?? DEFAULT_MASTER_VOLUME,
+    masterGainDb: options.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
   })
 
   const wav = encodeAudioBufferToWav(rendered)
@@ -164,6 +180,8 @@ export async function speakSam(options: SamSpeakOptions) {
       metallic: options.metallic,
       vocoder: normalizeVocoder(options.vocoder),
       postProcess: normalizePostProcess(options.postProcess),
+      masterVolume: options.masterVolume ?? DEFAULT_MASTER_VOLUME,
+      masterGainDb: options.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
     },
     {
       loop: options.loop,

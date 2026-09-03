@@ -20,16 +20,45 @@ export function clampKnobValue(
   return Number(stepped.toFixed(decimals))
 }
 
-export function valueToKnobAngle(
+export function valueToKnobFill(
   value: number,
   min: number,
   max: number,
 ): number {
   if (max <= min) {
-    return KNOB_MIN_DEG
+    return 0
   }
-  const t = (value - min) / (max - min)
-  return KNOB_MIN_DEG + t * KNOB_SWEEP_DEG
+  return Math.min(1, Math.max(0, (value - min) / (max - min)))
+}
+
+export function valueToKnobAngle(
+  value: number,
+  min: number,
+  max: number,
+): number {
+  return KNOB_MIN_DEG + valueToKnobFill(value, min, max) * KNOB_SWEEP_DEG
+}
+
+/** CSS degrees: 0 = 12 o'clock, clockwise positive. */
+export function knobFillArcPath(
+  fill: number,
+  cx = 50,
+  cy = 50,
+  radius = 46,
+): string | null {
+  if (fill <= 0) {
+    return null
+  }
+
+  const sweep = fill * KNOB_SWEEP_DEG
+  const startDeg = KNOB_MIN_DEG
+  const endDeg = startDeg + sweep
+  const point = (cssDeg: number) => {
+    const rad = ((cssDeg - 90) * Math.PI) / 180
+    return `${cx + radius * Math.cos(rad)} ${cy + radius * Math.sin(rad)}`
+  }
+
+  return `M ${point(startDeg)} A ${radius} ${radius} 0 ${sweep > 180 ? 1 : 0} 1 ${point(endDeg)}`
 }
 
 export function knobAngleToValue(

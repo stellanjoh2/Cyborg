@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
   applyPalette,
+  applyStrokeOpacity,
   DEFAULT_PALETTE,
+  DEFAULT_STROKE_OPACITY,
   formatPalette,
   isHexColor,
   PALETTE_KEYS,
@@ -27,6 +29,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 export function DevMode() {
   const [open, setOpen] = useState(false)
   const [palette, setPalette] = useState<Palette>(DEFAULT_PALETTE)
+  const [strokeOpacity, setStrokeOpacity] = useState(DEFAULT_STROKE_OPACITY)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -57,8 +60,14 @@ export function DevMode() {
     }
   }
 
+  const setOpacity = (value: number) => {
+    const next = Math.min(1, Math.max(0, value))
+    setStrokeOpacity(next)
+    applyStrokeOpacity(next)
+  }
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(formatPalette(palette))
+    await navigator.clipboard.writeText(formatPalette(palette, strokeOpacity))
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1200)
   }
@@ -90,6 +99,31 @@ export function DevMode() {
           />
         </label>
       ))}
+      <label className="dev-mode__row dev-mode__row--opacity">
+        <span className="dev-mode__label">stroke opacity</span>
+        <input
+          className="dev-mode__range"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={Math.round(strokeOpacity * 100)}
+          onChange={(e) => setOpacity(Number(e.target.value) / 100)}
+          aria-label="stroke opacity"
+        />
+        <input
+          className="dev-mode__hex"
+          type="text"
+          value={strokeOpacity.toFixed(2)}
+          onChange={(e) => {
+            const next = Number(e.target.value)
+            if (Number.isFinite(next)) {
+              setOpacity(next)
+            }
+          }}
+          aria-label="stroke opacity value"
+        />
+      </label>
       <button className="dev-mode__copy" type="button" onClick={() => void handleCopy()}>
         {copied ? 'Copied' : 'Copy palette'}
       </button>

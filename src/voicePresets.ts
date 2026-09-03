@@ -46,8 +46,6 @@ export const VOICE_PRESETS: VoicePreset[] = [
       cutoff: 78,
       resonance: 96,
       efSense: 108,
-      bandLevels: [72, 82, 98, 112, 120, 118, 104, 86],
-      bandPans: [40, 86, 34, 92, 30, 96, 44, 82],
     },
     stSpeed: 112,
     stPitch: 92,
@@ -65,8 +63,6 @@ export const VOICE_PRESETS: VoicePreset[] = [
       cutoff: 90,
       resonance: 28,
       efSense: 96,
-      bandLevels: [52, 68, 86, 104, 116, 122, 118, 110],
-      bandPans: [54, 72, 50, 76, 48, 78, 56, 70],
     },
     stSpeed: 68,
     stPitch: 70,
@@ -84,8 +80,6 @@ export const VOICE_PRESETS: VoicePreset[] = [
       cutoff: 34,
       resonance: 74,
       efSense: 40,
-      bandLevels: [124, 118, 108, 96, 78, 58, 42, 28],
-      bandPans: [58, 68, 60, 66, 63, 63, 63, 63],
     },
     stSpeed: 118,
     stPitch: 98,
@@ -94,4 +88,67 @@ export const VOICE_PRESETS: VoicePreset[] = [
 
 export function getPresetById(id: Exclude<VoiceId, 'custom'>): VoicePreset {
   return VOICE_PRESETS.find((preset) => preset.id === id)!
+}
+
+function cloneVocoder(vocoder: VocoderUiState): VocoderUiState {
+  return {
+    ...DEFAULT_VOCODER_UI,
+    ...vocoder,
+  }
+}
+
+export function clonePresetVocoder(preset: VoicePreset): VocoderUiState {
+  return cloneVocoder(preset.vocoder)
+}
+
+export function voiceMatches(
+  preset: VoicePreset,
+  state: { speed: number; pitch: number; humanRobot: number },
+): boolean {
+  return (
+    state.speed === preset.speed &&
+    state.pitch === preset.pitch &&
+    state.humanRobot === preset.humanRobot
+  )
+}
+
+export function vocoderMatches(
+  preset: VoicePreset,
+  vocoder: VocoderUiState,
+): boolean {
+  const expected = cloneVocoder(preset.vocoder)
+  return (
+    vocoder.cutoff === expected.cutoff &&
+    vocoder.resonance === expected.resonance &&
+    vocoder.efSense === expected.efSense
+  )
+}
+
+export function carrierMatches(
+  preset: VoicePreset,
+  vocoder: VocoderUiState,
+): boolean {
+  const expected = cloneVocoder(preset.vocoder)
+  return (
+    vocoder.carrierAmount === expected.carrierAmount &&
+    vocoder.carrierMix === expected.carrierMix &&
+    vocoder.carrierCutoff === expected.carrierCutoff &&
+    vocoder.carrierResonance === expected.carrierResonance
+  )
+}
+
+export function presetMatches(
+  preset: VoicePreset,
+  state: {
+    speed: number
+    pitch: number
+    humanRobot: number
+    vocoder: VocoderUiState
+  },
+): boolean {
+  return (
+    voiceMatches(preset, state) &&
+    vocoderMatches(preset, state.vocoder) &&
+    carrierMatches(preset, state.vocoder)
+  )
 }

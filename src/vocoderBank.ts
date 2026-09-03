@@ -15,6 +15,7 @@ const SAW_LEVEL = 0.85
 const SQUARE_LEVEL = 0.7
 const OSC_MAKEUP = 2.4
 const DRY_BLEND = 0.22
+const OUTPUT_MAKEUP = 2
 
 const ABS_CURVE = createAbsCurve()
 
@@ -176,6 +177,7 @@ export function applyVocoderParams(
   bank.dryBlend.gain.setTargetAtTime(DRY_BLEND * (1 - amount), now, rampSeconds)
   bank.carrier.speechGain.gain.setTargetAtTime(1 - amount, now, rampSeconds)
   bank.carrier.oscGain.gain.setTargetAtTime(amount * OSC_MAKEUP, now, rampSeconds)
+  bank.output.gain.setTargetAtTime(1 + amount * OUTPUT_MAKEUP, now, rampSeconds)
   bank.carrier.sawGain.gain.setTargetAtTime((1 - mix) * SAW_LEVEL, now, rampSeconds)
   bank.carrier.squareGain.gain.setTargetAtTime(mix * SQUARE_LEVEL, now, rampSeconds)
   bank.carrier.filter.frequency.setTargetAtTime(

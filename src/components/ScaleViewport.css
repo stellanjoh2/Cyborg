@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--synth-shell, #000000);
+  background: var(--synth-shell, #0e0e0e);
 }
 
 .scale-stage {

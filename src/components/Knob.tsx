@@ -7,11 +7,16 @@ import {
 } from 'react'
 import {
   clampKnobValue,
+  knobFillArcPath,
   valueToKnobAngle,
+  valueToKnobFill,
   verticalDragToValueChange,
   wheelDeltaToValueChange,
 } from '../knobCore'
+import { useAnimatedNumber } from '../useAnimatedNumber'
 import './Knob.css'
+
+const DIAL_RADIUS = 46
 
 export type KnobSize = 'lg' | 'md'
 
@@ -49,8 +54,12 @@ export function Knob({
   const dragValueRef = useRef<number | null>(null)
   const labelId = useId()
   const safeValue = clampKnobValue(value, min, max, step)
-  const angle = valueToKnobAngle(safeValue, min, max)
-  const displayValue = format ? format(safeValue) : String(safeValue)
+  const { displayed, beginImmediate, endImmediate, skipOnce } =
+    useAnimatedNumber(safeValue)
+  const angle = valueToKnobAngle(displayed, min, max)
+  const fill = valueToKnobFill(displayed, min, max)
+  const fillPath = knobFillArcPath(fill, 50, 50, DIAL_RADIUS)
+  const displayValue = format ? format(displayed) : String(displayed)
 
   valueRef.current = safeValue
   onChangeRef.current = onChange
@@ -63,6 +72,7 @@ export function Knob({
 
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault()
+      skipOnce()
       const delta = wheelDeltaToValueChange(event.deltaY, min, max, step)
       onChangeRef.current(
         clampKnobValue(valueRef.current + delta, min, max, step),
@@ -79,6 +89,7 @@ export function Knob({
     }
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
+    beginImmediate()
     lastDragYRef.current = event.clientY
     dragValueRef.current = safeValue
   }
@@ -107,6 +118,7 @@ export function Knob({
   }
 
   const endDrag = (event: PointerEvent<HTMLDivElement>) => {
+    endImmediate()
     lastDragYRef.current = null
     dragValueRef.current = null
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -131,12 +143,13 @@ export function Knob({
     }
 
     event.preventDefault()
+    skipOnce()
     onChange(clampKnobValue(safeValue + delta, min, max, step))
   }
 
   return (
     <div
-      className={`knob-field knob-field--${size}${disabled ? ' is-disabled' : ''}`}
+      className={`knob-field knob-field--${size}${disabled ? ' is-disabled' : ''}${fill <= 0 ? ' is-zero' : ''}`}
     >
       <span className="knob-label" id={labelId}>
         {label}
@@ -166,6 +179,12 @@ export function Knob({
         onPointerCancel={endDrag}
         onKeyDown={handleKeyDown}
       >
+        <svg className="knob__dial" viewBox="0 0 100 100" aria-hidden="true">
+          <circle className="knob__track" cx="50" cy="50" r={DIAL_RADIUS} />
+          {fillPath ? (
+            <path className="knob__fill" d={fillPath} />
+          ) : null}
+        </svg>
         <span
           className="knob__needle"
           style={{ transform: `rotate(${angle}deg)` }}

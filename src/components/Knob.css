@@ -20,23 +20,31 @@
 }
 
 .knob-field.is-disabled {
-  color: var(--ega-gray);
+  color: var(--muted);
   pointer-events: none;
 }
 
-.knob-field.is-disabled .knob {
-  border-color: var(--ega-gray);
+.knob-field.is-disabled .knob__track,
+.knob-field.is-disabled .knob__fill,
+.knob-field.is-zero .knob__track,
+.knob-field.is-zero .knob__fill {
+  stroke: var(--muted);
 }
 
-.knob-field.is-disabled .knob__needle {
-  background: var(--ega-gray);
+.knob-field.is-disabled .knob__needle,
+.knob-field.is-zero .knob__needle {
+  background: var(--muted);
+}
+
+.knob-field.is-zero .knob-value {
+  color: var(--muted);
 }
 
 .knob-label {
   font-size: var(--font-m);
   line-height: 1;
   font-weight: 400;
-  color: var(--ega-gray);
+  color: var(--muted);
   text-align: center;
 }
 
@@ -50,22 +58,51 @@
   font-weight: 400;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--ega-gray);
+  color: var(--muted);
 }
 
 .knob {
+  --knob-stroke: 3px;
+  --knob-track-r: 46%;
   position: relative;
   width: var(--knob-size);
   height: var(--knob-size);
-  border: 2px solid var(--ega-bright-magenta);
+  border: 0;
   border-radius: 50%;
-  background: var(--ega-black);
+  background: var(--fill);
   cursor: ns-resize;
   outline: none;
+  overflow: hidden;
+}
+
+.knob__dial {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.knob__track,
+.knob__fill {
+  fill: none;
+  stroke: var(--knob);
+  stroke-width: var(--knob-stroke);
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
+}
+
+.knob__track {
+  opacity: 0.25;
+}
+
+.knob__fill {
+  opacity: 1;
 }
 
 .knob:focus-visible {
-  outline: 2px solid var(--ega-yellow);
+  outline: 2px solid var(--lime);
   outline-offset: 12px;
 }
 
@@ -75,12 +112,13 @@
 
 .knob__needle {
   position: absolute;
-  top: 0;
+  top: auto;
+  bottom: 50%;
   left: 50%;
-  width: 2px;
-  height: 50%;
-  margin-left: -1px;
-  background: var(--ega-cyan);
+  width: var(--knob-stroke);
+  height: calc(var(--knob-track-r) + var(--knob-stroke) / 2);
+  margin-left: calc(var(--knob-stroke) / -2);
+  background: var(--knob);
   transform-origin: 50% 100%;
 }
 
@@ -90,5 +128,5 @@
   line-height: 1;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  color: var(--ega-cyan);
+  color: var(--lime);
 }

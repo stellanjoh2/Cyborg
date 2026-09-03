@@ -48,6 +48,12 @@ export const DEFAULT_POST_PROCESS_UI: PostProcessUiState = {
   compressorRelease: 40,
 }
 
+export function postProcessMatches(ui: PostProcessUiState): boolean {
+  return (Object.keys(DEFAULT_POST_PROCESS_UI) as (keyof PostProcessUiState)[]).every(
+    (key) => ui[key] === DEFAULT_POST_PROCESS_UI[key],
+  )
+}
+
 function slider(value: number): number {
   return Math.min(Math.max(value, 0), 100) / 100
 }
@@ -106,12 +112,12 @@ export function formatNoiseTone(sliderValue: number): string {
 }
 
 export function formatReverbRoomSize(sliderValue: number): string {
-  const seconds = 0.35 + slider(sliderValue) * 3.65
+  const seconds = 0.35 + slider(sliderValue) * 1.65
   return `${seconds.toFixed(1)} s`
 }
 
 export function formatReverbDecay(sliderValue: number): string {
-  const tailSeconds = 0.4 + slider(sliderValue) * 3.2
+  const tailSeconds = 0.4 + slider(sliderValue) * 1.4
   return `${tailSeconds.toFixed(1)} s tail`
 }
 

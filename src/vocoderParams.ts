@@ -25,8 +25,6 @@ export interface VocoderUiState {
   carrierMix: number
   carrierCutoff: number
   carrierResonance: number
-  bandLevels: number[]
-  bandPans: number[]
 }
 
 export const VOCODER_BAND_COUNT = 8
@@ -43,17 +41,11 @@ export const DEFAULT_VOCODER_UI: VocoderUiState = {
   carrierMix: 28,
   carrierCutoff: 58,
   carrierResonance: 32,
-  bandLevels: Array(VOCODER_BAND_COUNT).fill(100),
-  bandPans: Array(VOCODER_BAND_COUNT).fill(63),
 }
 
 export function formatSigned63(value: number): string {
   const signed = Math.round(value - 63)
   return signed > 0 ? `+${signed}` : `${signed}`
-}
-
-export function formatBandPan(index: number): string {
-  return formatSigned63(index)
 }
 
 export function mapUiToVocoder(ui: VocoderUiState): VocoderParams {
@@ -66,9 +58,9 @@ export function mapUiToVocoder(ui: VocoderUiState): VocoderParams {
     carrierMix: clamp(ui.carrierMix, 0, 100) / 100,
     carrierCutoff: clamp(ui.carrierCutoff, 0, 100) / 100,
     carrierResonance: clamp(ui.carrierResonance, 0, 100) / 100,
-    bands: ui.bandLevels.map((level, index) => ({
-      level: clamp(level, 0, 127),
-      pan: clamp(ui.bandPans[index] ?? 63, 0, 126) - 63,
+    bands: Array.from({ length: VOCODER_BAND_COUNT }, () => ({
+      level: 100,
+      pan: 0,
     })),
   }
 }

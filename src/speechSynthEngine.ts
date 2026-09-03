@@ -74,6 +74,17 @@ export interface LiveSynthParams {
   metallic: number
   vocoder: VocoderParams
   postProcess: PostProcessParams
+  masterVolume: number
+  masterGainDb: number
+}
+
+export const DEFAULT_MASTER_VOLUME = 1
+export const DEFAULT_MASTER_GAIN_DB = 0
+export const MASTER_GAIN_MAX_DB = 12
+
+export function mapMasterOutputGain(volume: number, gainDb: number): number {
+  const boost = 10 ** (Math.min(MASTER_GAIN_MAX_DB, Math.max(0, gainDb)) / 20)
+  return Math.min(1, Math.max(0, volume)) * boost
 }
 
 export const DEFAULT_POST_PROCESS: PostProcessParams = {
@@ -173,6 +184,8 @@ interface SynthGraph {
   compressorOut: GainNode
   compressorNode: DynamicsCompressorNode
   compressorMakeup: GainNode
+  masterGain: GainNode
+  analyser: AnalyserNode
 }
 
 let graph: SynthGraph | null = null
@@ -191,6 +204,8 @@ let currentParams: LiveSynthParams = {
   metallic: 0,
   postProcess: mergePostProcess(DEFAULT_POST_PROCESS),
   vocoder: { ...DEFAULT_VOCODER_PARAMS, bands: DEFAULT_VOCODER_PARAMS.bands.map((b) => ({ ...b })) },
+  masterVolume: DEFAULT_MASTER_VOLUME,
+  masterGainDb: DEFAULT_MASTER_GAIN_DB,
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -239,7 +254,7 @@ function mapNoiseToneCutoff(tone: number): number {
 }
 
 function mapReverbDuration(roomSize: number): number {
-  return 0.35 + clamp(roomSize, 0, 1) * 3.65
+  return 0.35 + clamp(roomSize, 0, 1) * 1.65
 }
 
 function mapReverbDecayPower(decay: number): number {
@@ -481,7 +496,7 @@ function applyPostProcessToGraph(
     rampSeconds,
   )
   nodes.reverbWet.gain.setTargetAtTime(
-    clamp(reverb.amount, 0, 1) * 0.68,
+    clamp(reverb.amount, 0, 1) * 0.34,
     now,
     rampSeconds,
   )
@@ -599,7 +614,7 @@ function applyPostProcessToGraph(
     1,
     estimatedNoiseWetMix(noise.amount) +
       delay.amount * 0.55 +
-      reverb.amount * 0.68,
+      reverb.amount * 0.34,
   )
   nodes.postDry.gain.setTargetAtTime(
     Math.max(0.38, 1 - wetMix * 0.32),
@@ -612,6 +627,44 @@ function mapPlaybackRate(speed: number, pitch: number): number {
   const speedFactor = 0.55 + speed * 0.45
   const pitchFactor = 0.55 + pitch * 0.725
   return speedFactor * pitchFactor
+}
+
+function applyMasterOut(
+  nodes: SynthGraph,
+  volume: number,
+  gainDb: number,
+  rampSeconds = 0.03,
+) {
+  const gain = mapMasterOutputGain(volume, gainDb)
+  const now = nodes.context.currentTime
+  if (rampSeconds <= 0) {
+    nodes.masterGain.gain.setValueAtTime(gain, now)
+    return
+  }
+  nodes.masterGain.gain.setTargetAtTime(gain, now, rampSeconds)
+}
+
+let meterBuffer: Float32Array<ArrayBuffer> | null = null
+
+export function readMasterPeak(): number {
+  if (!graph) {
+    return 0
+  }
+
+  const analyser = graph.analyser
+  if (!meterBuffer || meterBuffer.length !== analyser.fftSize) {
+    meterBuffer = new Float32Array(analyser.fftSize)
+  }
+
+  analyser.getFloatTimeDomainData(meterBuffer)
+  let peak = 0
+  for (let i = 0; i < meterBuffer.length; i += 1) {
+    const sample = Math.abs(meterBuffer[i] ?? 0)
+    if (sample > peak) {
+      peak = sample
+    }
+  }
+  return peak
 }
 
 function applyIntensityToGraph(
@@ -885,7 +938,15 @@ function buildSynthGraph(
   compressorNode.connect(compressorMakeup)
   compressorMakeup.connect(compressorWet)
   compressorWet.connect(compressorOut)
-  compressorOut.connect(destination)
+  const masterGain = context.createGain()
+  masterGain.gain.value = DEFAULT_MASTER_VOLUME
+  const analyser = context.createAnalyser()
+  analyser.fftSize = 2048
+  analyser.smoothingTimeConstant = 0
+
+  compressorOut.connect(masterGain)
+  masterGain.connect(destination)
+  masterGain.connect(analyser)
 
   combOutput.connect(highpass)
   highpass.connect(bandpass)
@@ -974,6 +1035,8 @@ function buildSynthGraph(
     compressorOut,
     compressorNode,
     compressorMakeup,
+    masterGain,
+    analyser,
   }
 }
 
@@ -990,6 +1053,12 @@ async function ensureGraph(): Promise<SynthGraph> {
       applyIntensityToGraph(nodes, 0, 0)
       applyVocoderParams(nodes.vocoder, DEFAULT_VOCODER_PARAMS, 1, 0)
       applyPostProcessToGraph(nodes, DEFAULT_POST_PROCESS, 0)
+      applyMasterOut(
+        nodes,
+        currentParams.masterVolume,
+        currentParams.masterGainDb,
+        0,
+      )
 
       nodes.vocoder.carrier.saw.start()
       nodes.vocoder.carrier.square.start()
@@ -1021,6 +1090,7 @@ function scheduleOfflineGraph(
   applyIntensityToGraph(nodes, params.metallic, 0)
   applyVocoderParams(nodes.vocoder, params.vocoder, params.pitch, 0)
   applyPostProcessToGraph(nodes, params.postProcess, 0)
+  applyMasterOut(nodes, params.masterVolume, params.masterGainDb, 0)
 
   const playbackRate = mapPlaybackRate(params.speed, params.pitch)
   scheduleSpeechGatedNoise(
@@ -1050,6 +1120,8 @@ export async function renderSynthOffline(
   const merged: LiveSynthParams = {
     ...params,
     postProcess: mergePostProcess(DEFAULT_POST_PROCESS, params.postProcess),
+    masterVolume: params.masterVolume ?? DEFAULT_MASTER_VOLUME,
+    masterGainDb: params.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
   }
 
   const playbackRate = mapPlaybackRate(merged.speed, merged.pitch)
@@ -1153,6 +1225,26 @@ export function isSynthPlaying(): boolean {
   return activeSource !== null
 }
 
+export function pauseSynthPlayback() {
+  if (!graph || !activeSource) {
+    return
+  }
+  const liveContext = graph.context as AudioContext
+  if (liveContext.state === 'running') {
+    void liveContext.suspend()
+  }
+}
+
+export function resumeSynthPlayback() {
+  if (!graph) {
+    return
+  }
+  const liveContext = graph.context as AudioContext
+  if (liveContext.state === 'suspended') {
+    void liveContext.resume()
+  }
+}
+
 export function setSynthLoop(enabled: boolean) {
   loopEnabled = enabled
 }
@@ -1180,6 +1272,8 @@ export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
           }))
         : currentParams.vocoder.bands,
     },
+    masterVolume: params.masterVolume ?? currentParams.masterVolume,
+    masterGainDb: params.masterGainDb ?? currentParams.masterGainDb,
   }
 
   if (!graph) {
@@ -1189,6 +1283,7 @@ export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
   applyIntensityToGraph(graph, currentParams.metallic)
   applyVocoderParams(graph.vocoder, currentParams.vocoder, currentParams.pitch)
   applyPostProcessToGraph(graph, currentParams.postProcess)
+  applyMasterOut(graph, currentParams.masterVolume, currentParams.masterGainDb)
 
   if (activeSource && speechSamples && params.postProcess?.noise) {
     const now = graph.context.currentTime
@@ -1227,6 +1322,12 @@ export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
   }
   stopSourceOnly()
   onEndCallback = null
+  if (graph) {
+    const liveContext = graph.context as AudioContext
+    if (liveContext.state === 'suspended') {
+      void liveContext.resume()
+    }
+  }
 }
 
 export function startSynthPlayback(
@@ -1249,6 +1350,8 @@ export function startSynthPlayback(
         (band) => ({ ...band }),
       ),
     },
+    masterVolume: params.masterVolume ?? DEFAULT_MASTER_VOLUME,
+    masterGainDb: params.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
   }
   loopEnabled = callbacks.loop ?? false
   onEndCallback = callbacks.onEnd ?? null
@@ -1268,6 +1371,12 @@ export function startSynthPlayback(
         0,
       )
       applyPostProcessToGraph(nodes, currentParams.postProcess, 0)
+      applyMasterOut(
+        nodes,
+        currentParams.masterVolume,
+        currentParams.masterGainDb,
+        0,
+      )
       startSource()
     } catch {
       callbacks.onError?.('Audio playback failed.')
@@ -1300,6 +1409,8 @@ export function playAudioBuffer(
         bands: DEFAULT_VOCODER_PARAMS.bands.map((band) => ({ ...band })),
       },
       postProcess: { ...DEFAULT_POST_PROCESS },
+      masterVolume: DEFAULT_MASTER_VOLUME,
+      masterGainDb: DEFAULT_MASTER_GAIN_DB,
     },
     callbacks,
   )
