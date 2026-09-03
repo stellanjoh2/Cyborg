@@ -1,0 +1,89 @@
+/* Ac437 Cordata PPC — VileR / int10h.org, CC BY-SA 4.0 */
+@font-face {
+  font-family: 'Ac437 Cordata PPC-21';
+  src: url('./assets/fonts/Ac437_Cordata_PPC-21.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Ac437 Cordata PPC-400';
+  src: url('./assets/fonts/Ac437_Cordata_PPC-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --ega-black: #000000;
+  --ega-blue: #0000aa;
+  --ega-cyan: #00aaaa;
+  --ega-red: #aa0000;
+  --ega-magenta: #aa00aa;
+  --ega-gray: #aaaaaa;
+  --ega-bright-magenta: #ff55ff;
+  --ega-yellow: #ffff55;
+  --ega-white: #ffffff;
+
+  --u: 12px;
+  --font-s: 15px;
+  --font-m: 30px;
+  --font-xl: 60px;
+
+  --text: var(--ega-gray);
+  --text-h: var(--ega-white);
+  --bg: var(--ega-black);
+  --border: var(--ega-bright-magenta);
+  --accent: var(--ega-yellow);
+  --accent-bg: var(--ega-blue);
+  --accent-border: var(--ega-bright-magenta);
+  --synth-shell: var(--ega-black);
+
+  --font-ui: 'Ac437 Cordata PPC-21', monospace;
+  --font-display: 'Ac437 Cordata PPC-400', monospace;
+  --sans: var(--font-ui);
+
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  letter-spacing: 0;
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  background: var(--bg);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  border-radius: 0;
+}

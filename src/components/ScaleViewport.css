@@ -1,0 +1,16 @@
+.scale-viewport {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--synth-shell, #000000);
+}
+
+.scale-stage {
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
