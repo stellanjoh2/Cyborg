@@ -1,12 +1,17 @@
 .speech-app {
+  --section-stroke: color-mix(
+    in srgb,
+    var(--stroke) calc(var(--section-stroke-opacity) * 100%),
+    transparent
+  );
   width: 100%;
   height: 100svh;
   margin: 0;
-  padding: var(--section-gap);
+  padding: calc(var(--section-gap) * 1.5);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: var(--section-gap);
+  gap: calc(var(--section-gap) * 1.5);
   overflow: hidden;
   text-align: left;
   color: var(--text);
@@ -14,20 +19,21 @@
 }
 
 .speech-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--section-gap);
   flex: 0 0 auto;
   min-width: 0;
-  margin: calc(-1 * var(--section-gap)) calc(-1 * var(--section-gap)) 0;
-  padding: var(--section-gap);
+  margin: calc(var(--section-gap) * -1.5) calc(var(--section-gap) * -1.5) 0;
+  padding: calc(var(--section-gap) * 1.5);
   background: var(--fill);
-  border-bottom: 2px solid var(--panel-border);
+  border-bottom: 2px solid var(--section-stroke);
 }
 
 .speech-title {
   display: inline-block;
-  flex: 0 0 auto;
+  justify-self: center;
   margin: 0;
   padding: 6px 8px;
   font-family: var(--font-display);
@@ -40,44 +46,20 @@
   border: 2px solid var(--lime);
 }
 
+.speech-top__left {
+  justify-self: start;
+}
+
 .speech-top__right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.speech-top .master-strip {
-  flex: 1 1 520px;
-  min-width: 280px;
-  border: 0;
-  background: transparent;
-  padding: 0;
-}
-
-.speech-top .master-fader__label,
-.speech-top .master-fader__value {
-  font-size: var(--font-s);
-}
-
-.speech-top .master-fader:first-of-type,
-.speech-top .master-fader:nth-of-type(2) {
-  flex: 1 1 180px;
-  min-width: 160px;
-}
-
-.speech-top .vu-led {
-  width: 5px;
+  justify-self: end;
 }
 
 .speech-top .actions {
-  flex: 0 0 auto;
+  display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
 }
 
 .speech-top .primary,
@@ -87,22 +69,12 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  height: 36px;
+  width: 160px;
+  height: 54px;
   box-sizing: border-box;
-  padding: 0 10px;
+  padding: 0;
   font-size: var(--font-s);
   white-space: nowrap;
-}
-
-.speech-top .icon-btn {
-  width: 36px;
-  padding: 0;
-}
-
-.speech-top .icon-btn svg {
-  width: 18px;
-  height: 18px;
-  display: block;
 }
 
 .speech-title__tm {
@@ -117,7 +89,7 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: var(--section-gap);
 }
 
@@ -130,8 +102,14 @@
   scrollbar-color: var(--synth-border) var(--black);
 }
 
-.speech-col--fx {
+.speech-col--master {
   grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+}
+
+.speech-col--fx {
+  grid-column: 3;
   grid-row: 1;
   min-height: 0;
 }
@@ -154,10 +132,14 @@
   border: 0;
   background: transparent;
   resize: none;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--font-m);
+  font-size: 24px;
   line-height: 1.15;
+  scrollbar-width: thin;
+  scrollbar-color: var(--synth-border) var(--black);
 }
 
 .field-textarea:focus-visible,
@@ -175,8 +157,9 @@
   background: var(--black);
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--font-m);
+  font-size: var(--font-s);
   line-height: 1;
+  text-transform: uppercase;
 }
 
 .field-select--inline {
@@ -200,22 +183,20 @@
   cursor: pointer;
 }
 
+.field-select option,
 .field-select--inline option {
   background: var(--black);
   color: var(--text);
+  text-transform: uppercase;
 }
 
 .knob-panel,
 .vocoder-panel,
-.post-process {
+.post-process,
+.master-strip {
   margin: 0;
   padding: 20px;
-  border: 2px solid
-    color-mix(
-      in srgb,
-      var(--stroke) calc(var(--section-stroke-opacity) * 100%),
-      transparent
-    );
+  border: 2px solid var(--section-stroke);
   border-radius: 8px;
   background: var(--fill);
   min-height: 0;
@@ -227,6 +208,7 @@
 .speech-col--voice .text-panel {
   flex: 0 0 clamp(168px, 20vh, 228px);
   min-height: 0;
+  overflow: hidden;
 }
 
 .speech-col--voice .knob-panel:not(.text-panel),
@@ -250,11 +232,26 @@
   overflow-y: auto;
 }
 
-.post-process {
+.field-readout {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.field-readout .is-spoken {
+  color: var(--knob);
+  text-shadow: var(--glow-outer);
+}
+
+.post-process,
+.speech-col--master .master-strip {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.speech-col--master .master-strip {
+  gap: 0;
 }
 
 .knob-grid {
@@ -295,7 +292,10 @@
 
 .speech-app .knob-label,
 .speech-app .knob-value,
-.speech-app .knob-hints {
+.speech-app .knob-hints,
+.speech-app .primary,
+.speech-app .secondary,
+.speech-app .field-select {
   font-size: var(--font-s);
 }
 
@@ -320,6 +320,7 @@
   font-size: var(--font-s);
   line-height: 1;
   font-weight: 400;
+  text-transform: uppercase;
   cursor: pointer;
   box-shadow: none;
 }
@@ -328,6 +329,7 @@
   border: 2px solid var(--lime);
   background: var(--lime);
   color: var(--on-chrome);
+  box-shadow: var(--glow-outer);
 }
 
 .primary:disabled {
@@ -335,6 +337,7 @@
   background: var(--fill);
   border-color: var(--panel-border);
   color: var(--muted);
+  box-shadow: none;
 }
 
 .primary:focus-visible,
@@ -359,6 +362,7 @@
   border-color: var(--lime);
   color: var(--on-chrome);
   background: var(--lime);
+  box-shadow: var(--glow-outer);
 }
 
 .error {
@@ -510,15 +514,21 @@
   }
 
   .speech-col--voice,
+  .speech-col--master,
   .speech-col--fx {
     grid-column: auto;
     grid-row: auto;
   }
 
+  .speech-col--master {
+    min-height: 280px;
+  }
+
   .speech-col--voice .text-panel {
     flex: 0 0 auto;
-    max-height: none;
+    max-height: 228px;
     height: auto;
+    overflow: hidden;
   }
 
   .speech-col--voice .knob-panel:not(.text-panel),
@@ -544,8 +554,7 @@
     --knob-size: 64px;
   }
 
-  .speech-top,
-  .speech-top__right {
+  .speech-top .actions {
     flex-wrap: wrap;
   }
 }

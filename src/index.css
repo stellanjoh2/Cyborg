@@ -1,5 +1,5 @@
 :root {
-  --lime: #c4ff00;
+  --lime: #ffc800;
   --purple: #3b00ff;
   --blue: #00c4ff;
   --pink: #ff00c4;
@@ -7,9 +7,20 @@
   --fill: #131313;
   --stroke: #ffffff;
   --section-stroke-opacity: 0.1;
+  --glow-blur-tight: 10px;
+  --glow-blur-wide: 22px;
+  --glow-mix-tight: 22%;
+  --glow-mix-wide: 14%;
+  --glow-color: var(--lime);
+  --glow-outer:
+    0 0 var(--glow-blur-tight)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent),
+    0 0 var(--glow-blur-wide)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent);
   --on-chrome: #0f0f0f;
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.45);
+  --text: #ffffff;
+  --muted: #6E6E6E;
+  --muted-solid: #6E6E6E;
   --panel-border: rgba(255, 255, 255, 0.1);
 
   --u: 12px;

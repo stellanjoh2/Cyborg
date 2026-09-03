@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const SETTLE_MS = 500
 
@@ -50,16 +50,15 @@ export function useAnimatedNumber(value: number) {
     return () => cancelAnimationFrame(rafRef.current)
   }, [value])
 
-  return {
-    displayed,
-    beginImmediate() {
-      immediateRef.current = true
-    },
-    endImmediate() {
-      immediateRef.current = false
-    },
-    skipOnce() {
-      skipOnceRef.current = true
-    },
-  }
+  const beginImmediate = useCallback(() => {
+    immediateRef.current = true
+  }, [])
+  const endImmediate = useCallback(() => {
+    immediateRef.current = false
+  }, [])
+  const skipOnce = useCallback(() => {
+    skipOnceRef.current = true
+  }, [])
+
+  return { displayed, beginImmediate, endImmediate, skipOnce }
 }

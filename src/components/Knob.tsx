@@ -60,6 +60,7 @@ export function Knob({
   const fill = valueToKnobFill(displayed, min, max)
   const fillPath = knobFillArcPath(fill, 50, 50, DIAL_RADIUS)
   const displayValue = format ? format(displayed) : String(displayed)
+  const committedText = format ? format(safeValue) : String(safeValue)
 
   valueRef.current = safeValue
   onChangeRef.current = onChange
@@ -81,7 +82,7 @@ export function Knob({
 
     node.addEventListener('wheel', handleWheel, { passive: false })
     return () => node.removeEventListener('wheel', handleWheel)
-  }, [disabled, max, min, step])
+  }, [disabled, max, min, skipOnce, step])
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (disabled) {
@@ -170,7 +171,7 @@ export function Knob({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={safeValue}
-        aria-valuetext={displayValue}
+        aria-valuetext={committedText}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         onPointerDown={handlePointerDown}

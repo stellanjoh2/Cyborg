@@ -100,7 +100,7 @@ export function DevMode() {
         </label>
       ))}
       <label className="dev-mode__row dev-mode__row--opacity">
-        <span className="dev-mode__label">stroke opacity</span>
+        <span className="dev-mode__label">border opacity</span>
         <input
           className="dev-mode__range"
           type="range"
@@ -109,7 +109,7 @@ export function DevMode() {
           step="1"
           value={Math.round(strokeOpacity * 100)}
           onChange={(e) => setOpacity(Number(e.target.value) / 100)}
-          aria-label="stroke opacity"
+          aria-label="border opacity"
         />
         <input
           className="dev-mode__hex"
@@ -121,7 +121,7 @@ export function DevMode() {
               setOpacity(next)
             }
           }}
-          aria-label="stroke opacity value"
+          aria-label="border opacity value"
         />
       </label>
       <button className="dev-mode__copy" type="button" onClick={() => void handleCopy()}>

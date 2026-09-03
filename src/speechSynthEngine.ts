@@ -194,6 +194,8 @@ let audioBuffer: AudioBuffer | null = null
 let speechSamples: Float32Array | null = null
 let sourceStartTime = 0
 let sourcePlaybackRate = 1
+let sourceOffsetSeconds = 0
+let lastPositionTime = 0
 let loopEnabled = false
 let cancelled = false
 let onEndCallback: (() => void) | null = null
@@ -1207,6 +1209,8 @@ function startSource() {
   source.onended = handleSourceEnded
 
   sourceStartTime = nodes.context.currentTime
+  sourceOffsetSeconds = 0
+  lastPositionTime = sourceStartTime
   if (speechSamples) {
     scheduleSpeechGatedNoise(
       nodes,
@@ -1219,6 +1223,25 @@ function startSource() {
 
   activeSource = source
   source.start(0)
+}
+
+function captureSourcePosition() {
+  if (!graph || !activeSource) {
+    return
+  }
+
+  const now = graph.context.currentTime
+  sourceOffsetSeconds += Math.max(0, now - lastPositionTime) * sourcePlaybackRate
+  lastPositionTime = now
+}
+
+export function getSynthPlaybackProgress(): number {
+  if (!audioBuffer || audioBuffer.duration <= 0) {
+    return 0
+  }
+
+  captureSourcePosition()
+  return Math.min(1, Math.max(0, sourceOffsetSeconds / audioBuffer.duration))
 }
 
 export function isSynthPlaying(): boolean {
@@ -1285,6 +1308,10 @@ export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
   applyPostProcessToGraph(graph, currentParams.postProcess)
   applyMasterOut(graph, currentParams.masterVolume, currentParams.masterGainDb)
 
+  if (activeSource) {
+    captureSourcePosition()
+  }
+
   if (activeSource && speechSamples && params.postProcess?.noise) {
     const now = graph.context.currentTime
     const elapsed = Math.max(0, now - sourceStartTime)
@@ -1306,9 +1333,9 @@ export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
       elapsed,
     )
   } else if (activeSource) {
-    const rate = mapPlaybackRate(currentParams.speed, currentParams.pitch)
+    sourcePlaybackRate = mapPlaybackRate(currentParams.speed, currentParams.pitch)
     activeSource.playbackRate.setTargetAtTime(
-      rate,
+      sourcePlaybackRate,
       graph.context.currentTime,
       0.03,
     )
@@ -1321,6 +1348,8 @@ export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
     loopEnabled = false
   }
   stopSourceOnly()
+  sourceOffsetSeconds = 0
+  lastPositionTime = 0
   onEndCallback = null
   if (graph) {
     const liveContext = graph.context as AudioContext
@@ -1355,6 +1384,8 @@ export function startSynthPlayback(
   }
   loopEnabled = callbacks.loop ?? false
   onEndCallback = callbacks.onEnd ?? null
+  sourceOffsetSeconds = 0
+  lastPositionTime = 0
 
   void (async () => {
     try {

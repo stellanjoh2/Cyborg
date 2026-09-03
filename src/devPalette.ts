@@ -1,34 +1,40 @@
 export const PALETTE_KEYS = [
+  'text',
+  'muted',
+  'black',
+  'fill',
+  'stroke',
   'lime',
   'purple',
   'blue',
   'pink',
-  'black',
-  'fill',
-  'stroke',
 ] as const
 
 export type PaletteKey = (typeof PALETTE_KEYS)[number]
 export type Palette = Record<PaletteKey, string>
 
 export const DEFAULT_PALETTE: Palette = {
-  lime: '#C4FF00',
-  purple: '#3B00FF',
-  blue: '#00C4FF',
-  pink: '#FF00C4',
+  text: '#FFFFFF',
+  muted: '#6E6E6E',
   black: '#0E0E0E',
   fill: '#131313',
   stroke: '#FFFFFF',
+  lime: '#FFC800',
+  purple: '#3B00FF',
+  blue: '#00C4FF',
+  pink: '#FF00C4',
 }
 
 export const PALETTE_LABELS: Record<PaletteKey, string> = {
-  lime: 'lime',
-  purple: 'purple',
-  blue: 'blue',
-  pink: 'pink',
-  black: 'black',
-  fill: 'fill',
-  stroke: 'stroke',
+  text: 'text primary',
+  muted: 'text secondary',
+  black: 'background',
+  fill: 'surface',
+  stroke: 'border',
+  lime: 'accent',
+  purple: 'accent secondary',
+  blue: 'accent tertiary',
+  pink: 'error',
 }
 
 export const DEFAULT_STROKE_OPACITY = 0.1
@@ -44,6 +50,7 @@ export function applyPalette(palette: Palette) {
   for (const key of PALETTE_KEYS) {
     root.style.setProperty(`--${key}`, palette[key])
   }
+  root.style.setProperty('--muted-solid', palette.muted)
 }
 
 export function applyStrokeOpacity(opacity: number) {

@@ -3,7 +3,7 @@
   top: 12px;
   right: 12px;
   z-index: 40;
-  width: 288px;
+  width: 320px;
   padding: 12px;
   border: 2px solid var(--synth-border);
   background: var(--fill);
@@ -77,6 +77,7 @@
   padding: 8px 12px;
   border: 2px solid var(--lime);
   background: var(--lime);
+  box-shadow: var(--glow-outer);
   color: var(--on-chrome);
   font-family: var(--font-display);
   font-size: var(--font-s);

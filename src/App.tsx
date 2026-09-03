@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DevMode } from './components/DevMode'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
@@ -40,9 +40,14 @@ import {
   resumeSamSpeech,
   updateSamLiveParams,
 } from './samSpeech'
-import { MASTER_GAIN_MAX_DB } from './speechSynthEngine'
+import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
 import { preloadPronunciationDictionary } from './samPronunciation'
 import { cancelSpeechPlayback } from './speechPlayback'
+import {
+  splitSpokenParts,
+  spokenWordWeights,
+  wordIndexAtProgress,
+} from './spokenWords'
 import {
   clonePresetVocoder,
   getPresetById,
@@ -53,7 +58,6 @@ import {
   VOICE_PRESETS,
   type VoiceId,
 } from './voicePresets'
-import { LoopIcon, PauseIcon, PlayIcon, StopIcon } from './ui/icons'
 import './SpeechApp.css'
 
 const DEFAULT_TEXT =
@@ -72,6 +76,8 @@ export default function App() {
   const [isPaused, setIsPaused] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
+  const spokenWordRef = useRef<HTMLSpanElement>(null)
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
@@ -83,6 +89,11 @@ export default function App() {
 
   const postProcess = useMemo(() => mapUiToPostProcess(postUi), [postUi])
   const vocoder = useMemo(() => mapUiToVocoder(vocoderUi), [vocoderUi])
+  const spokenParts = useMemo(() => splitSpokenParts(text), [text])
+  const spokenWeights = useMemo(
+    () => spokenWordWeights(spokenParts),
+    [spokenParts],
+  )
 
   const setVocoderKnob =
     (key: keyof VocoderUiState) =>
@@ -128,6 +139,40 @@ export default function App() {
       masterGainDb,
     })
   }, [masterVolume, masterGainDb])
+
+  useEffect(() => {
+    if (!isSpeaking || isPaused) {
+      return
+    }
+
+    let frame = 0
+    const tick = () => {
+      const next = wordIndexAtProgress(
+        spokenWeights,
+        getSynthPlaybackProgress(),
+      )
+      setSpokenWordIndex((current) => (current === next ? current : next))
+      frame = window.requestAnimationFrame(tick)
+    }
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [isSpeaking, isPaused, spokenWeights])
+
+  useEffect(() => {
+    const node = spokenWordRef.current
+    const scroller = node?.closest('.field-readout')
+    if (!node || !scroller) {
+      return
+    }
+
+    const nodeRect = node.getBoundingClientRect()
+    const scrollerRect = scroller.getBoundingClientRect()
+    if (nodeRect.top < scrollerRect.top) {
+      scroller.scrollTop -= scrollerRect.top - nodeRect.top
+    } else if (nodeRect.bottom > scrollerRect.bottom) {
+      scroller.scrollTop += nodeRect.bottom - scrollerRect.bottom
+    }
+  }, [spokenWordIndex])
 
   const activePresetId = voiceId === 'custom' ? 'default' : voiceId
   const activePreset = getPresetById(activePresetId)
@@ -213,6 +258,7 @@ export default function App() {
     setSamLoop(false)
     setIsSpeaking(false)
     setIsPaused(false)
+    setSpokenWordIndex(null)
   }
 
   const handlePlayPause = () => {
@@ -241,12 +287,14 @@ export default function App() {
     const trimmed = text.trim()
     if (!trimmed) {
       setIsSpeaking(false)
+      setSpokenWordIndex(null)
       setError('Please enter some text.')
       return
     }
 
     setIsSpeaking(true)
     setIsPaused(false)
+    setSpokenWordIndex(0)
     cancelSamSpeech()
     setSamLoop(isLooping)
 
@@ -263,10 +311,12 @@ export default function App() {
       onEnd: () => {
         setIsSpeaking(false)
         setIsPaused(false)
+        setSpokenWordIndex(null)
       },
       onError: (message) => {
         setIsSpeaking(false)
         setIsPaused(false)
+        setSpokenWordIndex(null)
         setError(message)
       },
     })
@@ -307,48 +357,47 @@ export default function App() {
     <>
       <main className="speech-app">
       <header className="speech-top">
-      <h1 className="speech-title">
-        Cyborg Dominance<span className="speech-title__tm">TM</span>
-      </h1>
-      <div className="speech-top__right">
-      <MasterStrip
-        volume={masterVolume}
-        gain={masterGain}
-        onVolumeChange={setMasterVolume}
-        onGainChange={setMasterGain}
-        onReset={handleResetMaster}
-        canReset={masterDirty}
-      />
-      <div className="actions">
+      <div className="speech-top__left actions">
         <button
-          className="primary icon-btn"
+          className="primary"
           type="button"
           onClick={handlePlayPause}
           title={isSpeaking && !isPaused ? 'Pause speech' : 'Play speech'}
-          aria-label={isSpeaking && !isPaused ? 'Pause' : 'Play'}
           aria-pressed={isSpeaking && !isPaused}
         >
-          {isSpeaking && !isPaused ? <PauseIcon /> : <PlayIcon />}
+          {isSpeaking && !isPaused ? 'PAUSE' : 'PLAY'}
         </button>
         <button
-          className={`secondary icon-btn${isLooping ? ' is-active' : ''}`}
+          className={`secondary${isLooping ? ' is-active' : ''}`}
           type="button"
           onClick={handleLoopToggle}
           title="Loop playback"
-          aria-label="Loop"
           aria-pressed={isLooping}
         >
-          <LoopIcon />
+          LOOP
         </button>
         <button
-          className="secondary icon-btn"
+          className="secondary"
           type="button"
           onClick={handleStop}
           disabled={!isSpeaking}
           title="Stop speech"
-          aria-label="Stop"
         >
-          <StopIcon />
+          STOP
+        </button>
+      </div>
+      <h1 className="speech-title">
+        Cyborg Dominance<span className="speech-title__tm">TM</span>
+      </h1>
+      <div className="speech-top__right actions">
+        <button
+          className="secondary"
+          type="button"
+          onClick={handleResetTemplate}
+          disabled={!templateDirty}
+          title="Reset all sections to the selected template"
+        >
+          RESET
         </button>
         <button
           className="secondary"
@@ -357,22 +406,22 @@ export default function App() {
           disabled={isExporting || !text.trim()}
           title="Render full mix with FX tails to WAV"
         >
-          {isExporting ? 'Exporting...' : 'Export WAV'}
+          {isExporting ? 'EXPORTING...' : 'EXPORT'}
         </button>
-        <button
-          className="secondary"
-          type="button"
-          onClick={handleResetTemplate}
-          disabled={!templateDirty}
-          title="Reset all sections to the selected template"
-        >
-          Reset to defaults
-        </button>
-      </div>
       </div>
       </header>
 
       <div className="speech-board">
+      <div className="speech-col speech-col--master">
+      <MasterStrip
+        volume={masterVolume}
+        gain={masterGain}
+        onVolumeChange={setMasterVolume}
+        onGainChange={setMasterGain}
+        onReset={handleResetMaster}
+        canReset={masterDirty}
+      />
+      </div>
       <div className="speech-col speech-col--fx">
       <section className="post-process">
         <div className="section-head">
@@ -649,14 +698,32 @@ export default function App() {
         <div className="section-head">
           <h2 className="section-title">Text</h2>
         </div>
-        <textarea
-          className="field-textarea"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type something..."
-          rows={4}
-          aria-label="Text"
-        />
+        {isSpeaking ? (
+          <div className="field-textarea field-readout" aria-label="Text">
+            {spokenParts.map((part, index) => (
+              <span
+                key={index}
+                ref={
+                  part.wordIndex === spokenWordIndex ? spokenWordRef : undefined
+                }
+                className={
+                  part.wordIndex === spokenWordIndex ? 'is-spoken' : undefined
+                }
+              >
+                {part.text}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <textarea
+            className="field-textarea"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Type something..."
+            rows={4}
+            aria-label="Text"
+          />
+        )}
       </section>
 
       <section className="knob-panel">

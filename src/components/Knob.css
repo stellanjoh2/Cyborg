@@ -28,12 +28,13 @@
 .knob-field.is-disabled .knob__fill,
 .knob-field.is-zero .knob__track,
 .knob-field.is-zero .knob__fill {
-  stroke: var(--muted);
+  stroke: var(--muted-solid);
+  opacity: 1;
 }
 
 .knob-field.is-disabled .knob__needle,
 .knob-field.is-zero .knob__needle {
-  background: var(--muted);
+  background: var(--muted-solid);
 }
 
 .knob-field.is-zero .knob-value {
@@ -62,7 +63,7 @@
 }
 
 .knob {
-  --knob-stroke: 3px;
+  --knob-stroke: 4.5px;
   --knob-track-r: 46%;
   position: relative;
   width: var(--knob-size);
@@ -119,6 +120,7 @@
   height: calc(var(--knob-track-r) + var(--knob-stroke) / 2);
   margin-left: calc(var(--knob-stroke) / -2);
   background: var(--knob);
+  border-radius: 0;
   transform-origin: 50% 100%;
 }
 
