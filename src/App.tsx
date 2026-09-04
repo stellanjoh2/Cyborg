@@ -12,6 +12,7 @@ import {
   formatCompressorRelease,
   formatDelayFeedback,
   formatDelayLength,
+  formatDistortionTone,
   formatNoisePitch,
   formatNoiseTone,
   formatReverbDecay,
@@ -386,9 +387,7 @@ export default function App() {
           STOP
         </button>
       </div>
-      <h1 className="speech-title">
-        Cyborg Dominance<span className="speech-title__tm">TM</span>
-      </h1>
+      <h1 className="speech-title" aria-label="Cyborg Dominance" />
       <div className="speech-top__right actions">
         <button
           className="secondary"
@@ -686,6 +685,42 @@ export default function App() {
               size="md"
               onChange={setPostKnob('compressorRelease')}
               format={(value) => formatCompressorRelease(value)}
+            />
+          </div>
+        </div>
+
+        <div className="fx-group">
+          <h3 className="fx-title">Distortion</h3>
+          <div className="knob-grid">
+            <Knob
+              label="Amount"
+              value={postUi.distortionAmount}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('distortionAmount')}
+              format={(value) => String(Math.round(value))}
+            />
+            <Knob
+              label="Drive"
+              value={postUi.distortionDrive}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('distortionDrive')}
+              format={(value) => String(Math.round(value))}
+            />
+            <Knob
+              label="Tone"
+              value={postUi.distortionTone}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('distortionTone')}
+              format={(value) => formatDistortionTone(value)}
             />
           </div>
         </div>

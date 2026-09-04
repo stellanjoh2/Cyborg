@@ -22,6 +22,9 @@ export interface PostProcessUiState {
   compressorAmount: number
   compressorAttack: number
   compressorRelease: number
+  distortionAmount: number
+  distortionDrive: number
+  distortionTone: number
 }
 
 export const DEFAULT_POST_PROCESS_UI: PostProcessUiState = {
@@ -46,6 +49,9 @@ export const DEFAULT_POST_PROCESS_UI: PostProcessUiState = {
   compressorAmount: 0,
   compressorAttack: 25,
   compressorRelease: 40,
+  distortionAmount: 0,
+  distortionDrive: 45,
+  distortionTone: 55,
 }
 
 export function postProcessMatches(ui: PostProcessUiState): boolean {
@@ -94,6 +100,11 @@ export function mapUiToPostProcess(ui: PostProcessUiState): PostProcessParams {
       amount: slider(ui.compressorAmount),
       attack: slider(ui.compressorAttack),
       release: slider(ui.compressorRelease),
+    },
+    distortion: {
+      amount: slider(ui.distortionAmount),
+      drive: slider(ui.distortionDrive),
+      tone: slider(ui.distortionTone),
     },
   }
 }
@@ -158,4 +169,12 @@ export function formatCompressorAttack(sliderValue: number): string {
 export function formatCompressorRelease(sliderValue: number): string {
   const ms = 40 + slider(sliderValue) ** 1.2 * 560
   return `${Math.round(ms)} ms`
+}
+
+export function formatDistortionTone(sliderValue: number): string {
+  const hz = Math.round(800 * 2 ** (slider(sliderValue) * 3.6))
+  if (hz >= 1000) {
+    return `${(hz / 1000).toFixed(1)} kHz`
+  }
+  return `${hz} Hz`
 }

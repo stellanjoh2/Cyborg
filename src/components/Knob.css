@@ -32,13 +32,21 @@
   opacity: 1;
 }
 
-.knob-field.is-disabled .knob__needle,
-.knob-field.is-zero .knob__needle {
+.knob-field.is-disabled .knob__needle-core,
+.knob-field.is-zero .knob__needle-core {
   background: var(--muted-solid);
+}
+
+.knob-field.is-disabled .knob__needle-bloom,
+.knob-field.is-zero .knob__needle-bloom,
+.knob-field.is-disabled .knob__arc-bloom,
+.knob-field.is-zero .knob__arc-bloom {
+  opacity: 0;
 }
 
 .knob-field.is-zero .knob-value {
   color: var(--muted);
+  text-shadow: none;
 }
 
 .knob-label {
@@ -63,7 +71,7 @@
 }
 
 .knob {
-  --knob-stroke: 4.5px;
+  --knob-stroke: 4px;
   --knob-track-r: 46%;
   position: relative;
   width: var(--knob-size);
@@ -73,7 +81,32 @@
   background: var(--fill);
   cursor: ns-resize;
   outline: none;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.knob__arc-bloom {
+  position: absolute;
+  inset: -16px;
+  pointer-events: none;
+  -webkit-mask-image: conic-gradient(
+    from 225deg,
+    #000 calc(var(--knob-fill, 0) * 270deg),
+    transparent 0
+  );
+  mask-image: conic-gradient(
+    from 225deg,
+    #000 calc(var(--knob-fill, 0) * 270deg),
+    transparent 0
+  );
+}
+
+.knob__arc-bloom-ring {
+  position: absolute;
+  inset: calc(16px + var(--knob-size) * 0.04 - var(--knob-stroke) / 2);
+  border: var(--knob-stroke) solid var(--glow-color);
+  border-radius: 50%;
+  opacity: 0.41;
+  filter: blur(6px);
 }
 
 .knob__dial {
@@ -119,16 +152,38 @@
   width: var(--knob-stroke);
   height: calc(var(--knob-track-r) + var(--knob-stroke) / 2);
   margin-left: calc(var(--knob-stroke) / -2);
-  background: var(--knob);
-  border-radius: 0;
   transform-origin: 50% 100%;
 }
 
+.knob:active .knob__needle {
+  will-change: transform;
+}
+
+.knob__needle-bloom {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -2px;
+  width: 8px;
+  margin-left: -4px;
+  background: var(--glow-color);
+  opacity: 0.41;
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.knob__needle-core {
+  position: absolute;
+  inset: 0;
+  background: var(--knob);
+}
+
 .knob-value {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-size: var(--font-m);
   line-height: 1;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--lime);
+  text-shadow: var(--glow-outer);
 }

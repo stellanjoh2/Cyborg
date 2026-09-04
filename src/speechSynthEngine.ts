@@ -58,6 +58,12 @@ export interface CompressorPostParams {
   release: number
 }
 
+export interface DistortionPostParams {
+  amount: number
+  drive: number
+  tone: number
+}
+
 export interface PostProcessParams {
   noise: NoisePostParams
   reverb: ReverbPostParams
@@ -66,6 +72,7 @@ export interface PostProcessParams {
   radio: RadioPostParams
   chorus: ChorusPostParams
   compressor: CompressorPostParams
+  distortion: DistortionPostParams
 }
 
 export interface LiveSynthParams {
@@ -95,6 +102,7 @@ export const DEFAULT_POST_PROCESS: PostProcessParams = {
   radio: { amount: 0, tone: 0.55, grit: 0.4 },
   chorus: { amount: 0, rate: 0.35, depth: 0.45 },
   compressor: { amount: 0, attack: 0.25, release: 0.4 },
+  distortion: { amount: 0, drive: 0.45, tone: 0.55 },
 }
 
 export function mergePostProcess(
@@ -109,6 +117,7 @@ export function mergePostProcess(
     radio: { ...base.radio, ...overlay?.radio },
     chorus: { ...base.chorus, ...overlay?.chorus },
     compressor: { ...base.compressor, ...overlay?.compressor },
+    distortion: { ...base.distortion, ...overlay?.distortion },
   }
 }
 
@@ -151,6 +160,7 @@ interface SynthGraph {
   lastReverbDecay: number
   lastCrushBits: number
   lastRadioGrit: number
+  lastDistortionDrive: number
   vocoder: VocoderBankGraph
   bitcrushIn: GainNode
   bitcrushDry: GainNode
@@ -184,6 +194,12 @@ interface SynthGraph {
   compressorOut: GainNode
   compressorNode: DynamicsCompressorNode
   compressorMakeup: GainNode
+  distortionIn: GainNode
+  distortionDry: GainNode
+  distortionWet: GainNode
+  distortionOut: GainNode
+  distortionShaper: WaveShaperNode
+  distortionTone: BiquadFilterNode
   masterGain: GainNode
   analyser: AnalyserNode
 }
@@ -298,6 +314,14 @@ function mapCompressorAttack(attack: number): number {
 
 function mapCompressorRelease(release: number): number {
   return (40 + clamp(release, 0, 1) ** 1.2 * 560) / 1000
+}
+
+function mapDistortionDrive(drive: number): number {
+  return 40 + clamp(drive, 0, 1) * 760
+}
+
+function mapDistortionToneCutoff(tone: number): number {
+  return 800 * 2 ** (clamp(tone, 0, 1) * 3.6)
 }
 
 function makeBitcrushCurve(bits: number): Float32Array {
@@ -475,6 +499,7 @@ function applyPostProcessToGraph(
   const radio = params.radio
   const chorus = params.chorus
   const compressor = params.compressor
+  const distortion = params.distortion
 
   nodes.noiseSource.playbackRate.setTargetAtTime(
     mapNoisePitch(noise.pitch),
@@ -585,6 +610,23 @@ function applyPostProcessToGraph(
   )
   nodes.chorusLfoGainL.gain.setTargetAtTime(chorusDepth, now, rampSeconds)
   nodes.chorusLfoGainR.gain.setTargetAtTime(chorusDepth * 0.92, now, rampSeconds)
+
+  const distAmount = clamp(distortion.amount, 0, 1)
+  const distDrive = clamp(distortion.drive, 0, 1)
+  nodes.distortionDry.gain.setTargetAtTime(1 - distAmount * 0.92, now, rampSeconds)
+  nodes.distortionWet.gain.setTargetAtTime(distAmount, now, rampSeconds)
+  nodes.distortionTone.frequency.setTargetAtTime(
+    mapDistortionToneCutoff(distortion.tone),
+    now,
+    rampSeconds,
+  )
+  const driveKey = Math.round(distDrive * 24)
+  if (driveKey !== nodes.lastDistortionDrive) {
+    nodes.lastDistortionDrive = driveKey
+    nodes.distortionShaper.curve = new Float32Array(
+      makeDistortionCurve(mapDistortionDrive(distDrive)),
+    )
+  }
 
   const compAmount = clamp(compressor.amount, 0, 1)
   nodes.compressorDry.gain.setTargetAtTime(1 - compAmount * 0.85, now, rampSeconds)
@@ -880,6 +922,22 @@ function buildSynthGraph(
   const compressorNode = context.createDynamicsCompressor()
   const compressorMakeup = context.createGain()
 
+  const distortionIn = context.createGain()
+  const distortionDry = context.createGain()
+  const distortionWet = context.createGain()
+  const distortionOut = context.createGain()
+  const distortionShaper = context.createWaveShaper()
+  distortionShaper.oversample = '4x'
+  distortionShaper.curve = new Float32Array(
+    makeDistortionCurve(mapDistortionDrive(DEFAULT_POST_PROCESS.distortion.drive)),
+  )
+  const distortionTone = context.createBiquadFilter()
+  distortionTone.type = 'lowpass'
+  distortionTone.Q.value = 0.7
+  distortionTone.frequency.value = mapDistortionToneCutoff(
+    DEFAULT_POST_PROCESS.distortion.tone,
+  )
+
   outputGain.connect(bitcrushIn)
   bitcrushIn.connect(bitcrushDry)
   bitcrushDry.connect(bitcrushOut)
@@ -933,7 +991,14 @@ function buildSynthGraph(
   noiseSource.connect(noiseToneFilter)
   noiseToneFilter.connect(noiseGain)
   noiseGain.connect(postMix)
-  postMix.connect(compressorIn)
+  postMix.connect(distortionIn)
+  distortionIn.connect(distortionDry)
+  distortionDry.connect(distortionOut)
+  distortionIn.connect(distortionShaper)
+  distortionShaper.connect(distortionTone)
+  distortionTone.connect(distortionWet)
+  distortionWet.connect(distortionOut)
+  distortionOut.connect(compressorIn)
   compressorIn.connect(compressorDry)
   compressorDry.connect(compressorOut)
   compressorIn.connect(compressorNode)
@@ -1004,6 +1069,7 @@ function buildSynthGraph(
     lastReverbDecay: -1,
     lastCrushBits: -1,
     lastRadioGrit: -1,
+    lastDistortionDrive: -1,
     vocoder,
     bitcrushIn,
     bitcrushDry,
@@ -1037,6 +1103,12 @@ function buildSynthGraph(
     compressorOut,
     compressorNode,
     compressorMakeup,
+    distortionIn,
+    distortionDry,
+    distortionWet,
+    distortionOut,
+    distortionShaper,
+    distortionTone,
     masterGain,
     analyser,
   }

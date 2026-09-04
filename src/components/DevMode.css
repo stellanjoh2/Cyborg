@@ -5,7 +5,8 @@
   z-index: 40;
   width: 320px;
   padding: 12px;
-  border: 2px solid var(--synth-border);
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
   background: var(--fill);
   color: var(--text);
   font-family: var(--font-ui);
@@ -19,6 +20,7 @@
   font-size: var(--font-s);
   font-weight: 400;
   color: var(--lime);
+  text-shadow: var(--glow-outer);
 }
 
 .dev-mode__row {
@@ -42,7 +44,8 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 2px solid var(--synth-border);
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
   background: transparent;
   cursor: pointer;
 }
@@ -55,7 +58,8 @@
   width: 100%;
   box-sizing: border-box;
   padding: 2px 4px;
-  border: 2px solid var(--synth-border);
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
   background: var(--black);
   color: var(--text);
   font-family: var(--font-ui);
@@ -71,17 +75,48 @@
 }
 
 .dev-mode__copy {
+  --hover-plate-on: color-mix(in srgb, var(--text) 20%, transparent);
   appearance: none;
+  position: relative;
+  isolation: isolate;
   width: 100%;
   margin-top: 4px;
   padding: 8px 12px;
-  border: 2px solid var(--lime);
+  border: var(--stroke-width) solid var(--lime);
+  border-radius: var(--radius);
   background: var(--lime);
   box-shadow: var(--glow-outer);
   color: var(--on-chrome);
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-size: var(--font-s);
   line-height: 1;
   font-weight: 400;
   cursor: pointer;
+}
+
+.dev-mode__copy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--hover-plate-on);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dev-mode__copy:hover::before {
+  animation: hover-plate-blink calc(4s / 30) linear infinite;
+}
+
+.dev-mode__copy:active::before {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dev-mode__copy:hover::before {
+    animation: none;
+    opacity: 1;
+  }
 }

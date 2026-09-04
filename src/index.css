@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Ac437 NEC MultiSpeed';
+  src: url('/Ac437_NEC_MultiSpeed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --lime: #ffc800;
   --purple: #3b00ff;
@@ -7,27 +15,47 @@
   --fill: #131313;
   --stroke: #ffffff;
   --section-stroke-opacity: 0.1;
-  --glow-blur-tight: 10px;
-  --glow-blur-wide: 22px;
-  --glow-mix-tight: 22%;
-  --glow-mix-wide: 14%;
+  --stroke-width: 1px;
+  --radius: 6px;
+  --section-stroke: color-mix(
+    in srgb,
+    var(--stroke) calc(var(--section-stroke-opacity) * 100%),
+    transparent
+  );
+  --hover-plate-on: color-mix(in srgb, var(--text) 20%, transparent);
+  --glow-blur-tight: 6px;
+  --glow-blur-wide: 12px;
+  --glow-mix-tight: 38%;
+  --glow-mix-wide: 21%;
   --glow-color: var(--lime);
   --glow-outer:
     0 0 var(--glow-blur-tight)
       color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent),
     0 0 var(--glow-blur-wide)
       color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent);
+  --glow-filter:
+    drop-shadow(
+      0 0 var(--glow-blur-tight)
+        color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent)
+    )
+    drop-shadow(
+      0 0 var(--glow-blur-wide)
+        color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent)
+    );
   --on-chrome: #0f0f0f;
   --text: #ffffff;
   --muted: #6E6E6E;
   --muted-solid: #6E6E6E;
-  --panel-border: rgba(255, 255, 255, 0.1);
+  --panel-border: var(--section-stroke);
 
   --u: 12px;
   --section-gap: 24px;
+  --nav-control-h: 54px;
+  --logo: url('/cyborg-logo.svg');
+  --logo-color: var(--accent);
+  --logo-aspect: 229.3 / 28.69;
   --font-s: 16px;
-  --font-m: 20px;
-  --font-xl: 16px;
+  --font-m: 22px;
 
   --text-h: var(--lime);
   --bg: var(--black);
@@ -39,15 +67,7 @@
   --accent-border: var(--panel-border);
   --synth-shell: var(--black);
 
-  --font-ui:
-    'Bitcount Grid Single Variable',
-    'Bitcount Grid Single',
-    ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Monaco,
-    Consolas,
-    monospace;
+  --font-ui: 'Ac437 NEC MultiSpeed', ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-ui);
   --sans: var(--font-ui);
 
@@ -55,6 +75,7 @@
   font-size: var(--font-s);
   line-height: 1;
   letter-spacing: 0;
+  text-transform: uppercase;
   color-scheme: dark;
   color: var(--text);
   background: var(--bg);
@@ -80,7 +101,11 @@ body,
 
 h1,
 h2,
-h3,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
 p {
   margin: 0;
 }
@@ -90,5 +115,16 @@ input,
 select,
 textarea {
   font: inherit;
-  border-radius: 0;
+  border-radius: var(--radius);
+}
+
+@keyframes hover-plate-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.001%,
+  100% {
+    opacity: 0;
+  }
 }

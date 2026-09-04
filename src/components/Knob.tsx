@@ -1,7 +1,9 @@
 import {
+  memo,
   useEffect,
   useId,
   useRef,
+  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
@@ -34,7 +36,7 @@ export interface KnobProps {
   hintMax?: string
 }
 
-export function Knob({
+function KnobComponent({
   label,
   value,
   min,
@@ -166,6 +168,7 @@ export function Knob({
       <div
         ref={knobRef}
         className="knob"
+        style={{ '--knob-fill': fill } as CSSProperties}
         role="slider"
         aria-labelledby={labelId}
         aria-valuemin={min}
@@ -180,20 +183,40 @@ export function Knob({
         onPointerCancel={endDrag}
         onKeyDown={handleKeyDown}
       >
+        <div className="knob__arc-bloom" aria-hidden="true">
+          <span className="knob__arc-bloom-ring" />
+        </div>
         <svg className="knob__dial" viewBox="0 0 100 100" aria-hidden="true">
           <circle className="knob__track" cx="50" cy="50" r={DIAL_RADIUS} />
-          {fillPath ? (
-            <path className="knob__fill" d={fillPath} />
-          ) : null}
+          {fillPath ? <path className="knob__fill" d={fillPath} /> : null}
         </svg>
         <span
           className="knob__needle"
           style={{ transform: `rotate(${angle}deg)` }}
           aria-hidden="true"
-        />
+        >
+          <span className="knob__needle-bloom" />
+          <span className="knob__needle-core" />
+        </span>
       </div>
 
       <span className="knob-value">{displayValue}</span>
     </div>
   )
 }
+
+function knobPropsEqual(prev: KnobProps, next: KnobProps) {
+  return (
+    prev.value === next.value &&
+    prev.min === next.min &&
+    prev.max === next.max &&
+    prev.step === next.step &&
+    prev.label === next.label &&
+    prev.size === next.size &&
+    prev.disabled === next.disabled &&
+    prev.hintMin === next.hintMin &&
+    prev.hintMax === next.hintMax
+  )
+}
+
+export const Knob = memo(KnobComponent, knobPropsEqual)
