@@ -554,6 +554,15 @@
 
 .fx-rack .fx-title {
   margin-bottom: 0;
+  text-align: center;
+}
+
+.fx-rack .fx-group:nth-child(odd) .fx-title {
+  padding-inline-start: calc(var(--fx-center-extra) / 2);
+}
+
+.fx-rack .fx-group:nth-child(even) .fx-title {
+  padding-inline-end: calc(var(--fx-center-extra) / 2);
 }
 
 .speech-app .fx-rack .knob-field {

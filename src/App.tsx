@@ -93,32 +93,61 @@ export default function App() {
     () => {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-      const from = {
-        opacity: 0,
-        y: 14,
-        duration: 0.5,
-        ease: 'power2.out',
-        clearProps: 'transform',
-      } as const
-
-      const left = gsap.utils.toArray<HTMLElement>(
+      const columns = [
         '.speech-top__left > *, .speech-col--voice > *',
-      )
-      const middle = gsap.utils.toArray<HTMLElement>(
         '.speech-title, .speech-col--master > *',
-      )
-      const right = gsap.utils.toArray<HTMLElement>(
-        [
-          '.speech-top__right > *',
-          '.speech-col--fx .section-head',
-          '.speech-col--fx .fx-group',
-        ].join(', '),
-      )
+        '.speech-top__right > *, .speech-col--fx > *',
+      ]
 
-      const tl = gsap.timeline()
-      tl.from(left, { ...from, stagger: 0.05 })
-        .from(middle, { ...from, stagger: 0.05 }, '-=0.2')
-        .from(right, { ...from, stagger: 0.04 }, '-=0.2')
+      const tl = gsap.timeline({
+        defaults: {
+          duration: 0.55,
+          ease: 'power2.out',
+        },
+      })
+
+      let nextColumnAt = 0
+
+      columns.forEach((selector, columnIndex) => {
+        const chromeEls = gsap.utils.toArray<HTMLElement>(selector)
+        if (!chromeEls.length) return
+
+        const columnStart = columnIndex === 0 ? 0 : nextColumnAt
+
+        chromeEls.forEach((el, i) => {
+          const start = columnStart + i * 0.05
+          tl.from(
+            el,
+            {
+              opacity: 0,
+              xPercent: -8,
+              clearProps: 'transform',
+            },
+            start,
+          )
+
+          const controlEls = gsap.utils.toArray<HTMLElement>(
+            el.querySelectorAll('.knob-field, .master-fader, .vu'),
+          )
+          if (!controlEls.length) return
+
+          tl.from(
+            controlEls,
+            {
+              opacity: 0,
+              xPercent: -8,
+              duration: 0.4,
+              stagger: 0.025,
+              clearProps: 'transform',
+            },
+            start + 0.1,
+          )
+        })
+
+        const columnChromeEnd =
+          columnStart + Math.max(0, chromeEls.length - 1) * 0.05 + 0.55
+        nextColumnAt = columnChromeEnd - 0.28
+      })
     },
     { scope: appRef },
   )
