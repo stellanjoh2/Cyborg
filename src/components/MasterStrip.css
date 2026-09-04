@@ -189,7 +189,8 @@
 }
 
 .vu-led--green.is-on {
-  background: var(--lime);
+  --glow-color: var(--vu);
+  background: var(--vu);
   box-shadow: var(--glow-outer);
 }
 

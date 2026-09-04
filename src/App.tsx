@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
 import { DevMode } from './components/DevMode'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
+import { PhaseOrb } from './components/PhaseOrb'
 import {
   DEFAULT_POST_PROCESS_UI,
   formatBitcrushBits,
@@ -61,6 +64,8 @@ import {
 } from './voicePresets'
 import './SpeechApp.css'
 
+gsap.registerPlugin(useGSAP)
+
 const DEFAULT_TEXT =
   '3 billion human lives ended on August 29, 1997. The survivors of the nuclear fire called the war Judgment Day. They lived only to face a new nightmare, the war against the Machines. The computer which controlled the machines, Skynet, sent two terminators back through time. Their mission: to destroy the leader of the human Resistance... John Connor. My son.'
 
@@ -79,9 +84,44 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
   const spokenWordRef = useRef<HTMLSpanElement>(null)
+  const appRef = useRef<HTMLElement>(null)
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
+
+  useGSAP(
+    () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+      const from = {
+        opacity: 0,
+        y: 14,
+        duration: 0.5,
+        ease: 'power2.out',
+        clearProps: 'transform',
+      } as const
+
+      const left = gsap.utils.toArray<HTMLElement>(
+        '.speech-top__left > *, .speech-col--voice > *',
+      )
+      const middle = gsap.utils.toArray<HTMLElement>(
+        '.speech-title, .speech-col--master > *',
+      )
+      const right = gsap.utils.toArray<HTMLElement>(
+        [
+          '.speech-top__right > *',
+          '.speech-col--fx .section-head',
+          '.speech-col--fx .fx-group',
+        ].join(', '),
+      )
+
+      const tl = gsap.timeline()
+      tl.from(left, { ...from, stagger: 0.05 })
+        .from(middle, { ...from, stagger: 0.05 }, '-=0.2')
+        .from(right, { ...from, stagger: 0.04 }, '-=0.2')
+    },
+    { scope: appRef },
+  )
 
   const livePlan = useMemo(
     () => resolveHumanRobotBlend(humanRobot, speed, pitch),
@@ -356,7 +396,7 @@ export default function App() {
 
   return (
     <>
-      <main className="speech-app">
+      <main className="speech-app" ref={appRef}>
       <header className="speech-top">
       <div className="speech-top__left actions">
         <button
@@ -386,6 +426,15 @@ export default function App() {
         >
           STOP
         </button>
+        {isSpeaking && !isPaused ? (
+          <div
+            className="speech-top__phase-orb"
+            aria-hidden="true"
+            title="Playing"
+          >
+            <PhaseOrb />
+          </div>
+        ) : null}
       </div>
       <h1 className="speech-title" aria-label="Cyborg Dominance" />
       <div className="speech-top__right actions">
@@ -474,6 +523,42 @@ export default function App() {
         </div>
 
         <div className="fx-group">
+          <h3 className="fx-title">Bitcrush</h3>
+          <div className="knob-grid">
+            <Knob
+              label="Amount"
+              value={postUi.bitcrushAmount}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('bitcrushAmount')}
+              format={(value) => String(Math.round(value))}
+            />
+            <Knob
+              label="Bits"
+              value={postUi.bitcrushBits}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('bitcrushBits')}
+              format={(value) => formatBitcrushBits(value)}
+            />
+            <Knob
+              label="Rate"
+              value={postUi.bitcrushRate}
+              min={0}
+              max={100}
+              step={1}
+              size="md"
+              onChange={setPostKnob('bitcrushRate')}
+              format={(value) => formatBitcrushRate(value)}
+            />
+          </div>
+        </div>
+
+        <div className="fx-group">
           <h3 className="fx-title">Reverb</h3>
           <div className="knob-grid">
             <Knob
@@ -541,42 +626,6 @@ export default function App() {
               size="md"
               onChange={setPostKnob('delayFeedback')}
               format={(value) => formatDelayFeedback(value)}
-            />
-          </div>
-        </div>
-
-        <div className="fx-group">
-          <h3 className="fx-title">Bitcrush</h3>
-          <div className="knob-grid">
-            <Knob
-              label="Amount"
-              value={postUi.bitcrushAmount}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setPostKnob('bitcrushAmount')}
-              format={(value) => String(Math.round(value))}
-            />
-            <Knob
-              label="Bits"
-              value={postUi.bitcrushBits}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setPostKnob('bitcrushBits')}
-              format={(value) => formatBitcrushBits(value)}
-            />
-            <Knob
-              label="Rate"
-              value={postUi.bitcrushRate}
-              min={0}
-              max={100}
-              step={1}
-              size="md"
-              onChange={setPostKnob('bitcrushRate')}
-              format={(value) => formatBitcrushRate(value)}
             />
           </div>
         </div>
@@ -796,7 +845,7 @@ export default function App() {
             min={0}
             max={100}
             step={1}
-            size="lg"
+            size="md"
             onChange={setHumanRobot}
             format={(value) => String(Math.round(value))}
           />
@@ -806,7 +855,7 @@ export default function App() {
             min={0.3}
             max={2.5}
             step={0.01}
-            size="lg"
+            size="md"
             onChange={setSpeed}
             format={(value) => value.toFixed(2)}
           />
@@ -816,7 +865,7 @@ export default function App() {
             min={0}
             max={2}
             step={0.01}
-            size="lg"
+            size="md"
             onChange={setPitch}
             format={(value) => value.toFixed(2)}
           />

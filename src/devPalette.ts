@@ -5,6 +5,7 @@ export const PALETTE_KEYS = [
   'fill',
   'stroke',
   'lime',
+  'vu',
   'purple',
   'blue',
   'pink',
@@ -20,6 +21,7 @@ export const DEFAULT_PALETTE: Palette = {
   fill: '#131313',
   stroke: '#FFFFFF',
   lime: '#FFC800',
+  vu: '#00FF1E',
   purple: '#3B00FF',
   blue: '#00C4FF',
   pink: '#FF00C4',
@@ -32,14 +34,20 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
   fill: 'surface',
   stroke: 'border',
   lime: 'accent',
+  vu: 'vu meter',
   purple: 'accent secondary',
   blue: 'accent tertiary',
   pink: 'error',
 }
 
 export const DEFAULT_STROKE_OPACITY = 0.1
+export const DEFAULT_GRAIN_OPACITY = 0.39
 
 const HEX = /^#[0-9a-fA-F]{6}$/
+
+function clampOpacity(opacity: number) {
+  return Math.min(1, Math.max(0, opacity))
+}
 
 export function isHexColor(value: string): boolean {
   return HEX.test(value)
@@ -54,19 +62,27 @@ export function applyPalette(palette: Palette) {
 }
 
 export function applyStrokeOpacity(opacity: number) {
-  const next = Math.min(1, Math.max(0, opacity))
   document.documentElement.style.setProperty(
     '--section-stroke-opacity',
-    String(next),
+    String(clampOpacity(opacity)),
+  )
+}
+
+export function applyGrainOpacity(opacity: number) {
+  document.documentElement.style.setProperty(
+    '--grain-opacity',
+    String(clampOpacity(opacity)),
   )
 }
 
 export function formatPalette(
   palette: Palette,
   strokeOpacity = DEFAULT_STROKE_OPACITY,
+  grainOpacity = DEFAULT_GRAIN_OPACITY,
 ): string {
   return [
     ...PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`),
     `--section-stroke-opacity: ${strokeOpacity};`,
+    `--grain-opacity: ${grainOpacity};`,
   ].join('\n')
 }

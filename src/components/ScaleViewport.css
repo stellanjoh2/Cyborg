@@ -15,10 +15,24 @@
   left: 0;
   right: 0;
   z-index: 0;
+  isolation: isolate;
   box-sizing: border-box;
   background: var(--fill);
   border-bottom: var(--stroke-width) solid var(--section-stroke);
   pointer-events: none;
+}
+
+.scale-nav-bleed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: var(--grain-opacity);
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
 }
 
 .scale-stage {
