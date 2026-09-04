@@ -1,21 +1,32 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
-import { DESIGN_HEIGHT, DESIGN_WIDTH } from '../layoutConstants'
+import {
+  DESIGN_HEIGHT,
+  DESIGN_WIDTH,
+  NAV_HEIGHT,
+} from '../layoutConstants'
 import './ScaleViewport.css'
 
 interface ScaleViewportProps {
   children: ReactNode
 }
 
+interface ScaleLayout {
+  scale: number
+  stageTop: number
+}
+
 export function ScaleViewport({ children }: ScaleViewportProps) {
-  const [scale, setScale] = useState(1)
+  const [layout, setLayout] = useState<ScaleLayout>({ scale: 1, stageTop: 0 })
 
   useLayoutEffect(() => {
     const updateScale = () => {
-      const next = Math.min(
+      const scale = Math.min(
+        1,
         window.innerWidth / DESIGN_WIDTH,
         window.innerHeight / DESIGN_HEIGHT,
       )
-      setScale(next)
+      const stageTop = (window.innerHeight - DESIGN_HEIGHT * scale) / 2
+      setLayout({ scale, stageTop })
     }
 
     updateScale()
@@ -23,8 +34,18 @@ export function ScaleViewport({ children }: ScaleViewportProps) {
     return () => window.removeEventListener('resize', updateScale)
   }, [])
 
+  const { scale, stageTop } = layout
+
   return (
     <div className="scale-viewport">
+      <div
+        className="scale-nav-bleed"
+        style={{
+          top: stageTop,
+          height: NAV_HEIGHT * scale,
+        }}
+        aria-hidden
+      />
       <div
         className="scale-stage"
         style={{

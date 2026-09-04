@@ -1,4 +1,5 @@
 .scale-viewport {
+  position: relative;
   width: 100vw;
   height: 100vh;
   height: 100dvh;
@@ -9,7 +10,20 @@
   background: var(--synth-shell, #0e0e0e);
 }
 
+.scale-nav-bleed {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  background: var(--fill);
+  border-bottom: var(--stroke-width) solid var(--section-stroke);
+  pointer-events: none;
+}
+
 .scale-stage {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   transform-origin: center center;
   will-change: transform;
