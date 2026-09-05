@@ -106,17 +106,15 @@
 }
 
 .dev-mode__copy:hover::before {
-  animation: hover-plate-blink calc(4s / 30) linear infinite;
+  opacity: 1;
 }
 
 .dev-mode__copy:active::before {
-  animation: none;
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .dev-mode__copy:hover::before {
-    animation: none;
     opacity: 1;
   }
 }

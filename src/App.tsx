@@ -37,11 +37,10 @@ import {
 import {
   cancelSamSpeech,
   exportSamWav,
+  refreshSamLiveBuffer,
   setSamLoop,
   speakSam,
   stopSamSpeech,
-  pauseSamSpeech,
-  resumeSamSpeech,
   updateSamLiveParams,
 } from './samSpeech'
 import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
@@ -75,16 +74,22 @@ export default function App() {
   const [speed, setSpeed] = useState(1)
   const [pitch, setPitch] = useState(1)
   const [humanRobot, setHumanRobot] = useState(0)
+  const [formant, setFormant] = useState(50)
   const [postUi, setPostUi] = useState<PostProcessUiState>(DEFAULT_POST_PROCESS_UI)
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
   const [isLooping, setIsLooping] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
   const spokenWordRef = useRef<HTMLSpanElement>(null)
   const appRef = useRef<HTMLElement>(null)
+  const bakedVoiceRef = useRef<{
+    text: string
+    rate: number
+    pitch: number
+    metallic: number
+  } | null>(null)
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
@@ -94,8 +99,8 @@ export default function App() {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
       const columns = [
-        '.speech-top__left > *, .speech-col--voice > *',
-        '.speech-title, .speech-col--master > *',
+        '.speech-title, .speech-col--voice > *',
+        '.speech-top__center > *, .speech-col--master > *',
         '.speech-top__right > *, .speech-col--fx > *',
       ]
 
@@ -158,7 +163,10 @@ export default function App() {
   )
 
   const postProcess = useMemo(() => mapUiToPostProcess(postUi), [postUi])
-  const vocoder = useMemo(() => mapUiToVocoder(vocoderUi), [vocoderUi])
+  const vocoder = useMemo(
+    () => mapUiToVocoder(vocoderUi, formant),
+    [vocoderUi, formant],
+  )
   const spokenParts = useMemo(() => splitSpokenParts(text), [text])
   const spokenWeights = useMemo(
     () => spokenWordWeights(spokenParts),
@@ -211,7 +219,43 @@ export default function App() {
   }, [masterVolume, masterGainDb])
 
   useEffect(() => {
-    if (!isSpeaking || isPaused) {
+    if (!isSpeaking) {
+      bakedVoiceRef.current = null
+      return
+    }
+
+    const next = {
+      text: text.trim(),
+      rate: livePlan.rate,
+      pitch: livePlan.pitch,
+      metallic: livePlan.metallic,
+    }
+    const baked = bakedVoiceRef.current
+    if (
+      baked &&
+      baked.text === next.text &&
+      baked.rate === next.rate &&
+      baked.pitch === next.pitch &&
+      baked.metallic === next.metallic
+    ) {
+      return
+    }
+
+    const handle = window.setTimeout(() => {
+      bakedVoiceRef.current = next
+      void refreshSamLiveBuffer({
+        text: next.text,
+        speed: next.rate,
+        pitch: next.pitch,
+        metallic: next.metallic,
+      })
+    }, 140)
+
+    return () => window.clearTimeout(handle)
+  }, [isSpeaking, livePlan.rate, livePlan.pitch, livePlan.metallic, text])
+
+  useEffect(() => {
+    if (!isSpeaking) {
       return
     }
 
@@ -226,7 +270,7 @@ export default function App() {
     }
     frame = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(frame)
-  }, [isSpeaking, isPaused, spokenWeights])
+  }, [isSpeaking, spokenWeights])
 
   useEffect(() => {
     const node = spokenWordRef.current
@@ -246,7 +290,12 @@ export default function App() {
 
   const activePresetId = voiceId === 'custom' ? 'default' : voiceId
   const activePreset = getPresetById(activePresetId)
-  const voiceDirty = !voiceMatches(activePreset, { speed, pitch, humanRobot })
+  const voiceDirty = !voiceMatches(activePreset, {
+    speed,
+    pitch,
+    humanRobot,
+    formant,
+  })
   const vocoderDirty = !vocoderMatches(activePreset, vocoderUi)
   const carrierDirty = !carrierMatches(activePreset, vocoderUi)
   const fxDirty = !postProcessMatches(postUi)
@@ -256,6 +305,7 @@ export default function App() {
       speed,
       pitch,
       humanRobot,
+      formant,
       vocoder: vocoderUi,
     }) ||
     fxDirty ||
@@ -267,6 +317,7 @@ export default function App() {
     setSpeed(preset.speed)
     setPitch(preset.pitch)
     setHumanRobot(preset.humanRobot)
+    setFormant(preset.formant)
     setVocoderUi(clonePresetVocoder(preset))
   }
 
@@ -280,45 +331,115 @@ export default function App() {
   }
 
   const handleResetVoice = () => {
-    setSpeed(activePreset.speed)
-    setPitch(activePreset.pitch)
-    setHumanRobot(activePreset.humanRobot)
+    const nextSpeed = activePreset.speed
+    const nextPitch = activePreset.pitch
+    const nextHumanRobot = activePreset.humanRobot
+    const nextFormant = activePreset.formant
+    setSpeed(nextSpeed)
+    setPitch(nextPitch)
+    setHumanRobot(nextHumanRobot)
+    setFormant(nextFormant)
+
+    if (isSpeaking) {
+      const plan = resolveHumanRobotBlend(nextHumanRobot, nextSpeed, nextPitch)
+      updateSamLiveParams(
+        {
+          speed: plan.rate,
+          pitch: plan.pitch,
+          metallic: plan.metallic,
+          vocoder: mapUiToVocoder(vocoderUi, nextFormant),
+        },
+        { immediate: true },
+      )
+      bakedVoiceRef.current = null
+    }
   }
 
   const handleResetVocoder = () => {
     const preset = clonePresetVocoder(activePreset)
-    setVocoderUi((current) => ({
-      ...current,
+    const next = {
+      ...vocoderUi,
       cutoff: preset.cutoff,
       resonance: preset.resonance,
       efSense: preset.efSense,
-    }))
+      unvoice: preset.unvoice,
+    }
+    setVocoderUi(next)
+    if (isSpeaking) {
+      updateSamLiveParams(
+        { vocoder: mapUiToVocoder(next, formant) },
+        { immediate: true },
+      )
+    }
   }
 
   const handleResetCarrier = () => {
     const preset = clonePresetVocoder(activePreset)
-    setVocoderUi((current) => ({
-      ...current,
+    const next = {
+      ...vocoderUi,
       carrierAmount: preset.carrierAmount,
       carrierMix: preset.carrierMix,
       carrierCutoff: preset.carrierCutoff,
       carrierResonance: preset.carrierResonance,
-    }))
+    }
+    setVocoderUi(next)
+    if (isSpeaking) {
+      updateSamLiveParams(
+        { vocoder: mapUiToVocoder(next, formant) },
+        { immediate: true },
+      )
+    }
   }
 
   const handleResetPostProcess = () => {
-    setPostUi({ ...DEFAULT_POST_PROCESS_UI })
+    const next = { ...DEFAULT_POST_PROCESS_UI }
+    setPostUi(next)
+    if (isSpeaking) {
+      updateSamLiveParams(
+        { postProcess: mapUiToPostProcess(next) },
+        { immediate: true },
+      )
+    }
   }
 
   const handleResetMaster = () => {
     setMasterVolume(100)
     setMasterGain(0)
+    updateSamLiveParams(
+      { masterVolume: 1, masterGainDb: 0 },
+      { immediate: true },
+    )
   }
 
   const handleResetTemplate = () => {
+    const preset = getPresetById(activePresetId)
+    const nextVocoder = clonePresetVocoder(preset)
+    const nextPost = { ...DEFAULT_POST_PROCESS_UI }
     applyVoicePreset(activePresetId)
-    handleResetPostProcess()
-    handleResetMaster()
+    setPostUi(nextPost)
+    setMasterVolume(100)
+    setMasterGain(0)
+
+    if (isSpeaking) {
+      const plan = resolveHumanRobotBlend(
+        preset.humanRobot,
+        preset.speed,
+        preset.pitch,
+      )
+      updateSamLiveParams(
+        {
+          speed: plan.rate,
+          pitch: plan.pitch,
+          metallic: plan.metallic,
+          vocoder: mapUiToVocoder(nextVocoder, preset.formant),
+          postProcess: mapUiToPostProcess(nextPost),
+          masterVolume: 1,
+          masterGainDb: 0,
+        },
+        { immediate: true },
+      )
+      bakedVoiceRef.current = null
+    }
   }
 
   const handleStop = () => {
@@ -327,22 +448,8 @@ export default function App() {
     setIsLooping(false)
     setSamLoop(false)
     setIsSpeaking(false)
-    setIsPaused(false)
     setSpokenWordIndex(null)
-  }
-
-  const handlePlayPause = () => {
-    if (isSpeaking && isPaused) {
-      resumeSamSpeech()
-      setIsPaused(false)
-      return
-    }
-    if (isSpeaking) {
-      pauseSamSpeech()
-      setIsPaused(true)
-      return
-    }
-    handlePlayback()
+    bakedVoiceRef.current = null
   }
 
   const handleLoopToggle = () => {
@@ -363,10 +470,15 @@ export default function App() {
     }
 
     setIsSpeaking(true)
-    setIsPaused(false)
     setSpokenWordIndex(0)
     cancelSamSpeech()
     setSamLoop(isLooping)
+    bakedVoiceRef.current = {
+      text: trimmed,
+      rate: livePlan.rate,
+      pitch: livePlan.pitch,
+      metallic: livePlan.metallic,
+    }
 
     void speakSam({
       text: trimmed,
@@ -380,13 +492,13 @@ export default function App() {
       loop: isLooping,
       onEnd: () => {
         setIsSpeaking(false)
-        setIsPaused(false)
         setSpokenWordIndex(null)
+        bakedVoiceRef.current = null
       },
       onError: (message) => {
         setIsSpeaking(false)
-        setIsPaused(false)
         setSpokenWordIndex(null)
+        bakedVoiceRef.current = null
         setError(message)
       },
     })
@@ -427,45 +539,38 @@ export default function App() {
     <>
       <main className="speech-app" ref={appRef}>
       <header className="speech-top">
-      <div className="speech-top__left actions">
-        <button
-          className="primary"
-          type="button"
-          onClick={handlePlayPause}
-          title={isSpeaking && !isPaused ? 'Pause speech' : 'Play speech'}
-          aria-pressed={isSpeaking && !isPaused}
-        >
-          {isSpeaking && !isPaused ? 'PAUSE' : 'PLAY'}
-        </button>
-        <button
-          className={`secondary${isLooping ? ' is-active' : ''}`}
-          type="button"
-          onClick={handleLoopToggle}
-          title="Loop playback"
-          aria-pressed={isLooping}
-        >
-          LOOP
-        </button>
-        <button
-          className="secondary"
-          type="button"
-          onClick={handleStop}
-          disabled={!isSpeaking}
-          title="Stop speech"
-        >
-          STOP
-        </button>
-        {isSpeaking && !isPaused ? (
-          <div
-            className="speech-top__phase-orb"
-            aria-hidden="true"
-            title="Playing"
-          >
-            <PhaseOrb />
-          </div>
-        ) : null}
-      </div>
       <h1 className="speech-title" aria-label="Cyborg Dominance" />
+      <div className="speech-top__center">
+        <div className="speech-top__transport-left actions">
+          <button
+            className={isSpeaking ? 'secondary' : 'primary'}
+            type="button"
+            onClick={isSpeaking ? handleStop : handlePlayback}
+            title={isSpeaking ? 'Stop speech' : 'Play speech'}
+            aria-pressed={isSpeaking}
+          >
+            {isSpeaking ? 'STOP' : 'PLAY'}
+          </button>
+        </div>
+        <div
+          className={`speech-top__phase-orb${isSpeaking ? '' : ' is-idle'}`}
+          aria-hidden="true"
+          title={isSpeaking ? 'Playing' : 'Idle'}
+        >
+          <PhaseOrb active={isSpeaking} />
+        </div>
+        <div className="speech-top__transport-right actions">
+          <button
+            className={`secondary${isLooping ? ' is-active' : ''}`}
+            type="button"
+            onClick={handleLoopToggle}
+            title="Loop playback"
+            aria-pressed={isLooping}
+          >
+            LOOP
+          </button>
+        </div>
+      </div>
       <div className="speech-top__right actions">
         <button
           className="secondary"
@@ -898,6 +1003,16 @@ export default function App() {
             onChange={setPitch}
             format={(value) => value.toFixed(2)}
           />
+          <Knob
+            label="Formant"
+            value={formant}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setFormant}
+            format={(value) => String(Math.round(value))}
+          />
         </div>
       </section>
 
@@ -944,6 +1059,16 @@ export default function App() {
             step={1}
             size="md"
             onChange={setVocoderKnob('efSense')}
+            format={(value) => String(Math.round(value))}
+          />
+          <Knob
+            label="Unvoice"
+            value={vocoderUi.unvoice}
+            min={0}
+            max={100}
+            step={1}
+            size="md"
+            onChange={setVocoderKnob('unvoice')}
             format={(value) => String(Math.round(value))}
           />
         </div>

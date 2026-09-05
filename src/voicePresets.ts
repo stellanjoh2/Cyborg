@@ -13,6 +13,8 @@ export interface VoicePreset {
   chunkMode: ChunkMode
   /** 0 = human, 100 = robot. */
   humanRobot: number
+  /** 0–100; 50 = neutral. Shifts vocoder filter-bank formants. */
+  formant: number
   vocoder: VocoderUiState
   /** ST Speech speed marker (%1–%127, lower is faster). */
   stSpeed: number
@@ -29,6 +31,7 @@ export const VOICE_PRESETS: VoicePreset[] = [
     tone: 'natural',
     chunkMode: 'single',
     humanRobot: 0,
+    formant: 50,
     vocoder: DEFAULT_VOCODER_UI,
     stSpeed: 100,
     stPitch: 78,
@@ -41,11 +44,17 @@ export const VOICE_PRESETS: VoicePreset[] = [
     tone: 'natural',
     chunkMode: 'single',
     humanRobot: 82,
+    formant: 76,
     vocoder: {
       ...DEFAULT_VOCODER_UI,
       cutoff: 78,
       resonance: 96,
       efSense: 108,
+      unvoice: 36,
+      carrierAmount: 92,
+      carrierMix: 58,
+      carrierCutoff: 72,
+      carrierResonance: 48,
     },
     stSpeed: 112,
     stPitch: 92,
@@ -58,11 +67,17 @@ export const VOICE_PRESETS: VoicePreset[] = [
     tone: 'bright',
     chunkMode: 'single',
     humanRobot: 12,
+    formant: 48,
     vocoder: {
       ...DEFAULT_VOCODER_UI,
       cutoff: 90,
       resonance: 28,
       efSense: 96,
+      unvoice: 22,
+      carrierAmount: 68,
+      carrierMix: 16,
+      carrierCutoff: 82,
+      carrierResonance: 18,
     },
     stSpeed: 68,
     stPitch: 70,
@@ -71,15 +86,21 @@ export const VOICE_PRESETS: VoicePreset[] = [
     id: 'deep',
     label: 'Deep',
     speed: 0.72,
-    pitch: 0.55,
+    pitch: 0.42,
     tone: 'deep',
     chunkMode: 'single',
     humanRobot: 18,
+    formant: 62,
     vocoder: {
       ...DEFAULT_VOCODER_UI,
       cutoff: 34,
       resonance: 74,
       efSense: 40,
+      unvoice: 12,
+      carrierAmount: 88,
+      carrierMix: 42,
+      carrierCutoff: 36,
+      carrierResonance: 58,
     },
     stSpeed: 118,
     stPitch: 98,
@@ -103,12 +124,13 @@ export function clonePresetVocoder(preset: VoicePreset): VocoderUiState {
 
 export function voiceMatches(
   preset: VoicePreset,
-  state: { speed: number; pitch: number; humanRobot: number },
+  state: { speed: number; pitch: number; humanRobot: number; formant: number },
 ): boolean {
   return (
     state.speed === preset.speed &&
     state.pitch === preset.pitch &&
-    state.humanRobot === preset.humanRobot
+    state.humanRobot === preset.humanRobot &&
+    state.formant === preset.formant
   )
 }
 
@@ -120,7 +142,8 @@ export function vocoderMatches(
   return (
     vocoder.cutoff === expected.cutoff &&
     vocoder.resonance === expected.resonance &&
-    vocoder.efSense === expected.efSense
+    vocoder.efSense === expected.efSense &&
+    vocoder.unvoice === expected.unvoice
   )
 }
 
@@ -143,6 +166,7 @@ export function presetMatches(
     speed: number
     pitch: number
     humanRobot: number
+    formant: number
     vocoder: VocoderUiState
   },
 ): boolean {

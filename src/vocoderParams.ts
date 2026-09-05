@@ -1,15 +1,15 @@
-export type FormantShiftStep = -2 | -1 | 0 | 1 | 2
-
 export interface VocoderBandParams {
   level: number
   pan: number
 }
 
 export interface VocoderParams {
-  formantShift: FormantShiftStep
+  /** 0–1; 0.5 = neutral. Shifts synthesis filters vs analysis. */
+  formant: number
   cutoff: number
   resonance: number
   efSense: number
+  unvoice: number
   carrierAmount: number
   carrierMix: number
   carrierCutoff: number
@@ -21,6 +21,7 @@ export interface VocoderUiState {
   cutoff: number
   resonance: number
   efSense: number
+  unvoice: number
   carrierAmount: number
   carrierMix: number
   carrierCutoff: number
@@ -37,6 +38,7 @@ export const DEFAULT_VOCODER_UI: VocoderUiState = {
   cutoff: 63,
   resonance: 48,
   efSense: 72,
+  unvoice: 0,
   carrierAmount: 80,
   carrierMix: 28,
   carrierCutoff: 58,
@@ -48,12 +50,16 @@ export function formatSigned63(value: number): string {
   return signed > 0 ? `+${signed}` : `${signed}`
 }
 
-export function mapUiToVocoder(ui: VocoderUiState): VocoderParams {
+export function mapUiToVocoder(
+  ui: VocoderUiState,
+  formant = 50,
+): VocoderParams {
   return {
-    formantShift: 0,
+    formant: clamp(formant, 0, 100) / 100,
     cutoff: ui.cutoff - 63,
     resonance: clamp(ui.resonance, 0, 127),
     efSense: clamp(ui.efSense, 0, 126),
+    unvoice: clamp(ui.unvoice, 0, 100) / 100,
     carrierAmount: clamp(ui.carrierAmount, 0, 100) / 100,
     carrierMix: clamp(ui.carrierMix, 0, 100) / 100,
     carrierCutoff: clamp(ui.carrierCutoff, 0, 100) / 100,
@@ -69,15 +75,6 @@ export const DEFAULT_VOCODER_PARAMS: VocoderParams = mapUiToVocoder(
   DEFAULT_VOCODER_UI,
 )
 
-export function formantMultiplier(
-  formantShift: FormantShiftStep,
-  cutoff: number,
-): number {
-  const stepped = formantShift * 0.14
-  const fine = (clamp(cutoff, -63, 63) / 63) * 0.18
-  return 2 ** (stepped + fine)
-}
-
 export function mapResonanceToQ(resonance: number): number {
   return 0.8 + (clamp(resonance, 0, 127) / 127) * 14
 }
@@ -89,12 +86,42 @@ export function mapEfSenseToSmoothingHz(efSense: number): number {
 
 export const BASE_BAND_HZ = [180, 280, 520, 900, 1500, 2600, 3800, 5800]
 
-export function bandCenterHz(
+const MIN_BAND_HZ = 55
+const MAX_BAND_HZ = 16000
+
+function clampBandHz(hz: number): number {
+  return clamp(hz, MIN_BAND_HZ, MAX_BAND_HZ)
+}
+
+/**
+ * Cutoff shifts the analysis bank (~0.5×…2×). Formant shifts synthesis
+ * independently from the same base. Relative mismatch is what you hear —
+ * synthesis must not track analysis or Cutoff disappears.
+ */
+export function analysisCenterHz(
   bandIndex: number,
   params: VocoderParams,
 ): number {
   const base = BASE_BAND_HZ[bandIndex] ?? 1000
-  return base * formantMultiplier(params.formantShift, params.cutoff)
+  const shift = (clamp(params.cutoff, -63, 63) / 63) * 1.0
+  return clampBandHz(base * 2 ** shift)
+}
+
+/** Formant shifts synthesis (~0.35×…2.8×) off the unshifted base. */
+export function synthesisCenterHz(
+  bandIndex: number,
+  params: VocoderParams,
+): number {
+  const base = BASE_BAND_HZ[bandIndex] ?? 1000
+  const coarse = (clamp(params.formant, 0, 1) - 0.5) * 2
+  return clampBandHz(base * 2 ** (coarse * 1.5))
+}
+
+export function bandCenterHz(
+  bandIndex: number,
+  params: VocoderParams,
+): number {
+  return synthesisCenterHz(bandIndex, params)
 }
 
 export function mapBandLevel(level: number): number {

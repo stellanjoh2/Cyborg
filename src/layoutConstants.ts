@@ -2,9 +2,9 @@
 export const DESIGN_WIDTH = 2560
 export const DESIGN_HEIGHT = 1440
 
-/** Matches `.speech-top` height: pad + control + pad + border (design px). */
+/** Matches `.speech-top` height: pad-y + control + pad-y + border (design px). */
 export const NAV_HEIGHT =
-  48 + /* --app-pad top */
-  54 + /* --nav-control-h */
-  48 + /* --app-pad bottom */
+  24 + /* --section-gap top */
+  54 + /* --nav-control-h / --phase-orb-size */
+  24 + /* --section-gap bottom */
   1 /* --stroke-width */

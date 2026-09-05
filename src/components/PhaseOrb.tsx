@@ -44,7 +44,7 @@ function paintDots(dots: HTMLElement[], phase: number) {
 }
 
 /** Phase Orb — 5×5 circular dot matrix with an orbiting energy point. */
-export function PhaseOrb() {
+export function PhaseOrb({ active = true }: { active?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -52,7 +52,8 @@ export function PhaseOrb() {
     if (!root) return
     const dots = [...root.querySelectorAll<HTMLElement>('[data-orb-cell]')]
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce) {
+
+    if (!active || reduce) {
       paintDots(dots, 0)
       return
     }
@@ -66,7 +67,7 @@ export function PhaseOrb() {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [active])
 
   return (
     <div ref={rootRef} className="phase-orb">

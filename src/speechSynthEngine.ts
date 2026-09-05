@@ -214,6 +214,7 @@ let sourceOffsetSeconds = 0
 let lastPositionTime = 0
 let loopEnabled = false
 let cancelled = false
+let playbackPaused = false
 let onEndCallback: (() => void) | null = null
 let graphReady: Promise<SynthGraph> | null = null
 let currentParams: LiveSynthParams = {
@@ -486,6 +487,53 @@ function updateReverbImpulse(nodes: SynthGraph, roomSize: number, decay: number)
   )
 }
 
+/** Drop delay-line contents so a reset does not keep echoing prior audio. */
+function flushDelayNode(nodes: SynthGraph) {
+  const previous = nodes.delayNode
+  const time = previous.delayTime.value
+  try {
+    nodes.delayIn.disconnect(previous)
+  } catch {
+    // Already disconnected.
+  }
+  previous.disconnect()
+  nodes.delayFeedback.disconnect()
+
+  const delayNode = nodes.context.createDelay(1)
+  delayNode.delayTime.value = time
+  nodes.delayIn.connect(delayNode)
+  delayNode.connect(nodes.delayFeedback)
+  nodes.delayFeedback.connect(delayNode)
+  delayNode.connect(nodes.delayWet)
+  nodes.delayNode = delayNode
+}
+
+function flushFxTails(nodes: SynthGraph, params: PostProcessParams) {
+  if (params.delay.amount <= 0.01) {
+    flushDelayNode(nodes)
+  }
+  if (params.reverb.amount <= 0.01) {
+    nodes.lastReverbRoom = -1
+    nodes.lastReverbDecay = -1
+    nodes.convolver.buffer = null
+  }
+}
+
+function setAudioParam(
+  param: AudioParam,
+  value: number,
+  now: number,
+  rampSeconds: number,
+) {
+  param.cancelScheduledValues(now)
+  if (rampSeconds <= 0) {
+    param.setValueAtTime(value, now)
+    return
+  }
+  param.setValueAtTime(param.value, now)
+  param.setTargetAtTime(value, now, rampSeconds)
+}
+
 function applyPostProcessToGraph(
   nodes: SynthGraph,
   params: PostProcessParams,
@@ -501,45 +549,61 @@ function applyPostProcessToGraph(
   const compressor = params.compressor
   const distortion = params.distortion
 
-  nodes.noiseSource.playbackRate.setTargetAtTime(
+  if (rampSeconds <= 0) {
+    flushFxTails(nodes, params)
+  }
+
+  setAudioParam(
+    nodes.noiseSource.playbackRate,
     mapNoisePitch(noise.pitch),
     now,
     rampSeconds,
   )
-  nodes.noiseToneFilter.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.noiseToneFilter.frequency,
     mapNoiseToneCutoff(noise.tone),
     now,
     rampSeconds,
   )
 
   if (!activeSource) {
-    nodes.noiseGain.gain.setTargetAtTime(0, now, rampSeconds)
+    setAudioParam(nodes.noiseGain.gain, 0, now, rampSeconds)
   }
 
   updateReverbImpulse(nodes, reverb.roomSize, reverb.decay)
-  nodes.reverbIn.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.reverbIn.gain,
     reverb.amount > 0.01 ? 1 : 0,
     now,
     rampSeconds,
   )
-  nodes.reverbWet.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.reverbWet.gain,
     clamp(reverb.amount, 0, 1) * 0.34,
     now,
     rampSeconds,
   )
 
-  nodes.delayIn.gain.setTargetAtTime(delay.amount > 0.01 ? 1 : 0, now, rampSeconds)
-  nodes.delayNode.delayTime.setTargetAtTime(
+  setAudioParam(
+    nodes.delayIn.gain,
+    delay.amount > 0.01 ? 1 : 0,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(
+    nodes.delayNode.delayTime,
     mapDelayTimeMs(delay.length),
     now,
     rampSeconds,
   )
-  nodes.delayFeedback.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.delayFeedback.gain,
     clamp(delay.feedback, 0, 1) * 0.88,
     now,
     rampSeconds,
   )
-  nodes.delayWet.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.delayWet.gain,
     clamp(delay.amount, 0, 1) * 0.55,
     now,
     rampSeconds,
@@ -548,20 +612,23 @@ function applyPostProcessToGraph(
   const crushAmount = clamp(bitcrush.amount, 0, 1)
   const crushBits = mapBitcrushBits(bitcrush.bits)
   const crushDown = mapBitcrushDownsample(bitcrush.rate)
-  nodes.bitcrushDry.gain.setTargetAtTime(1 - crushAmount, now, rampSeconds)
-  nodes.bitcrushWet.gain.setTargetAtTime(crushAmount, now, rampSeconds)
-  nodes.bitcrushFilter.frequency.setTargetAtTime(
+  setAudioParam(nodes.bitcrushDry.gain, 1 - crushAmount, now, rampSeconds)
+  setAudioParam(nodes.bitcrushWet.gain, crushAmount, now, rampSeconds)
+  setAudioParam(
+    nodes.bitcrushFilter.frequency,
     nodes.context.sampleRate / (2 * crushDown),
     now,
     rampSeconds,
   )
   if (nodes.bitcrushWorklet) {
-    nodes.bitcrushWorklet.parameters
-      .get('bits')
-      ?.setTargetAtTime(crushBits, now, rampSeconds)
-    nodes.bitcrushWorklet.parameters
-      .get('downsample')
-      ?.setTargetAtTime(crushDown, now, rampSeconds)
+    const bitsParam = nodes.bitcrushWorklet.parameters.get('bits')
+    const downParam = nodes.bitcrushWorklet.parameters.get('downsample')
+    if (bitsParam) {
+      setAudioParam(bitsParam, crushBits, now, rampSeconds)
+    }
+    if (downParam) {
+      setAudioParam(downParam, crushDown, now, rampSeconds)
+    }
   } else {
     const bitsKey = Math.round(crushBits * 4)
     if (bitsKey !== nodes.lastCrushBits) {
@@ -574,14 +641,21 @@ function applyPostProcessToGraph(
 
   const radioAmount = clamp(radio.amount, 0, 1)
   const radioGrit = clamp(radio.grit, 0, 1)
-  nodes.radioDry.gain.setTargetAtTime(1 - radioAmount * 0.88, now, rampSeconds)
-  nodes.radioWet.gain.setTargetAtTime(radioAmount, now, rampSeconds)
-  nodes.radioHighpass.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.radioDry.gain,
+    1 - radioAmount * 0.88,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(nodes.radioWet.gain, radioAmount, now, rampSeconds)
+  setAudioParam(
+    nodes.radioHighpass.frequency,
     mapRadioHighpass(radio.tone),
     now,
     rampSeconds,
   )
-  nodes.radioLowpass.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.radioLowpass.frequency,
     mapRadioLowpass(radio.tone),
     now,
     rampSeconds,
@@ -596,26 +670,49 @@ function applyPostProcessToGraph(
 
   const chorusAmount = clamp(chorus.amount, 0, 1)
   const chorusDepth = mapChorusDepthSeconds(chorus.depth)
-  nodes.chorusDry.gain.setTargetAtTime(1 - chorusAmount * 0.4, now, rampSeconds)
-  nodes.chorusWet.gain.setTargetAtTime(chorusAmount * 0.55, now, rampSeconds)
-  nodes.chorusLfoL.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.chorusDry.gain,
+    1 - chorusAmount * 0.4,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(
+    nodes.chorusWet.gain,
+    chorusAmount * 0.55,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(
+    nodes.chorusLfoL.frequency,
     mapChorusRateHz(chorus.rate),
     now,
     rampSeconds,
   )
-  nodes.chorusLfoR.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.chorusLfoR.frequency,
     mapChorusRateHz(chorus.rate) * 1.13,
     now,
     rampSeconds,
   )
-  nodes.chorusLfoGainL.gain.setTargetAtTime(chorusDepth, now, rampSeconds)
-  nodes.chorusLfoGainR.gain.setTargetAtTime(chorusDepth * 0.92, now, rampSeconds)
+  setAudioParam(nodes.chorusLfoGainL.gain, chorusDepth, now, rampSeconds)
+  setAudioParam(
+    nodes.chorusLfoGainR.gain,
+    chorusDepth * 0.92,
+    now,
+    rampSeconds,
+  )
 
   const distAmount = clamp(distortion.amount, 0, 1)
   const distDrive = clamp(distortion.drive, 0, 1)
-  nodes.distortionDry.gain.setTargetAtTime(1 - distAmount * 0.92, now, rampSeconds)
-  nodes.distortionWet.gain.setTargetAtTime(distAmount, now, rampSeconds)
-  nodes.distortionTone.frequency.setTargetAtTime(
+  setAudioParam(
+    nodes.distortionDry.gain,
+    1 - distAmount * 0.92,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(nodes.distortionWet.gain, distAmount, now, rampSeconds)
+  setAudioParam(
+    nodes.distortionTone.frequency,
     mapDistortionToneCutoff(distortion.tone),
     now,
     rampSeconds,
@@ -629,26 +726,40 @@ function applyPostProcessToGraph(
   }
 
   const compAmount = clamp(compressor.amount, 0, 1)
-  nodes.compressorDry.gain.setTargetAtTime(1 - compAmount * 0.85, now, rampSeconds)
-  nodes.compressorWet.gain.setTargetAtTime(compAmount, now, rampSeconds)
-  nodes.compressorNode.threshold.setTargetAtTime(
+  setAudioParam(
+    nodes.compressorDry.gain,
+    1 - compAmount * 0.85,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(nodes.compressorWet.gain, compAmount, now, rampSeconds)
+  setAudioParam(
+    nodes.compressorNode.threshold,
     -6 - compAmount * 30,
     now,
     rampSeconds,
   )
-  nodes.compressorNode.ratio.setTargetAtTime(1.4 + compAmount * 10, now, rampSeconds)
-  nodes.compressorNode.knee.setTargetAtTime(8, now, rampSeconds)
-  nodes.compressorNode.attack.setTargetAtTime(
+  setAudioParam(
+    nodes.compressorNode.ratio,
+    1.4 + compAmount * 10,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(nodes.compressorNode.knee, 8, now, rampSeconds)
+  setAudioParam(
+    nodes.compressorNode.attack,
     mapCompressorAttack(compressor.attack),
     now,
     rampSeconds,
   )
-  nodes.compressorNode.release.setTargetAtTime(
+  setAudioParam(
+    nodes.compressorNode.release,
     mapCompressorRelease(compressor.release),
     now,
     rampSeconds,
   )
-  nodes.compressorMakeup.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.compressorMakeup.gain,
     10 ** ((compAmount * 9) / 20),
     now,
     rampSeconds,
@@ -660,7 +771,8 @@ function applyPostProcessToGraph(
       delay.amount * 0.55 +
       reverb.amount * 0.34,
   )
-  nodes.postDry.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.postDry.gain,
     Math.max(0.38, 1 - wetMix * 0.32),
     now,
     rampSeconds,
@@ -681,11 +793,7 @@ function applyMasterOut(
 ) {
   const gain = mapMasterOutputGain(volume, gainDb)
   const now = nodes.context.currentTime
-  if (rampSeconds <= 0) {
-    nodes.masterGain.gain.setValueAtTime(gain, now)
-    return
-  }
-  nodes.masterGain.gain.setTargetAtTime(gain, now, rampSeconds)
+  setAudioParam(nodes.masterGain.gain, gain, now, rampSeconds)
 }
 
 let meterBuffer: Float32Array<ArrayBuffer> | null = null
@@ -720,34 +828,41 @@ function applyIntensityToGraph(
   const now = context.currentTime
   const i = clamp(intensity, 0, 1) * 0.88
 
-  nodes.dryGain.gain.setTargetAtTime(
+  setAudioParam(
+    nodes.dryGain.gain,
     intensity < 0.02 ? 1 : Math.max(0.12, 1 - i * 0.88),
     now,
     rampSeconds,
   )
-  nodes.wetGain.gain.setTargetAtTime(intensity < 0.02 ? 0 : i, now, rampSeconds)
+  setAudioParam(
+    nodes.wetGain.gain,
+    intensity < 0.02 ? 0 : i,
+    now,
+    rampSeconds,
+  )
 
-  nodes.combDelay.delayTime.setTargetAtTime(
+  setAudioParam(
+    nodes.combDelay.delayTime,
     0.0015 + (1 - i) * 0.012,
     now,
     rampSeconds,
   )
-  nodes.combFeedback.gain.setTargetAtTime(0.12 + i * 0.52, now, rampSeconds)
-  nodes.combWet.gain.setTargetAtTime(0.18 + i * 0.48, now, rampSeconds)
-  nodes.combDry.gain.setTargetAtTime(0.5 + (1 - i) * 0.32, now, rampSeconds)
+  setAudioParam(nodes.combFeedback.gain, 0.12 + i * 0.52, now, rampSeconds)
+  setAudioParam(nodes.combWet.gain, 0.18 + i * 0.48, now, rampSeconds)
+  setAudioParam(nodes.combDry.gain, 0.5 + (1 - i) * 0.32, now, rampSeconds)
 
-  nodes.highpass.frequency.setTargetAtTime(180 + i * 200, now, rampSeconds)
-  nodes.bandpass.frequency.setTargetAtTime(650 + i * 1200, now, rampSeconds)
-  nodes.bandpass.Q.setTargetAtTime(2 + i * 10, now, rampSeconds)
+  setAudioParam(nodes.highpass.frequency, 180 + i * 200, now, rampSeconds)
+  setAudioParam(nodes.bandpass.frequency, 650 + i * 1200, now, rampSeconds)
+  setAudioParam(nodes.bandpass.Q, 2 + i * 10, now, rampSeconds)
   nodes.shaper.curve = new Float32Array(makeDistortionCurve(100 + i * 720))
 
-  nodes.ringOsc.frequency.setTargetAtTime(28 + i * 115, now, rampSeconds)
-  nodes.ringDepth.gain.setTargetAtTime(0.28 + i * 0.68, now, rampSeconds)
+  setAudioParam(nodes.ringOsc.frequency, 28 + i * 115, now, rampSeconds)
+  setAudioParam(nodes.ringDepth.gain, 0.28 + i * 0.68, now, rampSeconds)
 
-  nodes.amOsc.frequency.setTargetAtTime(55 + i * 130, now, rampSeconds)
-  nodes.amDepth.gain.setTargetAtTime(0.08 + i * 0.38, now, rampSeconds)
+  setAudioParam(nodes.amOsc.frequency, 55 + i * 130, now, rampSeconds)
+  setAudioParam(nodes.amDepth.gain, 0.08 + i * 0.38, now, rampSeconds)
 
-  nodes.outputGain.gain.setTargetAtTime(1.04 + i * 0.28, now, rampSeconds)
+  setAudioParam(nodes.outputGain.gain, 1.04 + i * 0.28, now, rampSeconds)
 }
 
 export function computeExportTailSeconds(postProcess: PostProcessParams): number {
@@ -1136,6 +1251,7 @@ async function ensureGraph(): Promise<SynthGraph> {
 
       nodes.vocoder.carrier.saw.start()
       nodes.vocoder.carrier.square.start()
+      nodes.vocoder.unvoice.noise.start()
       nodes.ringOsc.start()
       nodes.ringOffset.start()
       nodes.amOsc.start()
@@ -1177,6 +1293,8 @@ function scheduleOfflineGraph(
 
   nodes.vocoder.carrier.saw.start(0)
   nodes.vocoder.carrier.square.start(0)
+  nodes.vocoder.unvoice.noise.start(0)
+  nodes.vocoder.unvoice.noise.stop(Math.max(0.01, speechSeconds))
   nodes.ringOsc.start(0)
   nodes.ringOffset.start(0)
   nodes.amOsc.start(0)
@@ -1257,7 +1375,7 @@ function handleSourceEnded() {
   onEndCallback?.()
 }
 
-function startSource() {
+function startSource(bufferOffsetSeconds = 0) {
   if (!audioBuffer || !graph || cancelled) {
     return
   }
@@ -1266,9 +1384,12 @@ function startSource() {
   stopSourceOnly()
 
   const liveContext = nodes.context as AudioContext
-  if (liveContext.state === 'suspended') {
+  if (liveContext.state === 'suspended' && !playbackPaused) {
     void liveContext.resume()
   }
+
+  const maxOffset = Math.max(0, audioBuffer.duration - 0.001)
+  const offset = Math.min(Math.max(0, bufferOffsetSeconds), maxOffset)
 
   const source = nodes.context.createBufferSource()
   source.buffer = audioBuffer
@@ -1281,7 +1402,7 @@ function startSource() {
   source.onended = handleSourceEnded
 
   sourceStartTime = nodes.context.currentTime
-  sourceOffsetSeconds = 0
+  sourceOffsetSeconds = offset
   lastPositionTime = sourceStartTime
   if (speechSamples) {
     scheduleSpeechGatedNoise(
@@ -1290,11 +1411,12 @@ function startSource() {
       sourcePlaybackRate,
       currentParams.postProcess.noise,
       sourceStartTime,
+      offset / sourcePlaybackRate,
     )
   }
 
   activeSource = source
-  source.start(0)
+  source.start(0, offset)
 }
 
 function captureSourcePosition() {
@@ -1320,24 +1442,36 @@ export function isSynthPlaying(): boolean {
   return activeSource !== null
 }
 
-export function pauseSynthPlayback() {
-  if (!graph || !activeSource) {
-    return
-  }
-  const liveContext = graph.context as AudioContext
-  if (liveContext.state === 'running') {
-    void liveContext.suspend()
-  }
+export function isSynthPaused(): boolean {
+  return playbackPaused
 }
 
-export function resumeSynthPlayback() {
-  if (!graph) {
-    return
+export function pauseSynthPlayback(): Promise<void> {
+  if (!graph || !activeSource) {
+    return Promise.resolve()
   }
+
+  captureSourcePosition()
+  playbackPaused = true
+  const liveContext = graph.context as AudioContext
+  if (liveContext.state === 'running') {
+    return liveContext.suspend().then(() => undefined)
+  }
+  return Promise.resolve()
+}
+
+export function resumeSynthPlayback(): Promise<void> {
+  if (!graph) {
+    return Promise.resolve()
+  }
+
+  playbackPaused = false
+  lastPositionTime = graph.context.currentTime
   const liveContext = graph.context as AudioContext
   if (liveContext.state === 'suspended') {
-    void liveContext.resume()
+    return liveContext.resume().then(() => undefined)
   }
+  return Promise.resolve()
 }
 
 export function setSynthLoop(enabled: boolean) {
@@ -1348,7 +1482,42 @@ export function getSynthLoop(): boolean {
   return loopEnabled
 }
 
-export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
+export function replaceSynthSamples(samples: Float32Array) {
+  if (!graph || cancelled) {
+    return
+  }
+
+  const wasActive = activeSource !== null
+  if (wasActive) {
+    captureSourcePosition()
+  }
+
+  const previousDuration = audioBuffer?.duration ?? 0
+  const progress =
+    previousDuration > 0
+      ? Math.min(1, Math.max(0, sourceOffsetSeconds / previousDuration))
+      : 0
+
+  setAudioBufferFromSamples(samples, graph)
+
+  if (!wasActive || !audioBuffer) {
+    return
+  }
+
+  startSource(progress * audioBuffer.duration)
+
+  if (playbackPaused) {
+    const liveContext = graph.context as AudioContext
+    if (liveContext.state === 'running') {
+      void liveContext.suspend()
+    }
+  }
+}
+
+export function updateLiveSynthParams(
+  params: Partial<LiveSynthParams>,
+  options?: { immediate?: boolean },
+) {
   currentParams = {
     speed: params.speed ?? currentParams.speed,
     pitch: params.pitch ?? currentParams.pitch,
@@ -1375,47 +1544,55 @@ export function updateLiveSynthParams(params: Partial<LiveSynthParams>) {
     return
   }
 
-  applyIntensityToGraph(graph, currentParams.metallic)
-  applyVocoderParams(graph.vocoder, currentParams.vocoder, currentParams.pitch)
-  applyPostProcessToGraph(graph, currentParams.postProcess)
-  applyMasterOut(graph, currentParams.masterVolume, currentParams.masterGainDb)
+  const rampSeconds = options?.immediate ? 0 : 0.03
 
-  if (activeSource) {
-    captureSourcePosition()
+  applyIntensityToGraph(graph, currentParams.metallic, rampSeconds)
+  applyVocoderParams(
+    graph.vocoder,
+    currentParams.vocoder,
+    currentParams.pitch,
+    rampSeconds,
+  )
+  applyPostProcessToGraph(graph, currentParams.postProcess, rampSeconds)
+  applyMasterOut(
+    graph,
+    currentParams.masterVolume,
+    currentParams.masterGainDb,
+    rampSeconds,
+  )
+
+  if (!activeSource) {
+    return
   }
 
-  if (activeSource && speechSamples && params.postProcess?.noise) {
-    const now = graph.context.currentTime
-    const elapsed = Math.max(0, now - sourceStartTime)
-    sourcePlaybackRate = mapPlaybackRate(
-      currentParams.speed,
-      currentParams.pitch,
-    )
-    activeSource.playbackRate.setTargetAtTime(
-      sourcePlaybackRate,
-      now,
-      0.03,
-    )
+  captureSourcePosition()
+  sourcePlaybackRate = mapPlaybackRate(
+    currentParams.speed,
+    currentParams.pitch,
+  )
+  const now = graph.context.currentTime
+  if (options?.immediate) {
+    activeSource.playbackRate.cancelScheduledValues(now)
+    activeSource.playbackRate.setValueAtTime(sourcePlaybackRate, now)
+  } else {
+    activeSource.playbackRate.setTargetAtTime(sourcePlaybackRate, now, 0.03)
+  }
+
+  if (speechSamples) {
     scheduleSpeechGatedNoise(
       graph,
       speechSamples,
       sourcePlaybackRate,
       currentParams.postProcess.noise,
       now,
-      elapsed,
-    )
-  } else if (activeSource) {
-    sourcePlaybackRate = mapPlaybackRate(currentParams.speed, currentParams.pitch)
-    activeSource.playbackRate.setTargetAtTime(
-      sourcePlaybackRate,
-      graph.context.currentTime,
-      0.03,
+      sourceOffsetSeconds / sourcePlaybackRate,
     )
   }
 }
 
 export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
   cancelled = true
+  playbackPaused = false
   if (options?.clearLoop ?? true) {
     loopEnabled = false
   }
@@ -1441,6 +1618,7 @@ export function startSynthPlayback(
   },
 ) {
   cancelled = false
+  playbackPaused = false
   currentParams = {
     ...params,
     postProcess: mergePostProcess(DEFAULT_POST_PROCESS, params.postProcess),

@@ -7,6 +7,7 @@ import {
   DEFAULT_POST_PROCESS,
   mergePostProcess,
   renderSynthOffline,
+  replaceSynthSamples,
   startSynthPlayback,
   setSynthLoop,
   stopSynthPlayback,
@@ -41,15 +42,10 @@ function mapUiPitchToSam(pitch: number): number {
   return Math.round(Math.min(200, Math.max(20, 25 + pitch * 75)))
 }
 
-function mapMetallicToFormants(metallic: number): { mouth: number; throat: number } {
-  const natural = { mouth: 128, throat: 128 }
-  const robotic = { mouth: 200, throat: 195 }
-  return {
-    mouth: Math.round(natural.mouth + metallic * (robotic.mouth - natural.mouth)),
-    throat: Math.round(
-      natural.throat + metallic * (robotic.throat - natural.throat),
-    ),
-  }
+function mapMetallicToMouth(metallic: number): number {
+  const natural = 128
+  const robotic = 200
+  return Math.round(natural + metallic * (robotic - natural))
 }
 
 export async function renderSamSamples(
@@ -57,7 +53,7 @@ export async function renderSamSamples(
 ): Promise<Float32Array | null> {
   const metallic = Math.min(Math.max(options.metallic, 0), 1)
   const pitch = Math.min(Math.max(options.pitch, 0), 2)
-  const formants = mapMetallicToFormants(metallic)
+  const mouth = mapMetallicToMouth(metallic)
   const useBetterEnglish = options.betterEnglish ?? true
 
   let phoneticText = options.text
@@ -76,8 +72,8 @@ export async function renderSamSamples(
   const sam = new SamJs({
     speed: mapUiSpeedToSam(options.speed),
     pitch: mapUiPitchToSam(pitch),
-    mouth: formants.mouth,
-    throat: formants.throat,
+    mouth,
+    throat: 128,
   })
 
   const buffer = sam.buf32(phoneticText, phoneticMode)
@@ -92,20 +88,35 @@ export function setSamLoop(enabled: boolean) {
   setSynthLoop(enabled)
 }
 
-export function updateSamLiveParams(params: Partial<LiveSynthParams>) {
-  updateLiveSynthParams(params)
+export function updateSamLiveParams(
+  params: Partial<LiveSynthParams>,
+  options?: { immediate?: boolean },
+) {
+  updateLiveSynthParams(params, options)
 }
 
 export function stopSamSpeech() {
   stopSynthPlayback()
 }
 
-export function pauseSamSpeech() {
-  pauseSynthPlayback()
+export function pauseSamSpeech(): Promise<void> {
+  return pauseSynthPlayback()
 }
 
-export function resumeSamSpeech() {
-  resumeSynthPlayback()
+export function resumeSamSpeech(): Promise<void> {
+  return resumeSynthPlayback()
+}
+
+let liveBakeEpoch = 0
+
+/** Re-synthesize SAM samples mid-playback so mouth/timbre match current voice params. */
+export async function refreshSamLiveBuffer(options: SamSynthOptions) {
+  const epoch = ++liveBakeEpoch
+  const samples = await renderSamSamples(options)
+  if (epoch !== liveBakeEpoch || !samples) {
+    return
+  }
+  replaceSynthSamples(samples)
 }
 
 export interface SamSpeakOptions extends SamSynthOptions {
@@ -120,11 +131,11 @@ export interface SamSpeakOptions extends SamSynthOptions {
 
 function normalizeVocoder(vocoder?: VocoderParams): VocoderParams {
   return {
-    formantShift:
-      vocoder?.formantShift ?? DEFAULT_VOCODER_PARAMS.formantShift,
+    formant: vocoder?.formant ?? DEFAULT_VOCODER_PARAMS.formant,
     cutoff: vocoder?.cutoff ?? DEFAULT_VOCODER_PARAMS.cutoff,
     resonance: vocoder?.resonance ?? DEFAULT_VOCODER_PARAMS.resonance,
     efSense: vocoder?.efSense ?? DEFAULT_VOCODER_PARAMS.efSense,
+    unvoice: vocoder?.unvoice ?? DEFAULT_VOCODER_PARAMS.unvoice,
     carrierAmount:
       vocoder?.carrierAmount ?? DEFAULT_VOCODER_PARAMS.carrierAmount,
     carrierMix: vocoder?.carrierMix ?? DEFAULT_VOCODER_PARAMS.carrierMix,

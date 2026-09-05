@@ -1,8 +1,12 @@
 .knob-field {
+  --knob-chrome-gap: var(--section-gap);
+  /* Dial path r=46 in 100 viewBox → 4% pad inside the box on each side. */
+  --knob-track-pad: 0.04;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  /* Same label→ring and ring→value distance at every --knob-size. */
+  gap: var(--knob-chrome-gap);
   min-width: 0;
   padding: 0;
   border: 0;
@@ -73,6 +77,10 @@
 .knob {
   --knob-stroke: 4px;
   --knob-track-r: 46%;
+  /* Cancel size-scaled dial pad so flex gap is label/value ↔ ring edge. */
+  margin-block: calc(
+    var(--knob-stroke) / 2 - var(--knob-size) * var(--knob-track-pad)
+  );
   position: relative;
   width: var(--knob-size);
   height: var(--knob-size);
@@ -102,7 +110,9 @@
 
 .knob__arc-bloom-ring {
   position: absolute;
-  inset: calc(16px + var(--knob-size) * 0.04 - var(--knob-stroke) / 2);
+  inset: calc(
+    16px + var(--knob-size) * var(--knob-track-pad) - var(--knob-stroke) / 2
+  );
   border: var(--knob-stroke) solid var(--glow-color);
   border-radius: 50%;
   opacity: 0.41;

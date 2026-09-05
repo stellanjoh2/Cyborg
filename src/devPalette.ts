@@ -15,13 +15,13 @@ export type PaletteKey = (typeof PALETTE_KEYS)[number]
 export type Palette = Record<PaletteKey, string>
 
 export const DEFAULT_PALETTE: Palette = {
-  text: '#FFFFFF',
+  text: '#ffdbb3',
   muted: '#6E6E6E',
   black: '#0E0E0E',
   fill: '#131313',
   stroke: '#FFFFFF',
-  lime: '#FFC800',
-  vu: '#00FF1E',
+  lime: '#ff8800',
+  vu: '#00ffe1',
   purple: '#3B00FF',
   blue: '#00C4FF',
   pink: '#FF00C4',

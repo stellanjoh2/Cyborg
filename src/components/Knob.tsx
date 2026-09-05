@@ -181,6 +181,7 @@ function KnobComponent({
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onLostPointerCapture={endDrag}
         onKeyDown={handleKeyDown}
       >
         <div className="knob__arc-bloom" aria-hidden="true">

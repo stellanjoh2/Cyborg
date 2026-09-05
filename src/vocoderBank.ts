@@ -1,12 +1,13 @@
 import {
   analogCarrierHz,
-  bandCenterHz,
+  analysisCenterHz,
   mapBandLevel,
   mapBandPan,
   mapCarrierCutoffHz,
   mapCarrierResonanceQ,
   mapEfSenseToSmoothingHz,
   mapResonanceToQ,
+  synthesisCenterHz,
   VOCODER_BAND_COUNT,
   type VocoderParams,
 } from './vocoderParams'
@@ -16,6 +17,10 @@ const SQUARE_LEVEL = 0.7
 const OSC_MAKEUP = 2.4
 const DRY_BLEND = 0.22
 const OUTPUT_MAKEUP = 2
+const UNVOICE_GAIN_MAX = 0.55
+const UNVOICE_DETECT_HZ = 5200
+const UNVOICE_NOISE_HZ = 3800
+const UNVOICE_ENV_HZ = 28
 
 const ABS_CURVE = createAbsCurve()
 
@@ -39,12 +44,23 @@ export interface AnalogCarrierGraph {
   speechGain: GainNode
 }
 
+export interface UnvoiceGraph {
+  detectFilter: BiquadFilterNode
+  rectifier: WaveShaperNode
+  envSmooth: BiquadFilterNode
+  noise: AudioBufferSourceNode
+  noiseFilter: BiquadFilterNode
+  envGain: GainNode
+  amountGain: GainNode
+}
+
 export interface VocoderBankGraph {
   input: GainNode
   output: GainNode
   dryBlend: GainNode
   bands: VocoderBandGraph[]
   carrier: AnalogCarrierGraph
+  unvoice: UnvoiceGraph
 }
 
 function createAbsCurve(): Float32Array {
@@ -54,6 +70,15 @@ function createAbsCurve(): Float32Array {
     curve[i] = Math.abs(x)
   }
   return curve
+}
+
+function createNoiseBuffer(context: BaseAudioContext): AudioBuffer {
+  const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i += 1) {
+    data[i] = Math.random() * 2 - 1
+  }
+  return buffer
 }
 
 function createBandGraph(
@@ -103,6 +128,61 @@ function createBandGraph(
   }
 }
 
+function createUnvoiceGraph(
+  context: BaseAudioContext,
+  modulator: AudioNode,
+  output: GainNode,
+): UnvoiceGraph {
+  const detectFilter = context.createBiquadFilter()
+  detectFilter.type = 'highpass'
+  detectFilter.frequency.value = UNVOICE_DETECT_HZ
+  detectFilter.Q.value = 0.7
+
+  const rectifier = context.createWaveShaper()
+  rectifier.curve = new Float32Array(ABS_CURVE)
+  rectifier.oversample = 'none'
+
+  const envSmooth = context.createBiquadFilter()
+  envSmooth.type = 'lowpass'
+  envSmooth.frequency.value = UNVOICE_ENV_HZ
+  envSmooth.Q.value = 0.7
+
+  const noise = context.createBufferSource()
+  noise.buffer = createNoiseBuffer(context)
+  noise.loop = true
+
+  const noiseFilter = context.createBiquadFilter()
+  noiseFilter.type = 'highpass'
+  noiseFilter.frequency.value = UNVOICE_NOISE_HZ
+  noiseFilter.Q.value = 0.7
+
+  const envGain = context.createGain()
+  envGain.gain.value = 0
+
+  const amountGain = context.createGain()
+  amountGain.gain.value = 0
+
+  modulator.connect(detectFilter)
+  detectFilter.connect(rectifier)
+  rectifier.connect(envSmooth)
+  envSmooth.connect(envGain.gain)
+
+  noise.connect(noiseFilter)
+  noiseFilter.connect(envGain)
+  envGain.connect(amountGain)
+  amountGain.connect(output)
+
+  return {
+    detectFilter,
+    rectifier,
+    envSmooth,
+    noise,
+    noiseFilter,
+    envGain,
+    amountGain,
+  }
+}
+
 export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
   const input = context.createGain()
   const output = context.createGain()
@@ -143,6 +223,8 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
     bands.push(createBandGraph(context, input, carrierBus, output))
   }
 
+  const unvoice = createUnvoiceGraph(context, input, output)
+
   return {
     input,
     output,
@@ -157,7 +239,23 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
       oscGain,
       speechGain,
     },
+    unvoice,
   }
+}
+
+function setBankParam(
+  param: AudioParam,
+  value: number,
+  now: number,
+  rampSeconds: number,
+) {
+  param.cancelScheduledValues(now)
+  if (rampSeconds <= 0) {
+    param.setValueAtTime(value, now)
+    return
+  }
+  param.setValueAtTime(param.value, now)
+  param.setTargetAtTime(value, now, rampSeconds)
 }
 
 export function applyVocoderParams(
@@ -172,39 +270,69 @@ export function applyVocoderParams(
   const smoothingHz = mapEfSenseToSmoothingHz(params.efSense)
   const amount = Math.min(Math.max(params.carrierAmount, 0), 1)
   const mix = Math.min(Math.max(params.carrierMix, 0), 1)
+  const unvoice = Math.min(Math.max(params.unvoice, 0), 1)
   const carrierHz = analogCarrierHz(voicePitch)
 
-  bank.dryBlend.gain.setTargetAtTime(DRY_BLEND * (1 - amount), now, rampSeconds)
-  bank.carrier.speechGain.gain.setTargetAtTime(1 - amount, now, rampSeconds)
-  bank.carrier.oscGain.gain.setTargetAtTime(amount * OSC_MAKEUP, now, rampSeconds)
-  bank.output.gain.setTargetAtTime(1 + amount * OUTPUT_MAKEUP, now, rampSeconds)
-  bank.carrier.sawGain.gain.setTargetAtTime((1 - mix) * SAW_LEVEL, now, rampSeconds)
-  bank.carrier.squareGain.gain.setTargetAtTime(mix * SQUARE_LEVEL, now, rampSeconds)
-  bank.carrier.filter.frequency.setTargetAtTime(
+  setBankParam(bank.dryBlend.gain, DRY_BLEND * (1 - amount), now, rampSeconds)
+  setBankParam(bank.carrier.speechGain.gain, 1 - amount, now, rampSeconds)
+  setBankParam(
+    bank.carrier.oscGain.gain,
+    amount * OSC_MAKEUP,
+    now,
+    rampSeconds,
+  )
+  setBankParam(
+    bank.output.gain,
+    1 + amount * OUTPUT_MAKEUP,
+    now,
+    rampSeconds,
+  )
+  setBankParam(
+    bank.carrier.sawGain.gain,
+    (1 - mix) * SAW_LEVEL,
+    now,
+    rampSeconds,
+  )
+  setBankParam(
+    bank.carrier.squareGain.gain,
+    mix * SQUARE_LEVEL,
+    now,
+    rampSeconds,
+  )
+  setBankParam(
+    bank.carrier.filter.frequency,
     mapCarrierCutoffHz(params.carrierCutoff),
     now,
     rampSeconds,
   )
-  bank.carrier.filter.Q.setTargetAtTime(
+  setBankParam(
+    bank.carrier.filter.Q,
     mapCarrierResonanceQ(params.carrierResonance),
     now,
     rampSeconds,
   )
-  bank.carrier.saw.frequency.setTargetAtTime(carrierHz, now, rampSeconds)
-  bank.carrier.square.frequency.setTargetAtTime(carrierHz, now, rampSeconds)
+  setBankParam(bank.carrier.saw.frequency, carrierHz, now, rampSeconds)
+  setBankParam(bank.carrier.square.frequency, carrierHz, now, rampSeconds)
+  setBankParam(
+    bank.unvoice.amountGain.gain,
+    unvoice * UNVOICE_GAIN_MAX,
+    now,
+    rampSeconds,
+  )
 
   for (let index = 0; index < bank.bands.length; index += 1) {
     const band = bank.bands[index]
-    const center = bandCenterHz(index, params)
+    const analysisHz = analysisCenterHz(index, params)
+    const synthesisHz = synthesisCenterHz(index, params)
     const level = mapBandLevel(params.bands[index]?.level ?? 100)
     const pan = mapBandPan(params.bands[index]?.pan ?? 0)
 
-    band.analysisFilter.frequency.setTargetAtTime(center, now, rampSeconds)
-    band.analysisFilter.Q.setTargetAtTime(q, now, rampSeconds)
-    band.carrierFilter.frequency.setTargetAtTime(center, now, rampSeconds)
-    band.carrierFilter.Q.setTargetAtTime(q, now, rampSeconds)
-    band.envSmooth.frequency.setTargetAtTime(smoothingHz, now, rampSeconds)
-    band.levelGain.gain.setTargetAtTime(level, now, rampSeconds)
-    band.panner.pan.setTargetAtTime(pan, now, rampSeconds)
+    setBankParam(band.analysisFilter.frequency, analysisHz, now, rampSeconds)
+    setBankParam(band.analysisFilter.Q, q, now, rampSeconds)
+    setBankParam(band.carrierFilter.frequency, synthesisHz, now, rampSeconds)
+    setBankParam(band.carrierFilter.Q, q, now, rampSeconds)
+    setBankParam(band.envSmooth.frequency, smoothingHz, now, rampSeconds)
+    setBankParam(band.levelGain.gain, level, now, rampSeconds)
+    setBankParam(band.panner.pan, pan, now, rampSeconds)
   }
 }
