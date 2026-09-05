@@ -119,7 +119,7 @@ export function TypewriterReveal({
       </span>
       <span className="typewriter-reveal__live">
         {renderWithLinks(typed, links)}
-        {caret && !isComplete ? (
+        {caret && active && !isComplete ? (
           <span className="typewriter-reveal__caret" aria-hidden />
         ) : null}
       </span>

@@ -8,6 +8,7 @@ import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
 import { PhaseOrb } from './components/PhaseOrb'
+import { TypewriterReveal } from './components/TypewriterReveal'
 import {
   DEFAULT_POST_PROCESS_UI,
   formatBitcrushBits,
@@ -70,6 +71,9 @@ gsap.registerPlugin(useGSAP)
 const DEFAULT_TEXT =
   '3 billion human lives ended on August 29, 1997. The survivors of the nuclear fire called the war Judgment Day. They lived only to face a new nightmare, the war against the Machines. The computer which controlled the machines, Skynet, sent two terminators back through time. Their mission: to destroy the leader of the human Resistance... John Connor. My son.'
 
+const SPLASH_CREDIT =
+  'Larynx™ Industries — LX01 is created by Stellan Johansson.'
+const SPLASH_TYPE_MS = 10
 export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
@@ -100,6 +104,7 @@ export default function App() {
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
+  const [splashCreditActive, setSplashCreditActive] = useState(false)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
 
   useGSAP(
@@ -108,6 +113,7 @@ export default function App() {
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
+        setSplashCreditActive(true)
         gsap.set('.speech-splash', { autoAlpha: 0 })
         splashLogoRef.current?.show()
         headerLogoRef.current?.show()
@@ -117,6 +123,7 @@ export default function App() {
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
+      setSplashCreditActive(false)
 
       const root = appRef.current
       root?.classList.add('is-introducing')
@@ -131,24 +138,65 @@ export default function App() {
         },
       })
 
-      // —— 0. Logotype splash: wordmark → LX01 stagger → fade out ——
+      // —— 0. Accent splash: mark → LX01 → credit typewriter → fall out → curtain ——
+      const lineIn = 0.34
+      const staggerGap = 0.14
       const splashOut = 0.55
-      const splashHold = 0.25
+      const splashOutStagger = 0.1
+      const splashHold = 0.5
+      const curtainDur = 0.7
+      const creditTypeDur = (SPLASH_CREDIT.length * SPLASH_TYPE_MS) / 1000
+      const splashExit = [
+        '.speech-splash__mark',
+        '.speech-splash__logo',
+        '.speech-splash__credit',
+      ]
       splashLogoRef.current?.hideParts()
+      gsap.set('.speech-splash__mark', { autoAlpha: 0, y: 0 })
+      gsap.set('.speech-splash__credit', { autoAlpha: 1, y: 0 })
       const splashReveal = splashLogoRef.current?.revealTimeline()
       const charsEnd = splashReveal?.duration() ?? 1.1
-      const SPLASH = charsEnd + splashHold + splashOut
+      const markAt = 0
+      const lx01At = markAt + lineIn + staggerGap
+      const creditAt = lx01At + charsEnd + staggerGap
+      const logoOutAt = creditAt + creditTypeDur + splashHold
+      const exitSpan = splashOut + splashOutStagger * (splashExit.length - 1)
+      const curtainAt = logoOutAt + exitSpan
+      const SPLASH = curtainAt + curtainDur
 
-      if (splashReveal) tl.add(splashReveal, 0)
+      tl.fromTo(
+        '.speech-splash__mark',
+        { autoAlpha: 0, y: 14 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: lineIn,
+          ease: 'power2.out',
+          immediateRender: true,
+        },
+        markAt,
+      )
+      if (splashReveal) tl.add(splashReveal, lx01At)
+      tl.call(() => setSplashCreditActive(true), undefined, creditAt)
       tl.to(
-        '.speech-splash__logo',
+        splashExit,
         {
           autoAlpha: 0,
-          scale: 1.04,
+          y: 56,
           duration: splashOut,
+          stagger: splashOutStagger,
           ease: 'power2.in',
         },
-        charsEnd + splashHold,
+        logoOutAt,
+      )
+      tl.to(
+        '.speech-splash',
+        {
+          yPercent: 100,
+          duration: curtainDur,
+          ease: 'power3.in',
+        },
+        curtainAt,
       )
       tl.set('.speech-splash', { autoAlpha: 0 }, SPLASH)
 
@@ -335,7 +383,7 @@ export default function App() {
         volumeFillAt,
       )
 
-      tl.add(ui, SPLASH)
+      tl.add(ui, curtainAt)
 
       return () => {
         root?.classList.remove('is-introducing')
@@ -764,7 +812,20 @@ export default function App() {
     <>
       <main className="speech-app" ref={appRef}>
       <div className="speech-splash" aria-hidden="true">
-        <Logotype ref={splashLogoRef} className="speech-splash__logo" />
+        <div className="speech-splash__frame">
+          <div className="speech-splash__mark" />
+          <div className="speech-splash__logo-slot">
+            <Logotype ref={splashLogoRef} className="speech-splash__logo" />
+          </div>
+          <TypewriterReveal
+            as="p"
+            className="speech-splash__credit"
+            text={SPLASH_CREDIT}
+            active={splashCreditActive}
+            hold
+            speedMs={SPLASH_TYPE_MS}
+          />
+        </div>
       </div>
       <header className="speech-top">
       <h1 className="speech-title" aria-label="LX01">
