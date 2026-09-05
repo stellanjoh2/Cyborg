@@ -7,9 +7,14 @@ import { useAnimatedNumber } from '../useAnimatedNumber'
 import './MasterStrip.css'
 
 const RIDGE_PERIOD_PX = 7
-const MIN_DB = -36
-const RED_DB = -3
-const YELLOW_DB = -12
+/** DJM-A9 default: meter 0 ≈ −21 dBFS */
+const REFERENCE_DBFS = -21
+/** Pioneer channel scale floor / ∞ ceiling (∞ sits slightly above +12) */
+const MIN_METER_DB = -26
+const MAX_METER_DB = 15
+const YELLOW_METER_DB = 0
+const RED_METER_DB = 12
+const PEAK_HOLD_MS = 2000
 
 function ridgesForTrack(track: HTMLElement): number {
   const styles = getComputedStyle(track)
@@ -21,12 +26,28 @@ function ridgesForTrack(track: HTMLElement): number {
   return Math.max(1, Math.round((inner + gap) / RIDGE_PERIOD_PX))
 }
 
+function linearToMeterDb(linear: number): number {
+  if (linear <= 0.0001) {
+    return MIN_METER_DB
+  }
+  return Math.max(MIN_METER_DB, 20 * Math.log10(linear) - REFERENCE_DBFS)
+}
+
+function meterDbToLit(meterDb: number, ridges: number): number {
+  const t = (meterDb - MIN_METER_DB) / (MAX_METER_DB - MIN_METER_DB)
+  return Math.max(0, Math.min(ridges, Math.ceil(t * ridges)))
+}
+
+function segmentMeterDb(index: number, ridges: number): number {
+  return MIN_METER_DB + ((index + 0.5) / ridges) * (MAX_METER_DB - MIN_METER_DB)
+}
+
 function segmentZone(index: number, ridges: number): 'green' | 'yellow' | 'red' {
-  const db = MIN_DB + ((index + 1) / ridges) * -MIN_DB
-  if (db >= RED_DB) {
+  const db = segmentMeterDb(index, ridges)
+  if (db >= RED_METER_DB) {
     return 'red'
   }
-  if (db >= YELLOW_DB) {
+  if (db >= YELLOW_METER_DB) {
     return 'yellow'
   }
   return 'green'
@@ -103,6 +124,7 @@ export function MasterStrip({
   const metersRef = useRef<HTMLDivElement>(null)
   const displayed = useRef(0)
   const peakHoldUntil = useRef(0)
+  const peakHeldLit = useRef(0)
   const [ridges, setRidges] = useState(48)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
@@ -138,26 +160,37 @@ export function MasterStrip({
           ? instant
           : displayed.current * 0.88 + instant * 0.12
 
-      const db =
-        displayed.current <= 0.0001
-          ? MIN_DB
-          : Math.max(MIN_DB, 20 * Math.log10(displayed.current))
-      const lit = Math.ceil(((db - MIN_DB) / -MIN_DB) * ridgesRef.current)
-      const clipping = instant >= 0.99
-      if (clipping) {
-        peakHoldUntil.current = now + 900
+      const ridgesCount = ridgesRef.current
+      const meterDb = linearToMeterDb(displayed.current)
+      const lit = meterDbToLit(meterDb, ridgesCount)
+      const instantMeterDb = linearToMeterDb(instant)
+      const instantLit = meterDbToLit(instantMeterDb, ridgesCount)
+
+      if (instantLit >= peakHeldLit.current) {
+        peakHeldLit.current = instantLit
+        peakHoldUntil.current = now + PEAK_HOLD_MS
+      } else if (now >= peakHoldUntil.current) {
+        peakHeldLit.current = lit
       }
-      const hot = db >= RED_DB || now < peakHoldUntil.current
+
+      const heldLit = peakHeldLit.current
+      const holdingPeak = now < peakHoldUntil.current && heldLit > lit
+      const inRed =
+        meterDb >= RED_METER_DB ||
+        (holdingPeak &&
+          segmentMeterDb(heldLit - 1, ridgesCount) >= RED_METER_DB) ||
+        instant >= 0.99
 
       const root = ledsRef.current
       if (root) {
         const leds = root.children
         for (let i = 0; i < leds.length; i += 1) {
-          leds[i].classList.toggle('is-on', i < lit)
+          const on = i < lit || (holdingPeak && i === heldLit - 1)
+          leds[i].classList.toggle('is-on', on)
         }
-        root.classList.toggle('is-hot', hot)
+        root.classList.toggle('is-hot', inRed)
       }
-      peakRef.current?.classList.toggle('is-on', now < peakHoldUntil.current)
+      peakRef.current?.classList.toggle('is-on', inRed)
 
       frame = requestAnimationFrame(tick)
     }

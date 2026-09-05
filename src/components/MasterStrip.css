@@ -175,7 +175,8 @@
   padding: 2px;
   border: var(--stroke-width) solid var(--section-stroke);
   border-radius: var(--radius);
-  background: var(--ridge-stroke);
+  background-color: var(--ridge-stroke);
+  background-clip: padding-box;
 }
 
 .vu-leds.is-hot {

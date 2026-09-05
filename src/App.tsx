@@ -193,12 +193,18 @@ export default function App() {
       return
     }
 
-    updateSamLiveParams({
-      speed: livePlan.rate,
-      pitch: livePlan.pitch,
-      metallic: livePlan.metallic,
-      vocoder,
-    })
+    // Keep graph in sync, but don't retarget the playing buffer's rate —
+    // Robot/speed/pitch changes re-bake samples; applying rate early can
+    // finish the old buffer and flip STOP back to PLAY.
+    updateSamLiveParams(
+      {
+        speed: livePlan.rate,
+        pitch: livePlan.pitch,
+        metallic: livePlan.metallic,
+        vocoder,
+      },
+      { applySourceRate: false },
+    )
   }, [isSpeaking, livePlan, vocoder])
 
   useEffect(() => {
@@ -543,7 +549,7 @@ export default function App() {
       <div className="speech-top__center">
         <div className="speech-top__transport-left actions">
           <button
-            className={isSpeaking ? 'secondary' : 'primary'}
+            className={`secondary${isSpeaking ? ' is-active' : ''}`}
             type="button"
             onClick={isSpeaking ? handleStop : handlePlayback}
             title={isSpeaking ? 'Stop speech' : 'Play speech'}

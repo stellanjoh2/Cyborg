@@ -1346,12 +1346,16 @@ function setAudioBufferFromSamples(samples: Float32Array, nodes: SynthGraph) {
 }
 
 function stopSourceOnly() {
-  try {
-    activeSource?.stop()
-  } catch {
-    // Already stopped.
+  if (activeSource) {
+    // Detach before stop so intentional restarts/cancels don't fire onEnd.
+    activeSource.onended = null
+    try {
+      activeSource.stop()
+    } catch {
+      // Already stopped.
+    }
+    activeSource = null
   }
-  activeSource = null
 
   if (graph) {
     const now = graph.context.currentTime
@@ -1360,7 +1364,12 @@ function stopSourceOnly() {
   }
 }
 
-function handleSourceEnded() {
+function handleSourceEnded(event: Event) {
+  // Ignore ended events from sources we already replaced or cancelled.
+  if (event.target !== activeSource) {
+    return
+  }
+
   activeSource = null
 
   if (cancelled) {
@@ -1516,7 +1525,7 @@ export function replaceSynthSamples(samples: Float32Array) {
 
 export function updateLiveSynthParams(
   params: Partial<LiveSynthParams>,
-  options?: { immediate?: boolean },
+  options?: { immediate?: boolean; applySourceRate?: boolean },
 ) {
   currentParams = {
     speed: params.speed ?? currentParams.speed,
@@ -1561,7 +1570,7 @@ export function updateLiveSynthParams(
     rampSeconds,
   )
 
-  if (!activeSource) {
+  if (!activeSource || options?.applySourceRate === false) {
     return
   }
 

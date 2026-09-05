@@ -80,7 +80,12 @@ export async function renderSamSamples(
   return buffer instanceof Float32Array ? buffer : null
 }
 
+let liveBakeEpoch = 0
+let speakEpoch = 0
+
 export function cancelSamSpeech() {
+  speakEpoch += 1
+  liveBakeEpoch += 1
   cancelMetallicPlayback()
 }
 
@@ -90,12 +95,14 @@ export function setSamLoop(enabled: boolean) {
 
 export function updateSamLiveParams(
   params: Partial<LiveSynthParams>,
-  options?: { immediate?: boolean },
+  options?: { immediate?: boolean; applySourceRate?: boolean },
 ) {
   updateLiveSynthParams(params, options)
 }
 
 export function stopSamSpeech() {
+  speakEpoch += 1
+  liveBakeEpoch += 1
   stopSynthPlayback()
 }
 
@@ -106,8 +113,6 @@ export function pauseSamSpeech(): Promise<void> {
 export function resumeSamSpeech(): Promise<void> {
   return resumeSynthPlayback()
 }
-
-let liveBakeEpoch = 0
 
 /** Re-synthesize SAM samples mid-playback so mouth/timbre match current voice params. */
 export async function refreshSamLiveBuffer(options: SamSynthOptions) {
@@ -177,7 +182,11 @@ export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
 }
 
 export async function speakSam(options: SamSpeakOptions) {
+  const epoch = ++speakEpoch
   const samples = await renderSamSamples(options)
+  if (epoch !== speakEpoch) {
+    return
+  }
   if (!samples) {
     options.onError?.('Could not synthesize speech.')
     return
