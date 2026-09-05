@@ -92,67 +92,202 @@ export default function App() {
   } | null>(null)
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
+  /** Intro-only volume meter drive; null hands control back to normal state. */
+  const [volumeFill, setVolumeFill] = useState<number | null>(0)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
 
   useGSAP(
     () => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setVolumeFill(null)
+        return
+      }
 
-      const columns = [
-        '.speech-title, .speech-col--voice > *',
-        '.speech-top__center > *, .speech-col--master > *',
-        '.speech-top__right > *, .speech-col--fx > *',
-      ]
+      // Keep masterVolume at 100 so Reset buttons stay dormant; only the
+      // meter fill is overridden visually during intro.
+      setVolumeFill(0)
 
+      const root = appRef.current
+      root?.classList.add('is-introducing')
+
+      const D = 0.55
       const tl = gsap.timeline({
         defaults: {
-          duration: 0.55,
-          ease: 'power2.out',
+          duration: D,
+          ease: 'power3.out',
+        },
+        onComplete: () => {
+          root?.classList.remove('is-introducing')
         },
       })
+      // Prior speed-ups kept; sequence is timed in beats below.
+      tl.timeScale(1.5 / 1.25)
 
-      let nextColumnAt = 0
+      // —— 1. Nav plate, then assets L→R ——
+      tl.from(
+        '.speech-top',
+        { autoAlpha: 0, y: -28, immediateRender: true },
+        0,
+      )
 
-      columns.forEach((selector, columnIndex) => {
-        const chromeEls = gsap.utils.toArray<HTMLElement>(selector)
-        if (!chromeEls.length) return
+      const navItemsAt = D + 0.08
+      const navEls = gsap.utils.toArray<HTMLElement>(
+        [
+          '.speech-title',
+          '.speech-top__transport-left',
+          '.speech-top__phase-orb',
+          '.speech-top__transport-right',
+          '.speech-top__right > *',
+        ].join(', '),
+      )
+      const navStagger = 0.07
+      tl.from(
+        navEls,
+        {
+          autoAlpha: 0,
+          x: -20,
+          y: -12,
+          stagger: navStagger,
+          immediateRender: true,
+        },
+        navItemsAt,
+      )
 
-        const columnStart = columnIndex === 0 ? 0 : nextColumnAt
+      // Board starts the moment EXPORT (last nav item) finishes landing.
+      const boardAt =
+        navItemsAt + Math.max(0, navEls.length - 1) * navStagger + D
 
-        chromeEls.forEach((el, i) => {
-          const start = columnStart + i * 0.05
-          tl.from(
-            el,
-            {
-              opacity: 0,
-              xPercent: -8,
-              clearProps: 'transform',
-            },
-            start,
-          )
+      // —— 2. Master + side columns assemble together ——
+      tl.from(
+        '.speech-col--master .master-strip',
+        { autoAlpha: 0, y: 24, immediateRender: true },
+        boardAt,
+      )
 
-          const controlEls = gsap.utils.toArray<HTMLElement>(
-            el.querySelectorAll('.knob-field, .master-fader, .vu'),
-          )
-          if (!controlEls.length) return
+      const sideDuration = D * 2.4
+      tl.from(
+        '.speech-col--voice',
+        {
+          x: (_i, el) =>
+            -((el as HTMLElement).getBoundingClientRect().right + 24),
+          duration: sideDuration,
+          immediateRender: true,
+        },
+        boardAt,
+      )
+      tl.from(
+        '.speech-col--fx',
+        {
+          x: (_i, el) => {
+            const rect = (el as HTMLElement).getBoundingClientRect()
+            return window.innerWidth - rect.left + 24
+          },
+          duration: sideDuration,
+          immediateRender: true,
+        },
+        boardAt,
+      )
 
-          tl.from(
-            controlEls,
-            {
-              opacity: 0,
-              xPercent: -8,
-              duration: 0.4,
-              stagger: 0.025,
-              clearProps: 'transform',
-            },
-            start + 0.1,
-          )
-        })
+      // —— 3. Side panel contents (hold until columns are well into their land) ——
+      // Columns already handle the horizontal dock; only leaf UI rises into place.
+      const sideContentAt = boardAt + 0.85
+      const leftLeaves = gsap.utils.toArray<HTMLElement>(
+        [
+          '.speech-col--voice .section-title',
+          '.speech-col--voice .field-select',
+          '.speech-col--voice .section-reset',
+          '.speech-col--voice .field-textarea',
+          '.speech-col--voice .field-readout',
+          '.speech-col--voice .knob-field',
+        ].join(', '),
+      )
+      const rightLeaves = gsap.utils.toArray<HTMLElement>(
+        [
+          '.speech-col--fx .section-title',
+          '.speech-col--fx .section-reset',
+          '.speech-col--fx .fx-title',
+          '.speech-col--fx .knob-field',
+        ].join(', '),
+      )
+      const leafDuration = 0.42
+      const leftStagger = 0.03
+      const rightStagger = 0.022
+      tl.from(
+        leftLeaves,
+        {
+          autoAlpha: 0,
+          y: 12,
+          stagger: leftStagger,
+          duration: leafDuration,
+          immediateRender: true,
+        },
+        sideContentAt,
+      )
+      tl.from(
+        rightLeaves,
+        {
+          autoAlpha: 0,
+          y: 12,
+          stagger: rightStagger,
+          duration: leafDuration,
+          immediateRender: true,
+        },
+        sideContentAt,
+      )
 
-        const columnChromeEnd =
-          columnStart + Math.max(0, chromeEls.length - 1) * 0.05 + 0.55
-        nextColumnAt = columnChromeEnd - 0.28
+      // —— 4. Master meters start with the FX leaf cascade ——
+      const masterContentAt = sideContentAt
+      tl.from(
+        '.speech-col--master .section-head',
+        { autoAlpha: 0, y: -12, immediateRender: true },
+        masterContentAt,
+      )
+
+      const meterColumns = [
+        '.master-meters > .master-fader:nth-child(1) > *',
+        '.master-meters > .master-fader:nth-child(2) > *',
+        '.master-meters > .vu > *',
+      ]
+      const meterStagger = 0.1
+      meterColumns.forEach((selector, i) => {
+        const els = gsap.utils.toArray<HTMLElement>(selector)
+        if (!els.length) return
+        tl.from(
+          els,
+          {
+            autoAlpha: 0,
+            y: 16,
+            stagger: 0.03,
+            immediateRender: true,
+          },
+          masterContentAt + 0.06 + i * meterStagger,
+        )
       })
+      const masterMetersEnd =
+        masterContentAt +
+        0.06 +
+        (meterColumns.length - 1) * meterStagger +
+        D
+
+      // —— 5. Volume fill closes after the level bars ——
+      const volumeProxy = { v: 0 }
+      const volumeFillAt = masterMetersEnd
+      tl.fromTo(
+        volumeProxy,
+        { v: 0 },
+        {
+          v: 100,
+          duration: D * 1.9,
+          onStart: () => setVolumeFill(0),
+          onUpdate: () => setVolumeFill(volumeProxy.v),
+          onComplete: () => setVolumeFill(null),
+        },
+        volumeFillAt,
+      )
+
+      return () => {
+        root?.classList.remove('is-introducing')
+      }
     },
     { scope: appRef },
   )
@@ -608,6 +743,7 @@ export default function App() {
       <MasterStrip
         volume={masterVolume}
         gain={masterGain}
+        volumeFill={volumeFill}
         onVolumeChange={setMasterVolume}
         onGainChange={setMasterGain}
         onReset={handleResetMaster}

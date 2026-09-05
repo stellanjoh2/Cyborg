@@ -127,6 +127,7 @@ export function MasterStrip({
   onGainChange,
   onReset,
   canReset,
+  volumeFill,
 }: {
   volume: number
   gain: number
@@ -134,6 +135,8 @@ export function MasterStrip({
   onGainChange: (value: number) => void
   onReset: () => void
   canReset: boolean
+  /** When set, drives the volume meter fill/readout directly (skips ease). */
+  volumeFill?: number | null
 }) {
   const ledsRef = useRef<HTMLDivElement>(null)
   const peakRef = useRef<HTMLSpanElement>(null)
@@ -146,6 +149,8 @@ export function MasterStrip({
   ridgesRef.current = ridges
   const volumeAnim = useAnimatedNumber(volume)
   const gainAnim = useAnimatedNumber(gain)
+  const volumeShown = volumeFill ?? volumeAnim.displayed
+  const volumeLit = volumeFill ?? volume
 
   useEffect(() => {
     const meters = metersRef.current
@@ -240,8 +245,8 @@ export function MasterStrip({
       <div ref={metersRef} className="master-meters">
         <VerticalFader
           label="Volume"
-          value={volume}
-          displayed={volumeAnim.displayed}
+          value={volumeLit}
+          displayed={volumeShown}
           ridges={ridges}
           onChange={onVolumeChange}
           skipOnce={volumeAnim.skipOnce}

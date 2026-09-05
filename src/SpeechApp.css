@@ -251,6 +251,17 @@
   background-size: var(--grain-size) var(--grain-size);
   background-repeat: repeat;
   mix-blend-mode: soft-light;
+  transition: opacity 0.45s ease;
+}
+
+/* Soft-light grain flashes hard while intro opacity/transforms recomposite. */
+.speech-app.is-introducing .speech-top::before,
+.speech-app.is-introducing .knob-panel::before,
+.speech-app.is-introducing .vocoder-panel::before,
+.speech-app.is-introducing .post-process::before,
+.speech-app.is-introducing .master-strip::before {
+  opacity: 0;
+  transition: none;
 }
 
 .speech-col--voice .text-panel {
