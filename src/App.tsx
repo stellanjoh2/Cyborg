@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { DevMode } from './components/DevMode'
+import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
 import { PhaseOrb } from './components/PhaseOrb'
@@ -923,10 +924,10 @@ export default function App() {
       <div className="speech-col speech-col--voice">
       <section className="knob-panel text-panel">
         <div className="section-head">
-          <h2 className="section-title">Text</h2>
+          <h2 className="section-title">Input</h2>
         </div>
         {isSpeaking ? (
-          <div className="field-textarea field-readout" aria-label="Text">
+          <div className="field-textarea field-readout" aria-label="Input">
             {spokenParts.map((part, index) => (
               <span
                 key={index}
@@ -948,28 +949,28 @@ export default function App() {
             onChange={(e) => setText(e.target.value)}
             placeholder="Type something..."
             rows={4}
-            aria-label="Text"
+            aria-label="Input"
           />
         )}
       </section>
 
       <section className="knob-panel">
-        <div className="section-head">
-          <div className="section-head__start">
-            <h2 className="section-title">Voice</h2>
-            <select
-              className="field-select field-select--inline"
+        <div className="section-head section-head--voice">
+          <h2 className="section-title">Voice</h2>
+          <div className="voice-preset">
+            <FieldSelect
+              className="field-select--voice"
               value={voiceId}
-              onChange={(e) => handleVoiceChange(e.target.value as VoiceId)}
               aria-label="Voice"
-            >
-              {VOICE_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.label}
-                </option>
-              ))}
-              <option value="custom">Custom</option>
-            </select>
+              onChange={(next) => handleVoiceChange(next as VoiceId)}
+              options={[
+                ...VOICE_PRESETS.map((preset) => ({
+                  value: preset.id,
+                  label: preset.label,
+                })),
+                { value: 'custom', label: 'Custom' },
+              ]}
+            />
           </div>
           <button
             className="secondary section-reset"

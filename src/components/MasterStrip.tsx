@@ -6,7 +6,8 @@ import {
 import { useAnimatedNumber } from '../useAnimatedNumber'
 import './MasterStrip.css'
 
-const RIDGE_PERIOD_PX = 7
+/** Target pitch of one ridge + gap. */
+const RIDGE_PERIOD_PX = 14
 /** DJM-A9 default: meter 0 ≈ −21 dBFS */
 const REFERENCE_DBFS = -21
 /** Pioneer channel scale floor / ∞ ceiling (∞ sits slightly above +12) */
@@ -23,7 +24,8 @@ function ridgesForTrack(track: HTMLElement): number {
     Number.parseFloat(styles.paddingTop) -
     Number.parseFloat(styles.paddingBottom)
   const gap = Number.parseFloat(styles.getPropertyValue('--ridge-gap')) || 2
-  return Math.max(1, Math.round((inner + gap) / RIDGE_PERIOD_PX))
+  // floor keeps period ≥ target; CSS (100% + gap) / n tiles an exact integer count
+  return Math.max(1, Math.floor((inner + gap) / RIDGE_PERIOD_PX))
 }
 
 function linearToMeterDb(linear: number): number {
@@ -58,10 +60,20 @@ function formatGain(slider: number): string {
   return `+${db.toFixed(1)} dB`
 }
 
+/** Snap a 0–100 fader value onto an integer ridge count. */
+function ridgeLit(value: number, ridges: number): number {
+  return Math.max(0, Math.min(ridges, Math.round((value / 100) * ridges)))
+}
+
+function litToValue(lit: number, ridges: number): number {
+  return ridges > 0 ? (lit / ridges) * 100 : 0
+}
+
 function VerticalFader({
   label,
   value,
   displayed,
+  ridges,
   onChange,
   skipOnce,
   format,
@@ -70,11 +82,15 @@ function VerticalFader({
   label: string
   value: number
   displayed: number
+  ridges: number
   onChange: (value: number) => void
   skipOnce: () => void
   format: (value: number) => string
   valueClassName?: string
 }) {
+  const lit = ridgeLit(value, ridges)
+  const fillPct = litToValue(ridgeLit(displayed, ridges), ridges)
+
   return (
     <label className="master-fader">
       <span className={`master-fader__value${valueClassName ? ` ${valueClassName}` : ''}`}>
@@ -82,20 +98,20 @@ function VerticalFader({
       </span>
       <span
         className="master-fader__track"
-        style={{ '--fill-pct': `${displayed}%` } as CSSProperties}
+        style={{ '--fill-pct': `${fillPct}%` } as CSSProperties}
       >
         <input
           type="range"
           min={0}
-          max={100}
+          max={ridges}
           step={1}
-          value={value}
+          value={lit}
           aria-label={label}
           aria-orientation="vertical"
           {...{ orient: 'vertical' }}
           onChange={(event) => {
             skipOnce()
-            onChange(Number(event.target.value))
+            onChange(litToValue(Number(event.target.value), ridges))
           }}
         />
       </span>
@@ -125,7 +141,7 @@ export function MasterStrip({
   const displayed = useRef(0)
   const peakHoldUntil = useRef(0)
   const peakHeldLit = useRef(0)
-  const [ridges, setRidges] = useState(48)
+  const [ridges, setRidges] = useState(24)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
   const volumeAnim = useAnimatedNumber(volume)
@@ -226,6 +242,7 @@ export function MasterStrip({
           label="Volume"
           value={volume}
           displayed={volumeAnim.displayed}
+          ridges={ridges}
           onChange={onVolumeChange}
           skipOnce={volumeAnim.skipOnce}
           format={(value) => String(Math.round(value))}
@@ -234,6 +251,7 @@ export function MasterStrip({
           label="Gain"
           value={gain}
           displayed={gainAnim.displayed}
+          ridges={ridges}
           onChange={onGainChange}
           skipOnce={gainAnim.skipOnce}
           format={formatGain}

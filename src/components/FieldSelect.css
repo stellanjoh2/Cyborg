@@ -1,0 +1,142 @@
+.field-select--inline {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: auto;
+  max-width: 14em;
+  height: calc(var(--font-m) + 6px);
+  margin: 0;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  background: var(--fill);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.field-select--voice {
+  width: max-content;
+  max-width: 9em;
+  min-width: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--font-m);
+  color: var(--text);
+}
+
+.field-select--voice .field-select__trigger {
+  gap: 10px;
+  padding: 2px 0 0;
+  background-image: none;
+}
+
+.field-select--voice .field-select__trigger::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  /* Match the 2px label nudge */
+  transform: translateY(1px);
+}
+
+.field-select--voice .field-select__option {
+  font-size: var(--font-m);
+  padding: 8px 10px 8px 0;
+}
+
+.field-select--voice .field-select__menu {
+  /* Pull left so option glyphs share an edge with the trigger label */
+  left: calc(-1 * var(--stroke-width));
+  min-width: max(100%, 8em);
+  padding: 4px 8px 4px 0;
+  transform: none;
+}
+
+.field-select__trigger {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 28px 2px 8px;
+  border: 0;
+  border-radius: inherit;
+  background-color: transparent;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%),
+    linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(50% - 1px),
+    calc(100% - 8px) calc(50% - 1px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.field-select__trigger:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.field-select__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-select__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  background: var(--fill);
+  box-shadow: var(--section-shadow);
+}
+
+.field-select__option {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.field-select__option:hover,
+.field-select__option:focus-visible {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  outline: none;
+}
+
+.field-select__option.is-selected {
+  color: var(--lime);
+  text-shadow: var(--glow-outer);
+}
