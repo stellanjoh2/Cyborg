@@ -175,11 +175,13 @@ export function MasterStrip({
 
       const heldLit = peakHeldLit.current
       const holdingPeak = now < peakHoldUntil.current && heldLit > lit
-      const inRed =
-        meterDb >= RED_METER_DB ||
-        (holdingPeak &&
-          segmentMeterDb(heldLit - 1, ridgesCount) >= RED_METER_DB) ||
-        instant >= 0.99
+      const heldDb = holdingPeak
+        ? segmentMeterDb(heldLit - 1, ridgesCount)
+        : meterDb
+      const zoneDb = Math.max(meterDb, heldDb)
+      const inRed = zoneDb >= RED_METER_DB || instant >= 0.99
+      const inYellow = !inRed && zoneDb >= YELLOW_METER_DB
+      const isLive = !inRed && !inYellow && lit > 0
 
       const root = ledsRef.current
       if (root) {
@@ -190,7 +192,13 @@ export function MasterStrip({
         }
         root.classList.toggle('is-hot', inRed)
       }
-      peakRef.current?.classList.toggle('is-on', inRed)
+
+      const peak = peakRef.current
+      if (peak) {
+        peak.classList.toggle('is-live', isLive)
+        peak.classList.toggle('is-caution', inYellow)
+        peak.classList.toggle('is-on', inRed)
+      }
 
       frame = requestAnimationFrame(tick)
     }
@@ -235,8 +243,8 @@ export function MasterStrip({
           <span
             className="vu-peak"
             ref={peakRef}
-            title="Peak"
-            aria-label="Peak"
+            title="Signal"
+            aria-label="Signal lamp"
           />
           <div className="vu-leds" ref={ledsRef}>
             {Array.from({ length: ridges }, (_, index) => (

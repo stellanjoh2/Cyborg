@@ -217,15 +217,31 @@
   background: var(--black);
 }
 
+.vu-peak.is-live {
+  --glow-color: var(--vu);
+  border-color: var(--vu);
+  background: var(--vu);
+  box-shadow: var(--glow-outer);
+  animation: vu-peak-blink 0.72s steps(1) infinite;
+}
+
+.vu-peak.is-caution {
+  --glow-color: #ffd400;
+  border-color: #ffd400;
+  background: #ffd400;
+  box-shadow: var(--glow-outer);
+  animation: vu-peak-blink 0.36s steps(1) infinite;
+}
+
 .vu-peak.is-on {
   --glow-color: #ff2a00;
   border-color: #ff2a00;
   background: #ff2a00;
   box-shadow: var(--glow-outer);
-  animation: vu-peak-flash 0.16s steps(1) infinite;
+  animation: vu-peak-blink 0.16s steps(1) infinite;
 }
 
-@keyframes vu-peak-flash {
+@keyframes vu-peak-blink {
   50% {
     border-color: var(--panel-border);
     background: var(--black);
