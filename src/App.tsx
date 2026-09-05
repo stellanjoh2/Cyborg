@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
@@ -81,7 +82,9 @@ export default function App() {
   const [isLooping, setIsLooping] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emptyWarning, setEmptyWarning] = useState(false)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
   const spokenWordRef = useRef<HTMLSpanElement>(null)
   const appRef = useRef<HTMLElement>(null)
@@ -168,9 +171,11 @@ export default function App() {
         0,
       )
       if (navBleed) {
-        ui.from(
+        // Must use fromTo: gsap.set above left autoAlpha at 0.
+        ui.fromTo(
           navBleed,
-          { autoAlpha: 0, y: -28, immediateRender: true },
+          { autoAlpha: 0, y: -28 },
+          { autoAlpha: 1, y: 0 },
           0,
         )
       }
@@ -678,10 +683,11 @@ export default function App() {
     if (!trimmed) {
       setIsSpeaking(false)
       setSpokenWordIndex(null)
-      setError('Please enter some text.')
+      setEmptyWarning(true)
       return
     }
 
+    setEmptyWarning(false)
     setIsSpeaking(true)
     setSpokenWordIndex(0)
     cancelSamSpeech()
@@ -727,10 +733,11 @@ export default function App() {
 
     const trimmed = text.trim()
     if (!trimmed) {
-      setError('Please enter some text.')
+      setEmptyWarning(true)
       return
     }
 
+    setEmptyWarning(false)
     setIsExporting(true)
 
     void exportSamWav({
@@ -760,7 +767,7 @@ export default function App() {
         <Logotype ref={splashLogoRef} className="speech-splash__logo" />
       </div>
       <header className="speech-top">
-      <h1 className="speech-title" aria-label="Cyborg Dominance">
+      <h1 className="speech-title" aria-label="LX01">
         <Logotype ref={headerLogoRef} loopOnHover />
       </h1>
       <div className="speech-top__center">
@@ -803,6 +810,14 @@ export default function App() {
           title="Reset all sections to the selected template"
         >
           RESET
+        </button>
+        <button
+          className="secondary"
+          type="button"
+          onClick={() => setAboutOpen(true)}
+          title="About"
+        >
+          INFO
         </button>
         <button
           className="secondary"
@@ -1158,10 +1173,15 @@ export default function App() {
           </div>
         ) : (
           <textarea
-            className="field-textarea"
+            className={`field-textarea${emptyWarning ? ' is-warning' : ''}`}
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Type something..."
+            onChange={(e) => {
+              setText(e.target.value)
+              if (emptyWarning) setEmptyWarning(false)
+            }}
+            placeholder={
+              emptyWarning ? 'Please enter some text.' : 'Type something...'
+            }
             rows={4}
             aria-label="Input"
           />
@@ -1360,6 +1380,7 @@ export default function App() {
       </div>
       </div>
       </main>
+      <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />
     </>
   )

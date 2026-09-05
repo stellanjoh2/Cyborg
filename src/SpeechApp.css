@@ -101,6 +101,7 @@
   min-width: 0;
 }
 
+/* Top-nav: techy ridge/bracket buttons (adapted from uiverse Navarog21/terrible-walrus-15) */
 .speech-app .speech-top .primary,
 .speech-app .speech-top .secondary {
   display: inline-flex;
@@ -110,35 +111,106 @@
   width: 160px;
   height: var(--nav-control-h);
   box-sizing: border-box;
+  overflow: visible;
   /* Ac437 glyphs sit high in the em box; nudge for optical center */
   padding: calc(0.2em - 1px) 0 0;
   font-size: var(--font-m);
+  font-weight: 400;
   white-space: nowrap;
-  border-width: 2px;
+  border: 3px ridge var(--accent);
+  border-radius: 0.3em;
+  background: transparent;
+  color: var(--accent);
+  text-shadow: none;
+  box-shadow: none;
   transition:
     background-color 0.25s ease,
     color 0.25s ease,
     border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    text-shadow 0.25s ease;
+    box-shadow 0.25s ease;
+}
+
+.speech-top .primary::before,
+.speech-top .secondary::before,
+.speech-top .primary::after,
+.speech-top .secondary::after {
+  content: '';
+  position: absolute;
+  left: 3%;
+  width: 94%;
+  height: 40%;
+  /* Override global hover-plate z-index:-1 so masks sit on the ridge */
+  z-index: 0;
+  border-radius: 0;
+  background: var(--fill);
+  opacity: 1;
+  pointer-events: none;
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+.speech-top .primary::after,
+.speech-top .secondary::after {
+  top: -10px;
+}
+
+.speech-top .primary::before,
+.speech-top .secondary::before {
+  top: 80%;
 }
 
 .speech-top .primary:hover:not(:disabled)::before,
-.speech-top .secondary:hover:not(:disabled)::before {
-  opacity: 0;
+.speech-top .secondary:hover:not(:disabled)::before,
+.speech-top .primary:hover:not(:disabled)::after,
+.speech-top .secondary:hover:not(:disabled)::after,
+.speech-top .primary.is-active::before,
+.speech-top .secondary.is-active::before,
+.speech-top .primary.is-active::after,
+.speech-top .secondary.is-active::after {
+  transform: scale(0);
 }
 
-.speech-top .secondary:not(.is-active):not(:disabled) {
+.speech-top .primary:hover:not(:disabled),
+.speech-top .secondary:hover:not(:disabled):not(.is-active) {
+  background: transparent;
   border-color: var(--accent);
   color: var(--accent);
+  text-shadow: none;
+  box-shadow: inset 0 0 25px var(--accent);
 }
 
-.speech-top .secondary:not(.is-active):not(:disabled):hover {
+.speech-top .primary.is-active,
+.speech-top .secondary.is-active,
+.speech-top .primary:active:not(:disabled),
+.speech-top .secondary:active:not(:disabled) {
   background: var(--accent);
-  border-color: var(--accent);
+  border: 3px solid var(--accent);
   color: var(--on-chrome);
-  text-shadow: none;
-  box-shadow: var(--glow-outer);
+  box-shadow: none;
+}
+
+.speech-top .primary:active:not(:disabled)::before,
+.speech-top .secondary:active:not(:disabled)::before,
+.speech-top .primary:active:not(:disabled)::after,
+.speech-top .secondary:active:not(:disabled)::after {
+  transform: scale(0);
+}
+
+.speech-top .primary:disabled,
+.speech-top .secondary:disabled {
+  border-color: var(--muted);
+  border-style: ridge;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.speech-top .primary:disabled::before,
+.speech-top .secondary:disabled::before,
+.speech-top .primary:disabled::after,
+.speech-top .secondary:disabled::after {
+  background: var(--fill);
+  transform: none;
 }
 
 .speech-top__phase-orb {
@@ -241,6 +313,11 @@
 .field-textarea:focus-visible {
   outline: 2px solid var(--lime);
   outline-offset: 2px;
+}
+
+.field-textarea.is-warning::placeholder {
+  color: var(--error);
+  opacity: 1;
 }
 
 .knob-panel,
@@ -521,7 +598,7 @@
   font-size: var(--font-s);
   line-height: 1;
   color: var(--on-chrome);
-  background: var(--pink);
+  background: var(--error);
   font-weight: 400;
   border-radius: var(--radius);
 }

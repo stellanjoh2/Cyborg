@@ -184,7 +184,7 @@
 }
 
 .vu-leds.is-hot {
-  border-color: #ff2a00;
+  border-color: var(--error);
 }
 
 .vu-led {
@@ -206,8 +206,8 @@
 }
 
 .vu-led--red.is-on {
-  --glow-color: #ff2a00;
-  background: #ff2a00;
+  --glow-color: var(--error);
+  background: var(--error);
   box-shadow: var(--glow-outer);
 }
 
@@ -238,9 +238,9 @@
 }
 
 .vu-peak.is-on {
-  --glow-color: #ff2a00;
-  border-color: #ff2a00;
-  background: #ff2a00;
+  --glow-color: var(--error);
+  border-color: var(--error);
+  background: var(--error);
   box-shadow: var(--glow-outer);
   animation: vu-peak-blink 0.08s steps(1) infinite;
 }

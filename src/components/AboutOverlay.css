@@ -1,0 +1,226 @@
+.about-overlay {
+  --ui-ease: cubic-bezier(0.32, 0.08, 0.24, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  padding: 0;
+  background: rgba(0, 0, 0, 0);
+  pointer-events: none;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.2s var(--ui-ease);
+}
+
+.about-overlay.is-open {
+  /* Tint + blur on this node. A ::before child only frosts the overlay fill. */
+  background: rgba(0, 0, 0, 0.48);
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.about-overlay__scroll {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 1056px);
+  max-height: 100%;
+  margin: auto;
+  overflow-y: auto;
+  padding: 64px 32px;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.35s var(--ui-ease),
+    transform 0.4s var(--ui-ease);
+}
+
+.about-overlay.is-open .about-overlay__scroll {
+  opacity: 1;
+  transform: none;
+}
+
+.about-overlay__content p {
+  margin: 0 0 1.15em;
+  font-family: var(--font-ui);
+  font-size: 48px;
+  line-height: 1.35;
+  font-weight: 400;
+  text-transform: none;
+  color: #ffffff;
+}
+
+.about-overlay__content p:last-child {
+  margin-bottom: 0;
+}
+
+.about-overlay__content p.about-overlay__links {
+  margin-top: 0.5em;
+  font-size: calc(48px * 2 / 3);
+}
+
+/* Match top-nav ridge secondary buttons */
+.about-overlay .secondary.about-overlay__ok {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: var(--nav-control-h);
+  min-width: 0;
+  min-height: 0;
+  margin: 1.6em 0 0;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: calc(0.2em - 1px) 0 0;
+  border: 3px ridge var(--accent);
+  border-radius: 0.3em;
+  /* Match overlay backdrop so ridge masks don't read as gray strips */
+  background: var(--bg);
+  color: var(--accent);
+  font-size: var(--font-m);
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: none;
+  box-shadow: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.about-overlay .secondary.about-overlay__ok::before,
+.about-overlay .secondary.about-overlay__ok::after {
+  content: '';
+  position: absolute;
+  left: 3%;
+  width: 94%;
+  height: 40%;
+  z-index: 0;
+  border-radius: 0;
+  background: var(--bg);
+  opacity: 1;
+  pointer-events: none;
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+.about-overlay .secondary.about-overlay__ok::after {
+  top: -10px;
+}
+
+.about-overlay .secondary.about-overlay__ok::before {
+  top: 80%;
+}
+
+.about-overlay .secondary.about-overlay__ok.is-in {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.about-overlay .secondary.about-overlay__ok:hover:not(:disabled)::before,
+.about-overlay .secondary.about-overlay__ok:hover:not(:disabled)::after {
+  transform: scale(0);
+}
+
+.about-overlay .secondary.about-overlay__ok:hover:not(:disabled) {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+  text-shadow: none;
+  box-shadow: inset 0 0 25px var(--accent);
+}
+
+.about-overlay .secondary.about-overlay__ok:active:not(:disabled) {
+  background: var(--accent);
+  border: 3px solid var(--accent);
+  color: var(--on-chrome);
+  box-shadow: none;
+}
+
+.about-overlay .secondary.about-overlay__ok:active:not(:disabled)::before,
+.about-overlay .secondary.about-overlay__ok:active:not(:disabled)::after {
+  transform: scale(0);
+}
+
+.about-overlay__ok .typewriter-reveal {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+}
+
+.about-overlay__content a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  transition:
+    color 0.25s ease,
+    text-shadow 0.25s ease;
+}
+
+.about-overlay__content a:hover {
+  color: var(--accent);
+  text-shadow: var(--glow-outer);
+}
+
+.typewriter-reveal {
+  position: relative;
+  display: block;
+}
+
+.typewriter-reveal__ghost {
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre-wrap;
+}
+
+.typewriter-reveal__live {
+  position: absolute;
+  inset: 0;
+  white-space: pre-wrap;
+}
+
+.typewriter-reveal__caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.9em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: -0.12em;
+  animation: typewriter-reveal-caret-blink 0.64s steps(1) infinite;
+}
+
+@keyframes typewriter-reveal-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-overlay,
+  .about-overlay__scroll {
+    transition-duration: 0.01ms;
+  }
+
+  .about-overlay__scroll {
+    transform: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .about-overlay__scroll {
+    padding: 48px 20px;
+  }
+
+  .about-overlay__content p {
+    font-size: 48px;
+  }
+}
