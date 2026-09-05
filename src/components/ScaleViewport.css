@@ -10,6 +10,19 @@
   background: var(--synth-shell, #0e0e0e);
 }
 
+.scale-viewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--wallpaper-image);
+  background-size: cover;
+  background-position: center;
+  opacity: var(--wallpaper-opacity);
+  mix-blend-mode: var(--wallpaper-blend-mode);
+}
+
 .scale-nav-bleed {
   position: absolute;
   left: 0;

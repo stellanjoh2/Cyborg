@@ -3,15 +3,21 @@ import {
   applyGrainOpacity,
   applyPalette,
   applyStrokeOpacity,
+  applyWallpaperBlendMode,
+  applyWallpaperOpacity,
   DEFAULT_GRAIN_OPACITY,
   DEFAULT_PALETTE,
   DEFAULT_STROKE_OPACITY,
+  DEFAULT_WALLPAPER_BLEND_MODE,
+  DEFAULT_WALLPAPER_OPACITY,
   formatPalette,
   isHexColor,
   PALETTE_KEYS,
   PALETTE_LABELS,
+  WALLPAPER_BLEND_MODES,
   type Palette,
   type PaletteKey,
+  type WallpaperBlendMode,
 } from '../devPalette'
 import './DevMode.css'
 
@@ -33,6 +39,11 @@ export function DevMode() {
   const [palette, setPalette] = useState<Palette>(DEFAULT_PALETTE)
   const [strokeOpacity, setStrokeOpacity] = useState(DEFAULT_STROKE_OPACITY)
   const [grainOpacity, setGrainOpacity] = useState(DEFAULT_GRAIN_OPACITY)
+  const [wallpaperOpacity, setWallpaperOpacity] = useState(
+    DEFAULT_WALLPAPER_OPACITY,
+  )
+  const [wallpaperBlendMode, setWallpaperBlendMode] =
+    useState<WallpaperBlendMode>(DEFAULT_WALLPAPER_BLEND_MODE)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -75,9 +86,30 @@ export function DevMode() {
     applyGrainOpacity(next)
   }
 
+  const setWallpaper = (value: number) => {
+    const next = Math.min(1, Math.max(0, value))
+    setWallpaperOpacity(next)
+    applyWallpaperOpacity(next)
+  }
+
+  const setBlendMode = (value: string) => {
+    if (!(WALLPAPER_BLEND_MODES as readonly string[]).includes(value)) {
+      return
+    }
+    const next = value as WallpaperBlendMode
+    setWallpaperBlendMode(next)
+    applyWallpaperBlendMode(next)
+  }
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(
-      formatPalette(palette, strokeOpacity, grainOpacity),
+      formatPalette(
+        palette,
+        strokeOpacity,
+        grainOpacity,
+        wallpaperOpacity,
+        wallpaperBlendMode,
+      ),
     )
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1200)
@@ -159,6 +191,46 @@ export function DevMode() {
           }}
           aria-label="grain opacity value"
         />
+      </label>
+      <label className="dev-mode__row dev-mode__row--opacity">
+        <span className="dev-mode__label">wallpaper opacity</span>
+        <input
+          className="dev-mode__range"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={Math.round(wallpaperOpacity * 100)}
+          onChange={(e) => setWallpaper(Number(e.target.value) / 100)}
+          aria-label="wallpaper opacity"
+        />
+        <input
+          className="dev-mode__hex"
+          type="text"
+          value={wallpaperOpacity.toFixed(2)}
+          onChange={(e) => {
+            const next = Number(e.target.value)
+            if (Number.isFinite(next)) {
+              setWallpaper(next)
+            }
+          }}
+          aria-label="wallpaper opacity value"
+        />
+      </label>
+      <label className="dev-mode__row dev-mode__row--blend">
+        <span className="dev-mode__label">wallpaper blend</span>
+        <select
+          className="dev-mode__select"
+          value={wallpaperBlendMode}
+          onChange={(e) => setBlendMode(e.target.value)}
+          aria-label="wallpaper blend mode"
+        >
+          {WALLPAPER_BLEND_MODES.map((mode) => (
+            <option key={mode} value={mode}>
+              {mode}
+            </option>
+          ))}
+        </select>
       </label>
       <button className="dev-mode__copy" type="button" onClick={() => void handleCopy()}>
         {copied ? 'Copied' : 'Copy palette'}

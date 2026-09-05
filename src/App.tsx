@@ -5,6 +5,7 @@ import { DevMode } from './components/DevMode'
 import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
+import { Logotype, type LogotypeHandle } from './components/Logotype'
 import { PhaseOrb } from './components/PhaseOrb'
 import {
   DEFAULT_POST_PROCESS_UI,
@@ -84,6 +85,8 @@ export default function App() {
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
   const spokenWordRef = useRef<HTMLSpanElement>(null)
   const appRef = useRef<HTMLElement>(null)
+  const splashLogoRef = useRef<LogotypeHandle>(null)
+  const headerLogoRef = useRef<LogotypeHandle>(null)
   const bakedVoiceRef = useRef<{
     text: string
     rate: number
@@ -98,8 +101,13 @@ export default function App() {
 
   useGSAP(
     () => {
+      const navBleed = document.querySelector('.scale-nav-bleed')
+
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
+        gsap.set('.speech-splash', { autoAlpha: 0 })
+        splashLogoRef.current?.show()
+        headerLogoRef.current?.show()
         return
       }
 
@@ -110,25 +118,62 @@ export default function App() {
       const root = appRef.current
       root?.classList.add('is-introducing')
 
+      // Full-bleed nav lives outside the stage; hide until UI intro starts.
+      if (navBleed) gsap.set(navBleed, { autoAlpha: 0 })
+
       const D = 0.55
       const tl = gsap.timeline({
-        defaults: {
-          duration: D,
-          ease: 'power3.out',
-        },
         onComplete: () => {
           root?.classList.remove('is-introducing')
         },
       })
+
+      // —— 0. Logotype splash: wordmark → LX01 stagger → fade out ——
+      const splashOut = 0.55
+      const splashHold = 0.25
+      splashLogoRef.current?.hideParts()
+      const splashReveal = splashLogoRef.current?.revealTimeline()
+      const charsEnd = splashReveal?.duration() ?? 1.1
+      const SPLASH = charsEnd + splashHold + splashOut
+
+      if (splashReveal) tl.add(splashReveal, 0)
+      tl.to(
+        '.speech-splash__logo',
+        {
+          autoAlpha: 0,
+          scale: 1.04,
+          duration: splashOut,
+          ease: 'power2.in',
+        },
+        charsEnd + splashHold,
+      )
+      tl.set('.speech-splash', { autoAlpha: 0 }, SPLASH)
+
+      const ui = gsap.timeline({
+        defaults: {
+          duration: D,
+          ease: 'power3.out',
+        },
+      })
       // Prior speed-ups kept; sequence is timed in beats below.
-      tl.timeScale(1.5 / 1.25)
+      ui.timeScale(1.5 / 1.25)
+
+      // Header mark stays fully assembled (no splash-style reveal); hover loop still works.
+      headerLogoRef.current?.show()
 
       // —— 1. Nav plate, then assets L→R ——
-      tl.from(
+      ui.from(
         '.speech-top',
         { autoAlpha: 0, y: -28, immediateRender: true },
         0,
       )
+      if (navBleed) {
+        ui.from(
+          navBleed,
+          { autoAlpha: 0, y: -28, immediateRender: true },
+          0,
+        )
+      }
 
       const navItemsAt = D + 0.08
       const navEls = gsap.utils.toArray<HTMLElement>(
@@ -141,7 +186,7 @@ export default function App() {
         ].join(', '),
       )
       const navStagger = 0.07
-      tl.from(
+      ui.from(
         navEls,
         {
           autoAlpha: 0,
@@ -158,14 +203,14 @@ export default function App() {
         navItemsAt + Math.max(0, navEls.length - 1) * navStagger + D
 
       // —— 2. Master + side columns assemble together ——
-      tl.from(
+      ui.from(
         '.speech-col--master .master-strip',
         { autoAlpha: 0, y: 24, immediateRender: true },
         boardAt,
       )
 
       const sideDuration = D * 2.4
-      tl.from(
+      ui.from(
         '.speech-col--voice',
         {
           x: (_i, el) =>
@@ -175,7 +220,7 @@ export default function App() {
         },
         boardAt,
       )
-      tl.from(
+      ui.from(
         '.speech-col--fx',
         {
           x: (_i, el) => {
@@ -212,7 +257,7 @@ export default function App() {
       const leafDuration = 0.42
       const leftStagger = 0.03
       const rightStagger = 0.022
-      tl.from(
+      ui.from(
         leftLeaves,
         {
           autoAlpha: 0,
@@ -223,7 +268,7 @@ export default function App() {
         },
         sideContentAt,
       )
-      tl.from(
+      ui.from(
         rightLeaves,
         {
           autoAlpha: 0,
@@ -237,7 +282,7 @@ export default function App() {
 
       // —— 4. Master meters start with the FX leaf cascade ——
       const masterContentAt = sideContentAt
-      tl.from(
+      ui.from(
         '.speech-col--master .section-head',
         { autoAlpha: 0, y: -12, immediateRender: true },
         masterContentAt,
@@ -252,7 +297,7 @@ export default function App() {
       meterColumns.forEach((selector, i) => {
         const els = gsap.utils.toArray<HTMLElement>(selector)
         if (!els.length) return
-        tl.from(
+        ui.from(
           els,
           {
             autoAlpha: 0,
@@ -272,7 +317,7 @@ export default function App() {
       // —— 5. Volume fill closes after the level bars ——
       const volumeProxy = { v: 0 }
       const volumeFillAt = masterMetersEnd
-      tl.fromTo(
+      ui.fromTo(
         volumeProxy,
         { v: 0 },
         {
@@ -285,12 +330,40 @@ export default function App() {
         volumeFillAt,
       )
 
+      tl.add(ui, SPLASH)
+
       return () => {
         root?.classList.remove('is-introducing')
       }
     },
     { scope: appRef },
   )
+
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false
+      return (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      )
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'h' && event.key !== 'H') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (isTypingTarget(event.target)) return
+      event.preventDefault()
+      document.documentElement.classList.toggle('is-app-hidden')
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.documentElement.classList.remove('is-app-hidden')
+    }
+  }, [])
 
   const livePlan = useMemo(
     () => resolveHumanRobotBlend(humanRobot, speed, pitch),
@@ -683,8 +756,13 @@ export default function App() {
   return (
     <>
       <main className="speech-app" ref={appRef}>
+      <div className="speech-splash" aria-hidden="true">
+        <Logotype ref={splashLogoRef} className="speech-splash__logo" />
+      </div>
       <header className="speech-top">
-      <h1 className="speech-title" aria-label="Cyborg Dominance" />
+      <h1 className="speech-title" aria-label="Cyborg Dominance">
+        <Logotype ref={headerLogoRef} loopOnHover />
+      </h1>
       <div className="speech-top__center">
         <div className="speech-top__transport-left actions">
           <button

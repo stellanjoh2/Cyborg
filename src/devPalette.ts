@@ -17,8 +17,8 @@ export type Palette = Record<PaletteKey, string>
 export const DEFAULT_PALETTE: Palette = {
   text: '#ffdbb3',
   muted: '#6E6E6E',
-  black: '#0E0E0E',
-  fill: '#131313',
+  black: '#0a0a0a',
+  fill: '#121212',
   stroke: '#FFFFFF',
   lime: '#ff8800',
   vu: '#00ffe1',
@@ -41,7 +41,22 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
 }
 
 export const DEFAULT_STROKE_OPACITY = 0.1
-export const DEFAULT_GRAIN_OPACITY = 0.39
+export const DEFAULT_GRAIN_OPACITY = 0.48
+export const DEFAULT_WALLPAPER_OPACITY = 0.16
+export const DEFAULT_WALLPAPER_BLEND_MODE = 'screen'
+
+export const WALLPAPER_BLEND_MODES = [
+  'screen',
+  'soft-light',
+  'overlay',
+  'multiply',
+  'lighten',
+  'normal',
+  'hard-light',
+  'color-dodge',
+] as const
+
+export type WallpaperBlendMode = (typeof WALLPAPER_BLEND_MODES)[number]
 
 const HEX = /^#[0-9a-fA-F]{6}$/
 
@@ -75,14 +90,29 @@ export function applyGrainOpacity(opacity: number) {
   )
 }
 
+export function applyWallpaperOpacity(opacity: number) {
+  document.documentElement.style.setProperty(
+    '--wallpaper-opacity',
+    String(clampOpacity(opacity)),
+  )
+}
+
+export function applyWallpaperBlendMode(mode: WallpaperBlendMode) {
+  document.documentElement.style.setProperty('--wallpaper-blend-mode', mode)
+}
+
 export function formatPalette(
   palette: Palette,
   strokeOpacity = DEFAULT_STROKE_OPACITY,
   grainOpacity = DEFAULT_GRAIN_OPACITY,
+  wallpaperOpacity = DEFAULT_WALLPAPER_OPACITY,
+  wallpaperBlendMode: WallpaperBlendMode = DEFAULT_WALLPAPER_BLEND_MODE,
 ): string {
   return [
     ...PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`),
     `--section-stroke-opacity: ${strokeOpacity};`,
     `--grain-opacity: ${grainOpacity};`,
+    `--wallpaper-opacity: ${wallpaperOpacity};`,
+    `--wallpaper-blend-mode: ${wallpaperBlendMode};`,
   ].join('\n')
 }

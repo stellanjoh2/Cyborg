@@ -35,9 +35,28 @@
   grid-template-columns: 1fr 72px 48px;
 }
 
+.dev-mode__row--blend {
+  grid-template-columns: 1fr 128px;
+}
+
 .dev-mode__range {
   width: 100%;
   accent-color: var(--lime);
+}
+
+.dev-mode__select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  background: var(--black);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
 .dev-mode__swatch {
@@ -69,6 +88,7 @@
 }
 
 .dev-mode__hex:focus-visible,
+.dev-mode__select:focus-visible,
 .dev-mode__copy:focus-visible {
   outline: 2px solid var(--lime);
   outline-offset: 2px;

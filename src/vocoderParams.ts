@@ -39,7 +39,7 @@ export const DEFAULT_VOCODER_UI: VocoderUiState = {
   resonance: 48,
   efSense: 72,
   unvoice: 0,
-  carrierAmount: 80,
+  carrierAmount: 50,
   carrierMix: 28,
   carrierCutoff: 58,
   carrierResonance: 32,

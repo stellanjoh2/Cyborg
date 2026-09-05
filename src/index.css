@@ -12,13 +12,16 @@
   --purple: #3b00ff;
   --blue: #00c4ff;
   --pink: #ff00c4;
-  --black: #0e0e0e;
-  --fill: #131313;
+  --black: #0a0a0a;
+  --fill: #121212;
   --stroke: #ffffff;
   --section-stroke-opacity: 0.1;
-  --grain-opacity: 0.39;
+  --grain-opacity: 0.48;
   --grain-size: 128px;
   --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch' result='n'/%3E%3CfeColorMatrix in='n' type='matrix' values='0.333 0.333 0.333 0 0 0.333 0.333 0.333 0 0 0.333 0.333 0.333 0 0 0 0 0 0 1' result='gray'/%3E%3CfeComponentTransfer in='gray'%3E%3CfeFuncR type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncG type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncB type='linear' slope='1.5' intercept='-0.25'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --wallpaper-image: url('/peter-gargiulo-cGNCepznaV8-unsplash.jpg');
+  --wallpaper-opacity: 0.16;
+  --wallpaper-blend-mode: screen;
   --stroke-width: 1px;
   --radius: 6px;
   --radius-panel: 24px;
@@ -108,6 +111,12 @@ body,
 #root {
   overflow: hidden;
   background: var(--bg);
+}
+
+html.is-app-hidden .speech-app,
+html.is-app-hidden .scale-nav-bleed {
+  opacity: 0;
+  pointer-events: none;
 }
 
 h1,

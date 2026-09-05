@@ -1,4 +1,5 @@
 .speech-app {
+  position: relative;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -10,7 +11,17 @@
   overflow: hidden;
   text-align: left;
   color: var(--text);
-  background: var(--black);
+  background: transparent;
+}
+
+.speech-splash {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: transparent;
 }
 
 .speech-top {
@@ -33,17 +44,32 @@
   margin: 0;
   height: var(--nav-control-h);
   aspect-ratio: var(--logo-aspect);
+  color: var(--logo-color);
   filter: var(--glow-filter);
+  cursor: pointer;
 }
 
-.speech-title::before {
-  content: '';
+.speech-title .logotype {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: var(--logo-color);
-  -webkit-mask: var(--logo) left center / contain no-repeat;
-  mask: var(--logo) left center / contain no-repeat;
+  overflow: visible;
+}
+
+.speech-splash__logo {
+  display: block;
+  width: 75vw; /* 1920px on a 2560 display */
+  height: auto;
+  aspect-ratio: var(--logo-aspect);
+  color: var(--logo-color);
+  filter: var(--glow-filter);
+  overflow: visible;
+}
+
+.logotype__larynx,
+.logotype__industries,
+.logotype__char {
+  visibility: hidden;
 }
 
 .speech-top__center {
