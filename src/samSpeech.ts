@@ -11,8 +11,6 @@ import {
   startSynthPlayback,
   setSynthLoop,
   stopSynthPlayback,
-  pauseSynthPlayback,
-  resumeSynthPlayback,
   updateLiveSynthParams,
   type LiveSynthParams,
   type PostProcessParams,
@@ -51,33 +49,37 @@ function mapMetallicToMouth(metallic: number): number {
 export async function renderSamSamples(
   options: SamSynthOptions,
 ): Promise<Float32Array | null> {
-  const metallic = Math.min(Math.max(options.metallic, 0), 1)
-  const pitch = Math.min(Math.max(options.pitch, 0), 2)
-  const mouth = mapMetallicToMouth(metallic)
-  const useBetterEnglish = options.betterEnglish ?? true
+  try {
+    const metallic = Math.min(Math.max(options.metallic, 0), 1)
+    const pitch = Math.min(Math.max(options.pitch, 0), 2)
+    const mouth = mapMetallicToMouth(metallic)
+    const useBetterEnglish = options.betterEnglish ?? true
 
-  let phoneticText = options.text
-  let phoneticMode = false
+    let phoneticText = options.text
+    let phoneticMode = false
 
-  if (useBetterEnglish) {
-    try {
-      phoneticText = await prepareSamPhoneticText(options.text)
-      phoneticMode = true
-    } catch {
-      phoneticText = classicTextToPhonemes(options.text)
-      phoneticMode = true
+    if (useBetterEnglish) {
+      try {
+        phoneticText = await prepareSamPhoneticText(options.text)
+        phoneticMode = true
+      } catch {
+        phoneticText = classicTextToPhonemes(options.text)
+        phoneticMode = true
+      }
     }
+
+    const sam = new SamJs({
+      speed: mapUiSpeedToSam(options.speed),
+      pitch: mapUiPitchToSam(pitch),
+      mouth,
+      throat: 128,
+    })
+
+    const buffer = sam.buf32(phoneticText, phoneticMode)
+    return buffer instanceof Float32Array ? buffer : null
+  } catch {
+    return null
   }
-
-  const sam = new SamJs({
-    speed: mapUiSpeedToSam(options.speed),
-    pitch: mapUiPitchToSam(pitch),
-    mouth,
-    throat: 128,
-  })
-
-  const buffer = sam.buf32(phoneticText, phoneticMode)
-  return buffer instanceof Float32Array ? buffer : null
 }
 
 let liveBakeEpoch = 0
@@ -104,14 +106,6 @@ export function stopSamSpeech() {
   speakEpoch += 1
   liveBakeEpoch += 1
   stopSynthPlayback()
-}
-
-export function pauseSamSpeech(): Promise<void> {
-  return pauseSynthPlayback()
-}
-
-export function resumeSamSpeech(): Promise<void> {
-  return resumeSynthPlayback()
 }
 
 /** Re-synthesize SAM samples mid-playback so mouth/timbre match current voice params. */

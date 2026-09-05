@@ -6,7 +6,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: calc(var(--section-gap) * 1.5);
+  gap: var(--app-pad);
   overflow: hidden;
   text-align: left;
   color: var(--text);
@@ -75,8 +75,8 @@
   min-width: 0;
 }
 
-.speech-top .primary,
-.speech-top .secondary {
+.speech-app .speech-top .primary,
+.speech-app .speech-top .secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,16 +84,17 @@
   width: 160px;
   height: var(--nav-control-h);
   box-sizing: border-box;
-  padding: 0;
-  font-size: var(--font-s);
+  /* Ac437 glyphs sit high in the em box; nudge for optical center */
+  padding: calc(0.2em - 1px) 0 0;
+  font-size: var(--font-m);
   white-space: nowrap;
   border-width: 2px;
   transition:
-    background-color 80ms ease,
-    color 80ms ease,
-    border-color 80ms ease,
-    box-shadow 80ms ease,
-    text-shadow 80ms ease;
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    text-shadow 0.25s ease;
 }
 
 .speech-top .primary:hover:not(:disabled)::before,
@@ -410,7 +411,11 @@
   position: relative;
   isolation: isolate;
   border-radius: 9999px;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Ac437 glyphs sit high in the em box; nudge for optical center */
+  padding: calc(5px + 0.15em) 12px 6px;
   font-family: var(--font-ui);
   font-size: var(--font-s);
   line-height: 1;
@@ -418,6 +423,12 @@
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: none;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    text-shadow 0.25s ease;
 }
 
 .primary::before,
@@ -430,6 +441,7 @@
   background: var(--hover-plate-on);
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
 .primary:hover:not(:disabled)::before,
@@ -531,6 +543,7 @@
 
 .speech-app .secondary.section-reset {
   border: 2px solid var(--section-stroke);
+  border-radius: 3px;
   background: var(--fill);
   color: var(--muted);
   padding: 4px 8px;
@@ -539,11 +552,11 @@
   box-shadow: none;
   text-shadow: none;
   transition:
-    background-color 80ms ease,
-    color 80ms ease,
-    border-color 80ms ease,
-    box-shadow 80ms ease,
-    text-shadow 80ms ease;
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    text-shadow 0.25s ease;
 }
 
 .speech-app .secondary.section-reset:disabled {

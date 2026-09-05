@@ -33,7 +33,6 @@
 .knob-field.is-zero .knob__track,
 .knob-field.is-zero .knob__fill {
   stroke: var(--muted-solid);
-  opacity: 1;
 }
 
 .knob-field.is-disabled .knob__needle-core,
@@ -59,6 +58,11 @@
   font-weight: 400;
   color: var(--muted);
   text-align: center;
+  transition: filter 0.25s ease;
+}
+
+.knob-field:has(.knob:hover) .knob-label {
+  filter: brightness(1.5);
 }
 
 .knob-hints {
@@ -139,6 +143,11 @@
 
 .knob__track {
   opacity: 0.25;
+  transition: opacity 0.25s ease;
+}
+
+.knob:hover .knob__track {
+  opacity: 0.375; /* 50% more visible than base 0.25 */
 }
 
 .knob__fill {

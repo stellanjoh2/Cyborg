@@ -45,7 +45,6 @@ import {
 } from './samSpeech'
 import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
 import { preloadPronunciationDictionary } from './samPronunciation'
-import { cancelSpeechPlayback } from './speechPlayback'
 import {
   splitSpokenParts,
   spokenWordWeights,
@@ -449,7 +448,6 @@ export default function App() {
   }
 
   const handleStop = () => {
-    cancelSpeechPlayback()
     stopSamSpeech()
     setIsLooping(false)
     setSamLoop(false)
@@ -507,6 +505,11 @@ export default function App() {
         bakedVoiceRef.current = null
         setError(message)
       },
+    }).catch((err: unknown) => {
+      setIsSpeaking(false)
+      setSpokenWordIndex(null)
+      bakedVoiceRef.current = null
+      setError(err instanceof Error ? err.message : 'Speech synthesis failed.')
     })
   }
 

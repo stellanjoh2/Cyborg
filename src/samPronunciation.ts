@@ -30,19 +30,12 @@ function lookupCmu(dict: CmuDictionary, word: string): string | null {
     return PRONUNCIATION_OVERRIDES[normalized]
   }
 
-  const direct =
+  return (
     dict[normalized] ??
     dict[`${normalized}(2)`] ??
-    dict[`${normalized}(3)`]
-
-  if (direct) {
-    return direct
-  }
-
-  const insensitiveKey = Object.keys(dict).find(
-    (key) => key.toLowerCase() === normalized,
+    dict[`${normalized}(3)`] ??
+    null
   )
-  return insensitiveKey ? dict[insensitiveKey] : null
 }
 
 function cmuToSamPhonemes(cmu: string): string {

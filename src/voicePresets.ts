@@ -1,5 +1,3 @@
-import type { ChunkMode } from './speechPlayback'
-import type { VoiceTone } from './selectSystemVoice'
 import { DEFAULT_VOCODER_UI, type VocoderUiState } from './vocoderParams'
 
 export type VoiceId = 'default' | 'robot' | 'fast' | 'deep' | 'custom'
@@ -9,17 +7,11 @@ export interface VoicePreset {
   label: string
   speed: number
   pitch: number
-  tone: VoiceTone
-  chunkMode: ChunkMode
   /** 0 = human, 100 = robot. */
   humanRobot: number
   /** 0–100; 50 = neutral. Shifts vocoder filter-bank formants. */
   formant: number
   vocoder: VocoderUiState
-  /** ST Speech speed marker (%1–%127, lower is faster). */
-  stSpeed: number
-  /** ST Speech pitch marker (!60–!127, lower is higher pitched). */
-  stPitch: number
 }
 
 export const VOICE_PRESETS: VoicePreset[] = [
@@ -28,21 +20,15 @@ export const VOICE_PRESETS: VoicePreset[] = [
     label: 'Default',
     speed: 1,
     pitch: 1,
-    tone: 'natural',
-    chunkMode: 'single',
     humanRobot: 0,
     formant: 50,
     vocoder: DEFAULT_VOCODER_UI,
-    stSpeed: 100,
-    stPitch: 78,
   },
   {
     id: 'robot',
     label: 'Robot',
     speed: 0.9,
     pitch: 0.55,
-    tone: 'natural',
-    chunkMode: 'single',
     humanRobot: 82,
     formant: 76,
     vocoder: {
@@ -56,16 +42,12 @@ export const VOICE_PRESETS: VoicePreset[] = [
       carrierCutoff: 72,
       carrierResonance: 48,
     },
-    stSpeed: 112,
-    stPitch: 92,
   },
   {
     id: 'fast',
     label: 'Fast',
     speed: 1.45,
     pitch: 1.12,
-    tone: 'bright',
-    chunkMode: 'single',
     humanRobot: 12,
     formant: 48,
     vocoder: {
@@ -79,16 +61,12 @@ export const VOICE_PRESETS: VoicePreset[] = [
       carrierCutoff: 82,
       carrierResonance: 18,
     },
-    stSpeed: 68,
-    stPitch: 70,
   },
   {
     id: 'deep',
     label: 'Deep',
     speed: 0.72,
     pitch: 0.42,
-    tone: 'deep',
-    chunkMode: 'single',
     humanRobot: 18,
     formant: 62,
     vocoder: {
@@ -102,8 +80,6 @@ export const VOICE_PRESETS: VoicePreset[] = [
       carrierCutoff: 36,
       carrierResonance: 58,
     },
-    stSpeed: 118,
-    stPitch: 98,
   },
 ]
 

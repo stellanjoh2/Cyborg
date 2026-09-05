@@ -214,6 +214,7 @@ let sourceOffsetSeconds = 0
 let lastPositionTime = 0
 let loopEnabled = false
 let cancelled = false
+let playbackGeneration = 0
 let playbackPaused = false
 let onEndCallback: (() => void) | null = null
 let graphReady: Promise<SynthGraph> | null = null
@@ -1447,42 +1448,6 @@ export function getSynthPlaybackProgress(): number {
   return Math.min(1, Math.max(0, sourceOffsetSeconds / audioBuffer.duration))
 }
 
-export function isSynthPlaying(): boolean {
-  return activeSource !== null
-}
-
-export function isSynthPaused(): boolean {
-  return playbackPaused
-}
-
-export function pauseSynthPlayback(): Promise<void> {
-  if (!graph || !activeSource) {
-    return Promise.resolve()
-  }
-
-  captureSourcePosition()
-  playbackPaused = true
-  const liveContext = graph.context as AudioContext
-  if (liveContext.state === 'running') {
-    return liveContext.suspend().then(() => undefined)
-  }
-  return Promise.resolve()
-}
-
-export function resumeSynthPlayback(): Promise<void> {
-  if (!graph) {
-    return Promise.resolve()
-  }
-
-  playbackPaused = false
-  lastPositionTime = graph.context.currentTime
-  const liveContext = graph.context as AudioContext
-  if (liveContext.state === 'suspended') {
-    return liveContext.resume().then(() => undefined)
-  }
-  return Promise.resolve()
-}
-
 export function setSynthLoop(enabled: boolean) {
   loopEnabled = enabled
 }
@@ -1601,6 +1566,7 @@ export function updateLiveSynthParams(
 
 export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
   cancelled = true
+  playbackGeneration += 1
   playbackPaused = false
   if (options?.clearLoop ?? true) {
     loopEnabled = false
@@ -1627,6 +1593,7 @@ export function startSynthPlayback(
   },
 ) {
   cancelled = false
+  const generation = ++playbackGeneration
   playbackPaused = false
   currentParams = {
     ...params,
@@ -1649,7 +1616,7 @@ export function startSynthPlayback(
   void (async () => {
     try {
       const nodes = await ensureGraph()
-      if (cancelled) {
+      if (cancelled || generation !== playbackGeneration) {
         return
       }
       setAudioBufferFromSamples(samples, nodes)
@@ -1669,39 +1636,13 @@ export function startSynthPlayback(
       )
       startSource()
     } catch {
-      callbacks.onError?.('Audio playback failed.')
+      if (generation === playbackGeneration) {
+        callbacks.onError?.('Audio playback failed.')
+      }
     }
   })()
 }
 
 export function cancelMetallicPlayback() {
   stopSynthPlayback({ clearLoop: false })
-}
-
-export function playAudioBuffer(
-  samples: Float32Array,
-  _sampleRate: number,
-  fx: { intensity: number; pitch: number; speed?: number },
-  callbacks: {
-    loop?: boolean
-    onEnd?: () => void
-    onError?: (message: string) => void
-  },
-) {
-  startSynthPlayback(
-    samples,
-    {
-      speed: fx.speed ?? 1,
-      pitch: fx.pitch,
-      metallic: fx.intensity,
-      vocoder: {
-        ...DEFAULT_VOCODER_PARAMS,
-        bands: DEFAULT_VOCODER_PARAMS.bands.map((band) => ({ ...band })),
-      },
-      postProcess: { ...DEFAULT_POST_PROCESS },
-      masterVolume: DEFAULT_MASTER_VOLUME,
-      masterGainDb: DEFAULT_MASTER_GAIN_DB,
-    },
-    callbacks,
-  )
 }

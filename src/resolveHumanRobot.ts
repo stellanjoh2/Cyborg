@@ -1,5 +1,4 @@
 export interface PlaybackPlan {
-  engine: 'sam'
   rate: number
   pitch: number
   /** 0 = clean/human, 1 = full metallic FX chain. */
@@ -20,7 +19,6 @@ export function resolveHumanRobotBlend(
   pitch: number,
 ): PlaybackPlan {
   return {
-    engine: 'sam',
     rate: speed,
     pitch,
     metallic: mapHumanRobotToMetallic(humanRobot),

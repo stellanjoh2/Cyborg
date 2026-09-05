@@ -55,7 +55,6 @@
 .master-fader__label,
 .master-fader__value {
   font-family: var(--font-ui);
-  font-size: var(--font-s);
   line-height: 1;
 }
 
@@ -64,6 +63,7 @@
   writing-mode: vertical-rl;
   text-orientation: mixed;
   transform: rotate(180deg);
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -74,6 +74,7 @@
   justify-self: stretch;
   width: 0;
   min-width: 100%;
+  font-size: var(--font-s);
   color: var(--lime);
   text-shadow: var(--glow-outer);
   text-align: center;
@@ -121,7 +122,7 @@
   background-origin: content-box, content-box;
   background-clip: content-box, content-box, padding-box;
   border: var(--stroke-width) solid var(--section-stroke);
-  border-radius: var(--radius);
+  border-radius: 3px;
 }
 
 .master-fader__track::after {
@@ -131,7 +132,7 @@
   right: 2px;
   bottom: 2px;
   height: calc((100% - 4px) * var(--fill-pct) / 100%);
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: 1px;
   box-shadow: var(--glow-outer);
   opacity: min(1, calc(var(--fill-pct) * 100));
   pointer-events: none;
@@ -174,7 +175,7 @@
   gap: var(--ridge-gap);
   padding: 2px;
   border: var(--stroke-width) solid var(--section-stroke);
-  border-radius: var(--radius);
+  border-radius: 3px;
   background-color: var(--ridge-stroke);
   background-clip: padding-box;
 }
@@ -222,7 +223,7 @@
   border-color: var(--vu);
   background: var(--vu);
   box-shadow: var(--glow-outer);
-  animation: vu-peak-blink 0.72s steps(1) infinite;
+  animation: vu-peak-blink 0.36s steps(1) infinite;
 }
 
 .vu-peak.is-caution {
@@ -230,7 +231,7 @@
   border-color: #ffd400;
   background: #ffd400;
   box-shadow: var(--glow-outer);
-  animation: vu-peak-blink 0.36s steps(1) infinite;
+  animation: vu-peak-blink 0.18s steps(1) infinite;
 }
 
 .vu-peak.is-on {
@@ -238,7 +239,7 @@
   border-color: #ff2a00;
   background: #ff2a00;
   box-shadow: var(--glow-outer);
-  animation: vu-peak-blink 0.16s steps(1) infinite;
+  animation: vu-peak-blink 0.08s steps(1) infinite;
 }
 
 @keyframes vu-peak-blink {
