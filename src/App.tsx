@@ -79,6 +79,97 @@ const SPLASH_SPEED = 1 / 0.9
 const SPLASH_TYPE_MS = Math.max(1, Math.round(10 / SPLASH_SPEED))
 /** Larynx / S mark in — scale-up / dock; same length so stagger stays readable. */
 const SPLASH_MARK_IN = 0.425 / SPLASH_SPEED
+/** Difference dirt: Eli Fitch–style canvas pixelate (coarse → sharp). */
+const SPLASH_DIRT_SRC = `${import.meta.env.BASE_URL}remapstudio-AFKX0ei32lA-unsplash.jpg`
+/** Columns across the viewport at the coarsest end (megablocks). */
+const SPLASH_DIRT_START_COLS = 3
+/** Discrete pixelation levels (fewer = choppier). */
+const SPLASH_DIRT_STEPS = 8
+
+function drawImageCover(
+  ctx: CanvasRenderingContext2D,
+  img: CanvasImageSource,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  iw: number,
+  ih: number,
+) {
+  const ir = iw / ih
+  const cr = dw / dh
+  let sx: number
+  let sy: number
+  let sw: number
+  let sh: number
+  if (ir > cr) {
+    sh = ih
+    sw = sh * cr
+    sx = (iw - sw) / 2
+    sy = 0
+  } else {
+    sw = iw
+    sh = sw / cr
+    sx = 0
+    sy = (ih - sh) / 2
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+}
+
+/** Log-space: t=0 → startCols megablocks, t=1 → full resolution (stepped). */
+function dirtColsForProgress(t: number, canvasW: number) {
+  const start = SPLASH_DIRT_START_COLS
+  const end = Math.max(start + 1, canvasW)
+  const p = Math.max(0, Math.min(1, t))
+  const level = Math.round(p * SPLASH_DIRT_STEPS)
+  const stepped = level / SPLASH_DIRT_STEPS
+  return Math.exp(
+    Math.log(start) + stepped * (Math.log(end) - Math.log(start)),
+  )
+}
+
+function paintPixelatedDirt(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  progress: number,
+  buffer: HTMLCanvasElement,
+) {
+  const w = canvas.width
+  const h = canvas.height
+  if (w < 1 || h < 1) return
+  const cols = dirtColsForProgress(progress, w)
+  const littleW = Math.max(1, Math.round(cols))
+  const littleH = Math.max(1, Math.round(cols * (h / w)))
+  if (buffer.width !== littleW) buffer.width = littleW
+  if (buffer.height !== littleH) buffer.height = littleH
+  const bctx = buffer.getContext('2d')
+  if (!bctx) return
+  bctx.imageSmoothingEnabled = false
+  drawImageCover(
+    bctx,
+    img,
+    0,
+    0,
+    littleW,
+    littleH,
+    img.naturalWidth,
+    img.naturalHeight,
+  )
+  ctx.imageSmoothingEnabled = false
+  ctx.clearRect(0, 0, w, h)
+  ctx.drawImage(buffer, 0, 0, littleW, littleH, 0, 0, w, h)
+}
+
+function sizeDirtCanvas(canvas: HTMLCanvasElement, host: HTMLElement) {
+  const rect = host.getBoundingClientRect()
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const w = Math.max(1, Math.round(rect.width * dpr))
+  const h = Math.max(1, Math.round(rect.height * dpr))
+  if (canvas.width !== w) canvas.width = w
+  if (canvas.height !== h) canvas.height = h
+}
+
 export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
@@ -120,6 +211,8 @@ export default function App() {
       const splashDirt = document.querySelector<HTMLElement>(
         '.scale-viewport__dirt',
       )
+      const splashDirtCanvas = splashDirt?.querySelector('canvas') ?? null
+      const splashDirtCtx = splashDirtCanvas?.getContext('2d') ?? null
       const root = appRef.current
       const splash = root?.querySelector<HTMLElement>('.speech-splash')
       const splashMark = root?.querySelector<HTMLElement>(
@@ -129,11 +222,40 @@ export default function App() {
       const splashCredit = root?.querySelector<HTMLElement>('.speech-splash__credit')
       const splashYear = root?.querySelector<HTMLElement>('.speech-splash__year')
 
+      const dirtPix = { t: 0 }
+      let dirtImg: HTMLImageElement | null = null
+      const dirtBuffer = document.createElement('canvas')
+
+      const paintDirt = () => {
+        if (!splashDirtCanvas || !splashDirtCtx || !dirtImg?.complete) return
+        paintPixelatedDirt(
+          splashDirtCanvas,
+          splashDirtCtx,
+          dirtImg,
+          dirtPix.t,
+          dirtBuffer,
+        )
+      }
+
+      const fitDirtCanvas = () => {
+        if (!splashDirt || !splashDirtCanvas) return
+        sizeDirtCanvas(splashDirtCanvas, splashDirt)
+        paintDirt()
+      }
+
       const clearSplashDirt = () => {
         if (!splashDirt) return
         splashDirt.classList.remove('is-splash')
         splashDirt.style.clipPath = ''
-        splashDirt.style.filter = ''
+        dirtPix.t = 0
+        if (splashDirtCtx && splashDirtCanvas) {
+          splashDirtCtx.clearRect(
+            0,
+            0,
+            splashDirtCanvas.width,
+            splashDirtCanvas.height,
+          )
+        }
       }
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -200,6 +322,7 @@ export default function App() {
         : 0
 
       // Pixel y — yPercent is unreliable inside ScaleViewport's transform: scale().
+      // Extended splash covers letterbox; travel must clear the full viewport height.
       const plateTravel = Math.max(splash.offsetHeight, root.offsetHeight, 1)
       gsap.set(splash, { y: -plateTravel, autoAlpha: 1, force3D: true })
 
@@ -225,7 +348,24 @@ export default function App() {
       }
       splashDirt?.classList.add('is-splash')
       syncSplashDirt()
-      if (splashDirt) gsap.set(splashDirt, { filter: 'blur(20px)' })
+      fitDirtCanvas()
+      window.addEventListener('resize', () => {
+        syncSplashDirt()
+        fitDirtCanvas()
+      })
+
+      // Preload difference image; first paint stays coarse until the tween runs.
+      const dirtLoader = new Image()
+      dirtLoader.decoding = 'async'
+      dirtLoader.src = SPLASH_DIRT_SRC
+      dirtLoader.onload = () => {
+        dirtImg = dirtLoader
+        paintDirt()
+      }
+      if (dirtLoader.complete && dirtLoader.naturalWidth > 0) {
+        dirtImg = dirtLoader
+        paintDirt()
+      }
 
       // Hold black void for ~15 frames @60fps before the orange plate drops in.
       const plateInAt = 15 / 60
@@ -256,16 +396,31 @@ export default function App() {
         },
         plateInAt,
       )
-      // Difference dirt: quick blur-in as the plate reveals it.
-      if (splashDirt) {
+      // Difference dirt: log-space pixelate; sharp when the top-left mark settles.
+      // Out tracks the plate curtain (megablocks as it leaves).
+      if (splashDirtCanvas) {
+        const dirtInEnd = markAt + SPLASH_MARK_IN
+        dirtPix.t = 0
+        paintDirt()
         tl.to(
-          splashDirt,
+          dirtPix,
           {
-            filter: 'blur(0px)',
-            duration: splashT(0.35),
-            ease: 'power2.out',
+            t: 1,
+            duration: Math.max(0.01, dirtInEnd - plateInAt),
+            ease: 'none',
+            onUpdate: paintDirt,
           },
           plateInAt,
+        )
+        tl.to(
+          dirtPix,
+          {
+            t: 0,
+            duration: curtainDur,
+            ease: 'none',
+            onUpdate: paintDirt,
+          },
+          curtainAt,
         )
       }
       tl.call(
@@ -413,11 +568,23 @@ export default function App() {
       )
 
       const sideDuration = D * 2.4
+      // getBoundingClientRect is screenspace; GSAP x is pre-scale design px.
+      const stageScale = Math.max(
+        0.001,
+        Number.parseFloat(
+          getComputedStyle(viewportEl ?? document.documentElement).getPropertyValue(
+            '--stage-scale',
+          ),
+        ) || 1,
+      )
       ui.from(
         '.speech-col--voice',
         {
-          x: (_i, el) =>
-            -((el as HTMLElement).getBoundingClientRect().right + 24),
+          autoAlpha: 0,
+          x: (_i, el) => {
+            const right = (el as HTMLElement).getBoundingClientRect().right
+            return -(right + 24) / stageScale
+          },
           duration: sideDuration,
           immediateRender: true,
         },
@@ -426,9 +593,10 @@ export default function App() {
       ui.from(
         '.speech-col--fx',
         {
+          autoAlpha: 0,
           x: (_i, el) => {
-            const rect = (el as HTMLElement).getBoundingClientRect()
-            return window.innerWidth - rect.left + 24
+            const left = (el as HTMLElement).getBoundingClientRect().left
+            return (window.innerWidth - left + 24) / stageScale
           },
           duration: sideDuration,
           immediateRender: true,
@@ -536,6 +704,7 @@ export default function App() {
       tl.add(ui, curtainAt)
 
       return () => {
+        window.removeEventListener('resize', syncSplashDirt)
         root?.classList.remove('is-introducing')
         document.documentElement.classList.remove(
           'is-splash-void',

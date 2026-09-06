@@ -1,3 +1,12 @@
+/* Blur the app shell (portaled overlay stays sharp). See AboutOverlay.tsx. */
+#root {
+  transition: filter 0.2s cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+
+html.is-about-open #root {
+  filter: blur(14px);
+}
+
 .about-overlay {
   --ui-ease: cubic-bezier(0.32, 0.08, 0.24, 1);
   position: fixed;
@@ -15,11 +24,8 @@
 }
 
 .about-overlay.is-open {
-  /* Tint + blur on this node. A ::before child only frosts the overlay fill. */
   background: rgba(0, 0, 0, 0.48);
   pointer-events: auto;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .about-overlay__scroll {

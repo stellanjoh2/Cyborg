@@ -1,4 +1,5 @@
-/** Target 16:9 canvas (2560×1440). ScaleViewport only scales down from this. */
+/** Target 16:9 canvas (2560×1440). ScaleViewport only scales down from this.
+ *  Letterbox gutters are exposed as --stage-bleed-x/y so plates can extend. */
 export const DESIGN_WIDTH = 2560
 export const DESIGN_HEIGHT = 1440
 

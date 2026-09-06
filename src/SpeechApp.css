@@ -14,6 +14,17 @@
   background: transparent;
 }
 
+/* Let the splash plate paint into letterbox gutters during intro. */
+.speech-app.is-introducing {
+  overflow: visible;
+}
+
+/* Keep parked nav/board UI clipped to the stage — not the letterbox. */
+.speech-app.is-introducing .speech-top,
+.speech-app.is-introducing .speech-board {
+  overflow: hidden;
+}
+
 /* Letterbox outside the 16:9 stage — paint accent so the splash isn't cropped. */
 html.is-splash-bleed .scale-viewport {
   background: var(--accent);
@@ -42,9 +53,13 @@ html.is-splash-void .speech-splash {
   transform: translate3d(0, -110%, 0);
 }
 
+/* Extend into letterbox; content insets keep the 16:9 design frame. */
 .speech-splash {
   position: absolute;
-  inset: 0;
+  top: calc(-1 * var(--stage-bleed-y, 0px));
+  right: calc(-1 * var(--stage-bleed-x, 0px));
+  bottom: calc(-1 * var(--stage-bleed-y, 0px));
+  left: calc(-1 * var(--stage-bleed-x, 0px));
   z-index: 30;
   display: grid;
   place-items: center;
@@ -55,7 +70,8 @@ html.is-splash-void .speech-splash {
 
 .speech-splash__cyborg {
   position: absolute;
-  inset: 144px;
+  inset: calc(144px + var(--stage-bleed-y, 0px))
+    calc(144px + var(--stage-bleed-x, 0px));
   z-index: 0;
   box-sizing: border-box;
   pointer-events: none;
@@ -75,7 +91,8 @@ html.is-splash-void .speech-splash {
 
 .speech-splash__frame {
   position: absolute;
-  inset: 144px;
+  inset: calc(144px + var(--stage-bleed-y, 0px))
+    calc(144px + var(--stage-bleed-x, 0px));
   z-index: 1;
   box-sizing: border-box;
   display: grid;

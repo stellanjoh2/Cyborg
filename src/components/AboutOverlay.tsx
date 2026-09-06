@@ -39,6 +39,13 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
     setOkActive(false)
   }, [open])
 
+  // ScaleViewport's transform: scale() puts the UI on its own compositor layer;
+  // backdrop-filter on a body portal often samples empty chrome instead. Blur #root.
+  useEffect(() => {
+    document.documentElement.classList.toggle('is-about-open', entered)
+    return () => document.documentElement.classList.remove('is-about-open')
+  }, [entered])
+
   useEffect(() => {
     if (!mounted) return
     const onKeyDown = (event: KeyboardEvent) => {
