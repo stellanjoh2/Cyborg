@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
+  applyBevelEmboss,
   applyGrainOpacity,
   applyPalette,
   applyStrokeOpacity,
   applyWallpaperBlendMode,
   applyWallpaperOpacity,
+  DEFAULT_BEVEL_EMBOSS,
   DEFAULT_GRAIN_OPACITY,
   DEFAULT_PALETTE,
   DEFAULT_STROKE_OPACITY,
@@ -15,6 +17,7 @@ import {
   PALETTE_KEYS,
   PALETTE_LABELS,
   WALLPAPER_BLEND_MODES,
+  type BevelEmboss,
   type Palette,
   type PaletteKey,
   type WallpaperBlendMode,
@@ -34,6 +37,117 @@ function isTypingTarget(target: EventTarget | null): boolean {
   )
 }
 
+function OpacityRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <label className="dev-mode__row dev-mode__row--opacity">
+      <span className="dev-mode__label">{label}</span>
+      <input
+        className="dev-mode__range"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value={Math.round(value * 100)}
+        onChange={(e) => onChange(Number(e.target.value) / 100)}
+        aria-label={label}
+      />
+      <input
+        className="dev-mode__hex"
+        type="text"
+        value={value.toFixed(2)}
+        onChange={(e) => {
+          const next = Number(e.target.value)
+          if (Number.isFinite(next)) {
+            onChange(next)
+          }
+        }}
+        aria-label={`${label} value`}
+      />
+    </label>
+  )
+}
+
+function PxRow({
+  label,
+  value,
+  max,
+  onChange,
+}: {
+  label: string
+  value: number
+  max: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <label className="dev-mode__row dev-mode__row--opacity">
+      <span className="dev-mode__label">{label}</span>
+      <input
+        className="dev-mode__range"
+        type="range"
+        min="0"
+        max={max}
+        step="1"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={label}
+      />
+      <input
+        className="dev-mode__hex"
+        type="text"
+        value={`${value}px`}
+        onChange={(e) => {
+          const next = Number(e.target.value.replace(/px$/i, ''))
+          if (Number.isFinite(next)) {
+            onChange(next)
+          }
+        }}
+        aria-label={`${label} value`}
+      />
+    </label>
+  )
+}
+
+function ColorRow({
+  label,
+  value,
+  fallback,
+  onChange,
+}: {
+  label: string
+  value: string
+  fallback: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="dev-mode__row">
+      <input
+        className="dev-mode__swatch"
+        type="color"
+        value={isHexColor(value) ? value : fallback}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+      />
+      <span className="dev-mode__label">{label}</span>
+      <input
+        className="dev-mode__hex"
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        spellCheck={false}
+        aria-label={`${label} hex`}
+      />
+    </label>
+  )
+}
+
 export function DevMode() {
   const [open, setOpen] = useState(false)
   const [palette, setPalette] = useState<Palette>(DEFAULT_PALETTE)
@@ -44,6 +158,7 @@ export function DevMode() {
   )
   const [wallpaperBlendMode, setWallpaperBlendMode] =
     useState<WallpaperBlendMode>(DEFAULT_WALLPAPER_BLEND_MODE)
+  const [bevelEmboss, setBevelEmboss] = useState<BevelEmboss>(DEFAULT_BEVEL_EMBOSS)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -101,6 +216,12 @@ export function DevMode() {
     applyWallpaperBlendMode(next)
   }
 
+  const patchBevel = (patch: Partial<BevelEmboss>) => {
+    const next = { ...bevelEmboss, ...patch }
+    setBevelEmboss(next)
+    applyBevelEmboss(next)
+  }
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(
       formatPalette(
@@ -109,6 +230,7 @@ export function DevMode() {
         grainOpacity,
         wallpaperOpacity,
         wallpaperBlendMode,
+        bevelEmboss,
       ),
     )
     setCopied(true)
@@ -123,100 +245,29 @@ export function DevMode() {
     <aside className="dev-mode" aria-label="Color tuner">
       <h2 className="dev-mode__title">Dev colors</h2>
       {PALETTE_KEYS.map((key) => (
-        <label key={key} className="dev-mode__row">
-          <input
-            className="dev-mode__swatch"
-            type="color"
-            value={isHexColor(palette[key]) ? palette[key] : DEFAULT_PALETTE[key]}
-            onChange={(e) => setColor(key, e.target.value)}
-            aria-label={PALETTE_LABELS[key]}
-          />
-          <span className="dev-mode__label">{PALETTE_LABELS[key]}</span>
-          <input
-            className="dev-mode__hex"
-            type="text"
-            value={palette[key]}
-            onChange={(e) => setColor(key, e.target.value)}
-            spellCheck={false}
-            aria-label={`${PALETTE_LABELS[key]} hex`}
-          />
-        </label>
+        <ColorRow
+          key={key}
+          label={PALETTE_LABELS[key]}
+          value={palette[key]}
+          fallback={DEFAULT_PALETTE[key]}
+          onChange={(value) => setColor(key, value)}
+        />
       ))}
-      <label className="dev-mode__row dev-mode__row--opacity">
-        <span className="dev-mode__label">border opacity</span>
-        <input
-          className="dev-mode__range"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={Math.round(strokeOpacity * 100)}
-          onChange={(e) => setOpacity(Number(e.target.value) / 100)}
-          aria-label="border opacity"
-        />
-        <input
-          className="dev-mode__hex"
-          type="text"
-          value={strokeOpacity.toFixed(2)}
-          onChange={(e) => {
-            const next = Number(e.target.value)
-            if (Number.isFinite(next)) {
-              setOpacity(next)
-            }
-          }}
-          aria-label="border opacity value"
-        />
-      </label>
-      <label className="dev-mode__row dev-mode__row--opacity">
-        <span className="dev-mode__label">grain opacity</span>
-        <input
-          className="dev-mode__range"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={Math.round(grainOpacity * 100)}
-          onChange={(e) => setGrain(Number(e.target.value) / 100)}
-          aria-label="grain opacity"
-        />
-        <input
-          className="dev-mode__hex"
-          type="text"
-          value={grainOpacity.toFixed(2)}
-          onChange={(e) => {
-            const next = Number(e.target.value)
-            if (Number.isFinite(next)) {
-              setGrain(next)
-            }
-          }}
-          aria-label="grain opacity value"
-        />
-      </label>
-      <label className="dev-mode__row dev-mode__row--opacity">
-        <span className="dev-mode__label">wallpaper opacity</span>
-        <input
-          className="dev-mode__range"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={Math.round(wallpaperOpacity * 100)}
-          onChange={(e) => setWallpaper(Number(e.target.value) / 100)}
-          aria-label="wallpaper opacity"
-        />
-        <input
-          className="dev-mode__hex"
-          type="text"
-          value={wallpaperOpacity.toFixed(2)}
-          onChange={(e) => {
-            const next = Number(e.target.value)
-            if (Number.isFinite(next)) {
-              setWallpaper(next)
-            }
-          }}
-          aria-label="wallpaper opacity value"
-        />
-      </label>
+      <OpacityRow
+        label="border opacity"
+        value={strokeOpacity}
+        onChange={setOpacity}
+      />
+      <OpacityRow
+        label="grain opacity"
+        value={grainOpacity}
+        onChange={setGrain}
+      />
+      <OpacityRow
+        label="wallpaper opacity"
+        value={wallpaperOpacity}
+        onChange={setWallpaper}
+      />
       <label className="dev-mode__row dev-mode__row--blend">
         <span className="dev-mode__label">wallpaper blend</span>
         <select
@@ -232,6 +283,70 @@ export function DevMode() {
           ))}
         </select>
       </label>
+
+      <h3 className="dev-mode__subtitle">Bevel / emboss</h3>
+      <ColorRow
+        label="highlight color"
+        value={bevelEmboss.highlightColor}
+        fallback={DEFAULT_BEVEL_EMBOSS.highlightColor}
+        onChange={(value) => patchBevel({ highlightColor: value })}
+      />
+      <ColorRow
+        label="shadow color"
+        value={bevelEmboss.shadowColor}
+        fallback={DEFAULT_BEVEL_EMBOSS.shadowColor}
+        onChange={(value) => patchBevel({ shadowColor: value })}
+      />
+      <PxRow
+        label="bevel radius"
+        value={bevelEmboss.radius}
+        max={12}
+        onChange={(value) => patchBevel({ radius: value })}
+      />
+      <PxRow
+        label="bevel offset"
+        value={bevelEmboss.offset}
+        max={8}
+        onChange={(value) => patchBevel({ offset: value })}
+      />
+      <OpacityRow
+        label="top highlight"
+        value={bevelEmboss.topOpacity}
+        onChange={(value) => patchBevel({ topOpacity: value })}
+      />
+      <OpacityRow
+        label="bottom shadow"
+        value={bevelEmboss.bottomOpacity}
+        onChange={(value) => patchBevel({ bottomOpacity: value })}
+      />
+      <OpacityRow
+        label="left highlight"
+        value={bevelEmboss.leftOpacity}
+        onChange={(value) => patchBevel({ leftOpacity: value })}
+      />
+      <OpacityRow
+        label="right shadow"
+        value={bevelEmboss.rightOpacity}
+        onChange={(value) => patchBevel({ rightOpacity: value })}
+      />
+      <ColorRow
+        label="glow color"
+        value={bevelEmboss.glowColor}
+        fallback={DEFAULT_BEVEL_EMBOSS.glowColor}
+        onChange={(value) => patchBevel({ glowColor: value })}
+      />
+      <OpacityRow
+        label="glow opacity"
+        value={bevelEmboss.glowOpacity}
+        onChange={(value) => patchBevel({ glowOpacity: value })}
+      />
+      <PxRow
+        label="glow radius"
+        value={bevelEmboss.glowRadius}
+        max={80}
+        onChange={(value) => patchBevel({ glowRadius: value })}
+      />
+
       <button className="dev-mode__copy" type="button" onClick={() => void handleCopy()}>
         {copied ? 'Copied' : 'Copy palette'}
       </button>

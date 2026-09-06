@@ -96,6 +96,7 @@
   --fill-pct: 0%;
   --period: calc((100% + var(--ridge-gap)) / var(--ridges));
   --ridge: calc(var(--period) - var(--ridge-gap));
+  --glow-color: var(--lime);
   position: relative;
   width: var(--meter-w);
   height: 100%;
@@ -121,9 +122,11 @@
   background-repeat: no-repeat;
   background-origin: content-box, content-box;
   background-clip: content-box, content-box, padding-box;
-  border: var(--stroke-width) solid var(--section-stroke);
+  border: none;
   border-radius: 999px;
-  overflow: hidden;
+  box-shadow: var(--section-recess-shadow);
+  /* Visible so fill glow can bloom past the capsule (esp. at full default). */
+  overflow: visible;
 }
 
 .master-fader__track::after {
@@ -135,7 +138,6 @@
   height: calc((100% - 4px) * var(--fill-pct) / 100%);
   border-radius: 999px;
   box-shadow: var(--glow-outer);
-  opacity: min(1, calc(var(--fill-pct) * 100));
   pointer-events: none;
 }
 
@@ -166,6 +168,8 @@
 }
 
 .vu-leds {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column-reverse;
   align-items: stretch;
@@ -174,17 +178,53 @@
   min-height: 0;
   box-sizing: border-box;
   gap: var(--ridge-gap);
-  /* No vertical padding so end LEDs clip into the capsule like the volume fill */
-  padding: 0 2px;
-  border: var(--stroke-width) solid var(--section-stroke);
+  /* Match fader track well; end LEDs extend into the vertical pad (below). */
+  padding: 2px;
+  border: none;
   border-radius: 999px;
   overflow: hidden;
   background-color: var(--ridge-stroke);
   background-clip: padding-box;
 }
 
+/*
+  Recess bevel above LED fills. Transparent inset shadows read weak; split into
+  multiply (dark) + screen (light) so compositing matches the fader tracks.
+*/
+.vu-leds::before,
+.vu-leds::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vu-leds::before {
+  background: #fff;
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 var(--bevel-offset) var(--bevel-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+      transparent
+    );
+}
+
+.vu-leds::after {
+  background: #000;
+  mix-blend-mode: screen;
+  box-shadow: inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+      transparent
+    );
+}
+
 .vu-leds.is-hot {
-  border-color: var(--error);
+  box-shadow: 0 0 0 1px var(--error);
 }
 
 .vu-led {
@@ -193,22 +233,37 @@
   background: var(--black);
 }
 
+/* column-reverse: first DOM led is the tip — bleed into the 2px pad like fader fill */
+.vu-led:first-child {
+  margin-bottom: -2px;
+}
+
+.vu-led:last-child {
+  margin-top: -2px;
+}
+
+.vu-led--green.is-on,
+.vu-led--yellow.is-on,
+.vu-led--red.is-on,
+.vu-peak.is-live,
+.vu-peak.is-caution,
+.vu-peak.is-on {
+  box-shadow: var(--glow-single);
+}
+
 .vu-led--green.is-on {
   --glow-color: var(--vu);
   background: var(--vu);
-  box-shadow: var(--glow-outer);
 }
 
 .vu-led--yellow.is-on {
   --glow-color: #ffd400;
   background: #ffd400;
-  box-shadow: var(--glow-outer);
 }
 
 .vu-led--red.is-on {
   --glow-color: var(--error);
   background: var(--error);
-  box-shadow: var(--glow-outer);
 }
 
 .vu-peak {
@@ -225,7 +280,6 @@
   --glow-color: var(--vu);
   border-color: var(--vu);
   background: var(--vu);
-  box-shadow: var(--glow-outer);
   animation: vu-peak-blink 0.36s steps(1) infinite;
 }
 
@@ -233,7 +287,6 @@
   --glow-color: #ffd400;
   border-color: #ffd400;
   background: #ffd400;
-  box-shadow: var(--glow-outer);
   animation: vu-peak-blink 0.18s steps(1) infinite;
 }
 
@@ -241,7 +294,6 @@
   --glow-color: var(--error);
   border-color: var(--error);
   background: var(--error);
-  box-shadow: var(--glow-outer);
   animation: vu-peak-blink 0.08s steps(1) infinite;
 }
 

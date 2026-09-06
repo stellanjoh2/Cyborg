@@ -144,6 +144,14 @@ export function MasterStrip({
   const displayed = useRef(0)
   const peakHoldUntil = useRef(0)
   const peakHeldLit = useRef(0)
+  const lastVuPaint = useRef({
+    lit: -1,
+    heldLit: -1,
+    holdingPeak: false,
+    inRed: false,
+    inYellow: false,
+    isLive: false,
+  })
   const [ridges, setRidges] = useState(24)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
@@ -203,6 +211,27 @@ export function MasterStrip({
       const inRed = zoneDb >= RED_METER_DB || instant >= 0.99
       const inYellow = !inRed && zoneDb >= YELLOW_METER_DB
       const isLive = !inRed && !inYellow && lit > 0
+
+      const prev = lastVuPaint.current
+      if (
+        prev.lit === lit &&
+        prev.heldLit === heldLit &&
+        prev.holdingPeak === holdingPeak &&
+        prev.inRed === inRed &&
+        prev.inYellow === inYellow &&
+        prev.isLive === isLive
+      ) {
+        frame = requestAnimationFrame(tick)
+        return
+      }
+      lastVuPaint.current = {
+        lit,
+        heldLit,
+        holdingPeak,
+        inRed,
+        inYellow,
+        isLive,
+      }
 
       const root = ledsRef.current
       if (root) {

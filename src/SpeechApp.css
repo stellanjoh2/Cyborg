@@ -234,7 +234,7 @@ html.is-splash-void .speech-splash {
   margin: calc(var(--app-pad) * -1) calc(var(--app-pad) * -1) 0;
   padding: var(--section-gap) var(--app-pad);
   background: var(--fill);
-  border-bottom: var(--stroke-width) solid var(--section-stroke);
+  box-shadow: var(--section-shadow);
 }
 
 .speech-title {
@@ -310,13 +310,22 @@ html.is-splash-void .speech-splash {
   border-radius: 0.3em;
   background: transparent;
   color: var(--accent);
-  text-shadow: none;
+  /* Text only — box-shadow would halo the dark ridge masks */
+  text-shadow: var(--glow-outer);
   box-shadow: none;
   transition:
     background-color 0.25s ease,
     color 0.25s ease,
     border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    box-shadow 0.25s ease,
+    text-shadow 0.25s ease;
+}
+
+/* Keep label (+ text-shadow glow) above the ridge masks */
+.speech-top .primary > .speech-top__btn-label,
+.speech-top .secondary > .speech-top__btn-label {
+  position: relative;
+  z-index: 1;
 }
 
 .speech-top .primary::before,
@@ -364,8 +373,8 @@ html.is-splash-void .speech-splash {
   background: transparent;
   border-color: var(--accent);
   color: var(--accent);
-  text-shadow: none;
-  box-shadow: inset 0 0 25px var(--accent);
+  text-shadow: var(--glow-outer);
+  box-shadow: inset 0 0 25px var(--accent), var(--glow-outer);
 }
 
 .speech-top .primary.is-active,
@@ -375,7 +384,8 @@ html.is-splash-void .speech-splash {
   background: var(--accent);
   border: 3px solid var(--accent);
   color: var(--on-chrome);
-  box-shadow: none;
+  text-shadow: none;
+  box-shadow: var(--glow-outer);
 }
 
 .speech-top .primary:active:not(:disabled)::before,
@@ -391,6 +401,7 @@ html.is-splash-void .speech-splash {
   border-style: ridge;
   background: transparent;
   color: var(--muted);
+  text-shadow: none;
   box-shadow: none;
 }
 
@@ -409,13 +420,11 @@ html.is-splash-void .speech-splash {
   place-items: center;
   flex: 0 0 auto;
   color: var(--accent);
-  filter: var(--glow-filter);
   pointer-events: none;
 }
 
 .speech-top__phase-orb.is-idle {
   color: var(--muted);
-  filter: none;
 }
 
 .phase-orb {
@@ -517,7 +526,7 @@ html.is-splash-void .speech-splash {
   isolation: isolate;
   margin: 0;
   padding: 24px;
-  border: var(--stroke-width) solid var(--section-stroke);
+  border: none;
   border-radius: var(--radius-panel);
   background: var(--fill);
   box-shadow: var(--section-shadow);

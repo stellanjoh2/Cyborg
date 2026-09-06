@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { playUiSound } from '../ui/sounds'
 import { TypewriterReveal } from './TypewriterReveal'
 import './AboutOverlay.css'
 
@@ -51,6 +52,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
+        playUiSound('close')
         onClose()
       }
     }
@@ -66,7 +68,10 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
         .filter(Boolean)
         .join(' ')}
       role="presentation"
-      onClick={onClose}
+      onClick={() => {
+        playUiSound('close')
+        onClose()
+      }}
       onTransitionEnd={(event) => {
         if (event.target !== event.currentTarget) return
         if (!open && event.propertyName === 'background-color') setMounted(false)
@@ -110,6 +115,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             ]
               .filter(Boolean)
               .join(' ')}
+            data-ui-sound="close"
             aria-hidden={!okActive}
             tabIndex={okActive ? 0 : -1}
             onClick={onClose}

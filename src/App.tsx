@@ -1190,7 +1190,9 @@ export default function App() {
             title={isSpeaking ? 'Stop speech' : 'Play speech'}
             aria-pressed={isSpeaking}
           >
-            {isSpeaking ? 'STOP' : 'PLAY'}
+            <span className="speech-top__btn-label">
+              {isSpeaking ? 'STOP' : 'PLAY'}
+            </span>
           </button>
         </div>
         <div
@@ -1208,7 +1210,7 @@ export default function App() {
             title="Loop playback"
             aria-pressed={isLooping}
           >
-            LOOP
+            <span className="speech-top__btn-label">LOOP</span>
           </button>
         </div>
       </div>
@@ -1220,7 +1222,7 @@ export default function App() {
           disabled={!templateDirty}
           title="Reset all sections to the selected template"
         >
-          RESET
+          <span className="speech-top__btn-label">RESET</span>
         </button>
         <button
           className="secondary"
@@ -1228,7 +1230,7 @@ export default function App() {
           onClick={() => setAboutOpen(true)}
           title="About"
         >
-          INFO
+          <span className="speech-top__btn-label">INFO</span>
         </button>
         <button
           className="secondary"
@@ -1237,7 +1239,9 @@ export default function App() {
           disabled={isExporting || !text.trim()}
           title="Render full mix with FX tails to WAV"
         >
-          {isExporting ? 'EXPORTING...' : 'EXPORT'}
+          <span className="speech-top__btn-label">
+            {isExporting ? 'EXPORTING...' : 'EXPORT'}
+          </span>
         </button>
       </div>
       </header>

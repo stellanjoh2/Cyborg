@@ -23,6 +23,7 @@ const UNVOICE_NOISE_HZ = 3800
 const UNVOICE_ENV_HZ = 28
 
 const ABS_CURVE = createAbsCurve()
+const FX_ENGAGE = 0.01
 
 export interface VocoderBandGraph {
   analysisFilter: BiquadFilterNode
@@ -58,12 +59,31 @@ export interface VocoderBankGraph {
   input: GainNode
   output: GainNode
   dryBlend: GainNode
+  carrierBus: GainNode
   bands: VocoderBandGraph[]
   carrier: AnalogCarrierGraph
   unvoice: UnvoiceGraph
+  /** Unvoice detect + noise path wired into the bank. */
+  unvoiceEngaged: boolean
+  /** Analog osc carrier wired into carrierBus (speech path stays). */
+  carrierOscEngaged: boolean
 }
 
-function createAbsCurve(): Float32Array {
+function forceMono(node: AudioNode) {
+  node.channelCount = 1
+  node.channelCountMode = 'explicit'
+  node.channelInterpretation = 'speakers'
+}
+
+function tryDisconnect(from: AudioNode, to: AudioNode) {
+  try {
+    from.disconnect(to)
+  } catch {
+    // Already disconnected.
+  }
+}
+
+function createAbsCurve(): Float32Array<ArrayBuffer> {
   const curve = new Float32Array(65536)
   for (let i = 0; i < 65536; i += 1) {
     const x = (i - 32768) / 32768
@@ -89,21 +109,28 @@ function createBandGraph(
 ): VocoderBandGraph {
   const analysisFilter = context.createBiquadFilter()
   analysisFilter.type = 'bandpass'
+  forceMono(analysisFilter)
 
   const carrierFilter = context.createBiquadFilter()
   carrierFilter.type = 'bandpass'
+  forceMono(carrierFilter)
 
   const rectifier = context.createWaveShaper()
-  rectifier.curve = new Float32Array(ABS_CURVE)
+  // Shared curve — WaveShaper copies on assign; avoid 8× 64k allocations.
+  rectifier.curve = ABS_CURVE
   rectifier.oversample = 'none'
+  forceMono(rectifier)
 
   const envSmooth = context.createBiquadFilter()
   envSmooth.type = 'lowpass'
+  forceMono(envSmooth)
 
   const envGain = context.createGain()
   envGain.gain.value = 0
+  forceMono(envGain)
 
   const levelGain = context.createGain()
+  forceMono(levelGain)
   const panner = context.createStereoPanner()
 
   modulator.connect(analysisFilter)
@@ -130,22 +157,24 @@ function createBandGraph(
 
 function createUnvoiceGraph(
   context: BaseAudioContext,
-  modulator: AudioNode,
   output: GainNode,
 ): UnvoiceGraph {
   const detectFilter = context.createBiquadFilter()
   detectFilter.type = 'highpass'
   detectFilter.frequency.value = UNVOICE_DETECT_HZ
   detectFilter.Q.value = 0.7
+  forceMono(detectFilter)
 
   const rectifier = context.createWaveShaper()
-  rectifier.curve = new Float32Array(ABS_CURVE)
+  rectifier.curve = ABS_CURVE
   rectifier.oversample = 'none'
+  forceMono(rectifier)
 
   const envSmooth = context.createBiquadFilter()
   envSmooth.type = 'lowpass'
   envSmooth.frequency.value = UNVOICE_ENV_HZ
   envSmooth.Q.value = 0.7
+  forceMono(envSmooth)
 
   const noise = context.createBufferSource()
   noise.buffer = createNoiseBuffer(context)
@@ -155,19 +184,20 @@ function createUnvoiceGraph(
   noiseFilter.type = 'highpass'
   noiseFilter.frequency.value = UNVOICE_NOISE_HZ
   noiseFilter.Q.value = 0.7
+  forceMono(noiseFilter)
 
   const envGain = context.createGain()
   envGain.gain.value = 0
+  forceMono(envGain)
 
   const amountGain = context.createGain()
   amountGain.gain.value = 0
 
-  modulator.connect(detectFilter)
+  // Inputs stay disconnected until unvoice engages (default is off).
   detectFilter.connect(rectifier)
   rectifier.connect(envSmooth)
   envSmooth.connect(envGain.gain)
 
-  noise.connect(noiseFilter)
   noiseFilter.connect(envGain)
   envGain.connect(amountGain)
   amountGain.connect(output)
@@ -223,12 +253,13 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
     bands.push(createBandGraph(context, input, carrierBus, output))
   }
 
-  const unvoice = createUnvoiceGraph(context, input, output)
+  const unvoice = createUnvoiceGraph(context, output)
 
   return {
     input,
     output,
     dryBlend,
+    carrierBus,
     bands,
     carrier: {
       saw,
@@ -240,6 +271,8 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
       speechGain,
     },
     unvoice,
+    unvoiceEngaged: false,
+    carrierOscEngaged: true,
   }
 }
 
@@ -319,6 +352,28 @@ export function applyVocoderParams(
     now,
     rampSeconds,
   )
+
+  const wantUnvoice = unvoice > FX_ENGAGE
+  if (wantUnvoice !== bank.unvoiceEngaged) {
+    if (wantUnvoice) {
+      bank.input.connect(bank.unvoice.detectFilter)
+      bank.unvoice.noise.connect(bank.unvoice.noiseFilter)
+    } else {
+      tryDisconnect(bank.input, bank.unvoice.detectFilter)
+      tryDisconnect(bank.unvoice.noise, bank.unvoice.noiseFilter)
+    }
+    bank.unvoiceEngaged = wantUnvoice
+  }
+
+  const wantCarrierOsc = amount > FX_ENGAGE
+  if (wantCarrierOsc !== bank.carrierOscEngaged) {
+    if (wantCarrierOsc) {
+      bank.carrier.oscGain.connect(bank.carrierBus)
+    } else {
+      tryDisconnect(bank.carrier.oscGain, bank.carrierBus)
+    }
+    bank.carrierOscEngaged = wantCarrierOsc
+  }
 
   for (let index = 0; index < bank.bands.length; index += 1) {
     const band = bank.bands[index]

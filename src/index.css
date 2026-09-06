@@ -13,7 +13,7 @@
   --blue: #00c4ff;
   --error: #ff2a00;
   --black: #0a0a0a;
-  --fill: #171717;
+  --fill: #121212;
   --stroke: #ffffff;
   --section-stroke-opacity: 0.1;
   --grain-opacity: 0.48;
@@ -25,9 +25,59 @@
   --stroke-width: 1px;
   --radius: 6px;
   --radius-panel: 24px;
+  --bevel-highlight-color: #ffffff;
+  --bevel-shadow-color: #000000;
+  --bevel-radius: 3px;
+  --bevel-offset: 1px;
+  --bevel-top-opacity: 0.13;
+  --bevel-bottom-opacity: 1;
+  --bevel-left-opacity: 0;
+  --bevel-right-opacity: 0.34;
+  --emboss-glow-color: #ffffff;
+  --emboss-glow-opacity: 0.03;
+  --emboss-glow-radius: 10px;
+  --section-inset-glow: inset 0 0 var(--emboss-glow-radius)
+    color-mix(
+      in srgb,
+      var(--emboss-glow-color) calc(var(--emboss-glow-opacity) * 100%),
+      transparent
+    );
+  /* Elevation + top/bottom bevel only (no emboss glow, no L/R) — cheaper idle paint. */
   --section-shadow:
     0 1px 3px color-mix(in srgb, #000 55%, transparent),
-    0 6px 27px color-mix(in srgb, #000 40%, transparent);
+    0 6px 27px color-mix(in srgb, #000 40%, transparent),
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
+  /* Inverted bevel for recessed “holes” (meters, wells). */
+  --section-recess-glow: inset 0 0 var(--emboss-glow-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-shadow-color) calc(var(--emboss-glow-opacity) * 100%),
+      transparent
+    );
+  --section-recess-shadow:
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      );
   --section-stroke: color-mix(
     in srgb,
     var(--stroke) calc(var(--section-stroke-opacity) * 100%),
@@ -44,6 +94,8 @@
       color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent),
     0 0 var(--glow-blur-wide)
       color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent);
+  --glow-single: 0 0 var(--glow-blur-tight)
+    color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent);
   --glow-filter:
     drop-shadow(
       0 0 var(--glow-blur-tight)

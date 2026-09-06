@@ -15,6 +15,11 @@ export const OFFLINE_SAMPLE_RATE = 44100
 const EXPORT_TAIL_FLOOR_SECONDS = 0.12
 const NOISE_GAIN_MAX = 0.12
 const NOISE_ENVELOPE_POINTS = 512
+const FX_ENGAGE = 0.01
+const REVERB_IR_DEBOUNCE_MS = 80
+const REVERB_IR_CACHE_MAX = 24
+
+const reverbImpulseCache = new Map<string, AudioBuffer>()
 
 export interface NoisePostParams {
   amount: number
@@ -158,9 +163,20 @@ interface SynthGraph {
   noiseSource: AudioBufferSourceNode
   lastReverbRoom: number
   lastReverbDecay: number
+  reverbUpdateTimer: number
   lastCrushBits: number
   lastRadioGrit: number
   lastDistortionDrive: number
+  /** Wet FX branches engaged (false = hard-bypassed / disconnected). */
+  fxEngaged: {
+    bitcrush: boolean
+    radio: boolean
+    chorus: boolean
+    distortion: boolean
+    compressor: boolean
+    reverb: boolean
+    delay: boolean
+  }
   vocoder: VocoderBankGraph
   bitcrushIn: GainNode
   bitcrushDry: GainNode
@@ -232,6 +248,18 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
+function tryDisconnect(from: AudioNode, to: AudioNode | AudioParam) {
+  try {
+    if (typeof AudioParam !== 'undefined' && to instanceof AudioParam) {
+      from.disconnect(to)
+    } else {
+      from.disconnect(to as AudioNode)
+    }
+  } catch {
+    // Already disconnected.
+  }
+}
+
 function makeDistortionCurve(amount: number): Float32Array {
   const samples = 44100
   const curve = new Float32Array(samples)
@@ -262,6 +290,36 @@ function createReverbImpulse(
     }
   }
 
+  return impulse
+}
+
+function reverbImpulseKey(
+  sampleRate: number,
+  durationSeconds: number,
+  decay: number,
+): string {
+  return `${sampleRate}:${Math.round(durationSeconds * 100)}:${Math.round(decay * 100)}`
+}
+
+function getCachedReverbImpulse(
+  context: BaseAudioContext,
+  durationSeconds: number,
+  decay: number,
+): AudioBuffer {
+  const key = reverbImpulseKey(context.sampleRate, durationSeconds, decay)
+  const cached = reverbImpulseCache.get(key)
+  if (cached) {
+    return cached
+  }
+
+  const impulse = createReverbImpulse(context, durationSeconds, decay)
+  reverbImpulseCache.set(key, impulse)
+  if (reverbImpulseCache.size > REVERB_IR_CACHE_MAX) {
+    const oldest = reverbImpulseCache.keys().next().value
+    if (oldest !== undefined) {
+      reverbImpulseCache.delete(oldest)
+    }
+  }
   return impulse
 }
 
@@ -466,7 +524,18 @@ function estimatedNoiseWetMix(amount: number): number {
   return clamp(amount, 0, 1) * NOISE_GAIN_MAX * 0.42
 }
 
-function updateReverbImpulse(nodes: SynthGraph, roomSize: number, decay: number) {
+function clearReverbUpdateTimer(nodes: SynthGraph) {
+  if (nodes.reverbUpdateTimer) {
+    window.clearTimeout(nodes.reverbUpdateTimer)
+    nodes.reverbUpdateTimer = 0
+  }
+}
+
+function applyReverbImpulse(
+  nodes: SynthGraph,
+  roomSize: number,
+  decay: number,
+) {
   const room = clamp(roomSize, 0, 1)
   const dec = clamp(decay, 0, 1)
   const roomKey = Math.round(room * 100)
@@ -474,18 +543,54 @@ function updateReverbImpulse(nodes: SynthGraph, roomSize: number, decay: number)
 
   if (
     nodes.lastReverbRoom === roomKey &&
-    nodes.lastReverbDecay === decayKey
+    nodes.lastReverbDecay === decayKey &&
+    nodes.convolver.buffer
   ) {
     return
   }
 
   nodes.lastReverbRoom = roomKey
   nodes.lastReverbDecay = decayKey
-  nodes.convolver.buffer = createReverbImpulse(
+  nodes.convolver.buffer = getCachedReverbImpulse(
     nodes.context,
     mapReverbDuration(room),
     mapReverbDecayPower(dec),
   )
+}
+
+function updateReverbImpulse(
+  nodes: SynthGraph,
+  roomSize: number,
+  decay: number,
+  immediate = false,
+) {
+  const room = clamp(roomSize, 0, 1)
+  const dec = clamp(decay, 0, 1)
+  const roomKey = Math.round(room * 100)
+  const decayKey = Math.round(dec * 100)
+
+  if (
+    nodes.lastReverbRoom === roomKey &&
+    nodes.lastReverbDecay === decayKey &&
+    nodes.convolver.buffer
+  ) {
+    return
+  }
+
+  const offline = typeof OfflineAudioContext !== 'undefined'
+    && nodes.context instanceof OfflineAudioContext
+
+  if (immediate || offline) {
+    clearReverbUpdateTimer(nodes)
+    applyReverbImpulse(nodes, room, dec)
+    return
+  }
+
+  clearReverbUpdateTimer(nodes)
+  nodes.reverbUpdateTimer = window.setTimeout(() => {
+    nodes.reverbUpdateTimer = 0
+    applyReverbImpulse(nodes, room, dec)
+  }, REVERB_IR_DEBOUNCE_MS)
 }
 
 /** Drop delay-line contents so a reset does not keep echoing prior audio. */
@@ -510,14 +615,121 @@ function flushDelayNode(nodes: SynthGraph) {
 }
 
 function flushFxTails(nodes: SynthGraph, params: PostProcessParams) {
-  if (params.delay.amount <= 0.01) {
+  if (params.delay.amount <= FX_ENGAGE) {
     flushDelayNode(nodes)
   }
-  if (params.reverb.amount <= 0.01) {
+  if (params.reverb.amount <= FX_ENGAGE) {
+    clearReverbUpdateTimer(nodes)
     nodes.lastReverbRoom = -1
     nodes.lastReverbDecay = -1
     nodes.convolver.buffer = null
   }
+}
+
+function setBitcrushEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.bitcrush === engaged) {
+    return
+  }
+  if (engaged) {
+    if (nodes.bitcrushWorklet) {
+      nodes.bitcrushIn.connect(nodes.bitcrushWorklet)
+      nodes.bitcrushWorklet.connect(nodes.bitcrushWet)
+    } else {
+      nodes.bitcrushIn.connect(nodes.bitcrushShaper)
+      nodes.bitcrushShaper.connect(nodes.bitcrushFilter)
+      nodes.bitcrushFilter.connect(nodes.bitcrushWet)
+    }
+  } else if (nodes.bitcrushWorklet) {
+    tryDisconnect(nodes.bitcrushIn, nodes.bitcrushWorklet)
+    tryDisconnect(nodes.bitcrushWorklet, nodes.bitcrushWet)
+  } else {
+    tryDisconnect(nodes.bitcrushIn, nodes.bitcrushShaper)
+    tryDisconnect(nodes.bitcrushShaper, nodes.bitcrushFilter)
+    tryDisconnect(nodes.bitcrushFilter, nodes.bitcrushWet)
+  }
+  nodes.fxEngaged.bitcrush = engaged
+}
+
+function setRadioEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.radio === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.radioIn.connect(nodes.radioHighpass)
+  } else {
+    tryDisconnect(nodes.radioIn, nodes.radioHighpass)
+  }
+  nodes.fxEngaged.radio = engaged
+}
+
+function setChorusEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.chorus === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.chorusIn.connect(nodes.chorusDelayL)
+    nodes.chorusIn.connect(nodes.chorusDelayR)
+    nodes.chorusLfoGainL.connect(nodes.chorusDelayL.delayTime)
+    nodes.chorusLfoGainR.connect(nodes.chorusDelayR.delayTime)
+  } else {
+    tryDisconnect(nodes.chorusIn, nodes.chorusDelayL)
+    tryDisconnect(nodes.chorusIn, nodes.chorusDelayR)
+    tryDisconnect(nodes.chorusLfoGainL, nodes.chorusDelayL.delayTime)
+    tryDisconnect(nodes.chorusLfoGainR, nodes.chorusDelayR.delayTime)
+  }
+  nodes.fxEngaged.chorus = engaged
+}
+
+function setDistortionEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.distortion === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.distortionIn.connect(nodes.distortionShaper)
+  } else {
+    tryDisconnect(nodes.distortionIn, nodes.distortionShaper)
+  }
+  nodes.fxEngaged.distortion = engaged
+}
+
+function setCompressorEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.compressor === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.compressorIn.connect(nodes.compressorNode)
+  } else {
+    tryDisconnect(nodes.compressorIn, nodes.compressorNode)
+  }
+  nodes.fxEngaged.compressor = engaged
+}
+
+function setDelayEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.delay === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.postInput.connect(nodes.delayIn)
+  } else {
+    tryDisconnect(nodes.postInput, nodes.delayIn)
+  }
+  nodes.fxEngaged.delay = engaged
+}
+
+function setReverbEngaged(nodes: SynthGraph, engaged: boolean) {
+  if (nodes.fxEngaged.reverb === engaged) {
+    return
+  }
+  if (engaged) {
+    nodes.postInput.connect(nodes.reverbIn)
+  } else {
+    tryDisconnect(nodes.postInput, nodes.reverbIn)
+    clearReverbUpdateTimer(nodes)
+    nodes.lastReverbRoom = -1
+    nodes.lastReverbDecay = -1
+    nodes.convolver.buffer = null
+  }
+  nodes.fxEngaged.reverb = engaged
 }
 
 function setAudioParam(
@@ -549,8 +761,9 @@ function applyPostProcessToGraph(
   const chorus = params.chorus
   const compressor = params.compressor
   const distortion = params.distortion
+  const immediate = rampSeconds <= 0
 
-  if (rampSeconds <= 0) {
+  if (immediate) {
     flushFxTails(nodes, params)
   }
 
@@ -571,10 +784,19 @@ function applyPostProcessToGraph(
     setAudioParam(nodes.noiseGain.gain, 0, now, rampSeconds)
   }
 
-  updateReverbImpulse(nodes, reverb.roomSize, reverb.decay)
+  const reverbOn = reverb.amount > FX_ENGAGE
+  setReverbEngaged(nodes, reverbOn)
+  if (reverbOn) {
+    updateReverbImpulse(
+      nodes,
+      reverb.roomSize,
+      reverb.decay,
+      immediate,
+    )
+  }
   setAudioParam(
     nodes.reverbIn.gain,
-    reverb.amount > 0.01 ? 1 : 0,
+    reverbOn ? 1 : 0,
     now,
     rampSeconds,
   )
@@ -585,9 +807,11 @@ function applyPostProcessToGraph(
     rampSeconds,
   )
 
+  const delayOn = delay.amount > FX_ENGAGE
+  setDelayEngaged(nodes, delayOn)
   setAudioParam(
     nodes.delayIn.gain,
-    delay.amount > 0.01 ? 1 : 0,
+    delayOn ? 1 : 0,
     now,
     rampSeconds,
   )
@@ -611,160 +835,180 @@ function applyPostProcessToGraph(
   )
 
   const crushAmount = clamp(bitcrush.amount, 0, 1)
-  const crushBits = mapBitcrushBits(bitcrush.bits)
-  const crushDown = mapBitcrushDownsample(bitcrush.rate)
-  setAudioParam(nodes.bitcrushDry.gain, 1 - crushAmount, now, rampSeconds)
-  setAudioParam(nodes.bitcrushWet.gain, crushAmount, now, rampSeconds)
-  setAudioParam(
-    nodes.bitcrushFilter.frequency,
-    nodes.context.sampleRate / (2 * crushDown),
-    now,
-    rampSeconds,
-  )
-  if (nodes.bitcrushWorklet) {
-    const bitsParam = nodes.bitcrushWorklet.parameters.get('bits')
-    const downParam = nodes.bitcrushWorklet.parameters.get('downsample')
-    if (bitsParam) {
-      setAudioParam(bitsParam, crushBits, now, rampSeconds)
-    }
-    if (downParam) {
-      setAudioParam(downParam, crushDown, now, rampSeconds)
-    }
-  } else {
-    const bitsKey = Math.round(crushBits * 4)
-    if (bitsKey !== nodes.lastCrushBits) {
-      nodes.lastCrushBits = bitsKey
-      nodes.bitcrushShaper.curve = new Float32Array(
-        makeBitcrushCurve(bitcrush.bits),
-      )
+  const crushOn = crushAmount > FX_ENGAGE
+  setBitcrushEngaged(nodes, crushOn)
+  setAudioParam(nodes.bitcrushDry.gain, crushOn ? 1 - crushAmount : 1, now, rampSeconds)
+  setAudioParam(nodes.bitcrushWet.gain, crushOn ? crushAmount : 0, now, rampSeconds)
+  if (crushOn) {
+    const crushBits = mapBitcrushBits(bitcrush.bits)
+    const crushDown = mapBitcrushDownsample(bitcrush.rate)
+    setAudioParam(
+      nodes.bitcrushFilter.frequency,
+      nodes.context.sampleRate / (2 * crushDown),
+      now,
+      rampSeconds,
+    )
+    if (nodes.bitcrushWorklet) {
+      const bitsParam = nodes.bitcrushWorklet.parameters.get('bits')
+      const downParam = nodes.bitcrushWorklet.parameters.get('downsample')
+      if (bitsParam) {
+        setAudioParam(bitsParam, crushBits, now, rampSeconds)
+      }
+      if (downParam) {
+        setAudioParam(downParam, crushDown, now, rampSeconds)
+      }
+    } else {
+      const bitsKey = Math.round(crushBits * 4)
+      if (bitsKey !== nodes.lastCrushBits) {
+        nodes.lastCrushBits = bitsKey
+        nodes.bitcrushShaper.curve = new Float32Array(
+          makeBitcrushCurve(bitcrush.bits),
+        )
+      }
     }
   }
 
   const radioAmount = clamp(radio.amount, 0, 1)
-  const radioGrit = clamp(radio.grit, 0, 1)
+  const radioOn = radioAmount > FX_ENGAGE
+  setRadioEngaged(nodes, radioOn)
   setAudioParam(
     nodes.radioDry.gain,
-    1 - radioAmount * 0.88,
+    radioOn ? 1 - radioAmount * 0.88 : 1,
     now,
     rampSeconds,
   )
-  setAudioParam(nodes.radioWet.gain, radioAmount, now, rampSeconds)
-  setAudioParam(
-    nodes.radioHighpass.frequency,
-    mapRadioHighpass(radio.tone),
-    now,
-    rampSeconds,
-  )
-  setAudioParam(
-    nodes.radioLowpass.frequency,
-    mapRadioLowpass(radio.tone),
-    now,
-    rampSeconds,
-  )
-  const gritKey = Math.round(radioGrit * 20)
-  if (gritKey !== nodes.lastRadioGrit) {
-    nodes.lastRadioGrit = gritKey
-    nodes.radioShaper.curve = new Float32Array(
-      makeDistortionCurve(20 + radioGrit * 480),
+  setAudioParam(nodes.radioWet.gain, radioOn ? radioAmount : 0, now, rampSeconds)
+  if (radioOn) {
+    const radioGrit = clamp(radio.grit, 0, 1)
+    setAudioParam(
+      nodes.radioHighpass.frequency,
+      mapRadioHighpass(radio.tone),
+      now,
+      rampSeconds,
     )
+    setAudioParam(
+      nodes.radioLowpass.frequency,
+      mapRadioLowpass(radio.tone),
+      now,
+      rampSeconds,
+    )
+    const gritKey = Math.round(radioGrit * 20)
+    if (gritKey !== nodes.lastRadioGrit) {
+      nodes.lastRadioGrit = gritKey
+      nodes.radioShaper.curve = new Float32Array(
+        makeDistortionCurve(20 + radioGrit * 480),
+      )
+    }
   }
 
   const chorusAmount = clamp(chorus.amount, 0, 1)
-  const chorusDepth = mapChorusDepthSeconds(chorus.depth)
+  const chorusOn = chorusAmount > FX_ENGAGE
+  setChorusEngaged(nodes, chorusOn)
   setAudioParam(
     nodes.chorusDry.gain,
-    1 - chorusAmount * 0.4,
+    chorusOn ? 1 - chorusAmount * 0.4 : 1,
     now,
     rampSeconds,
   )
   setAudioParam(
     nodes.chorusWet.gain,
-    chorusAmount * 0.55,
+    chorusOn ? chorusAmount * 0.55 : 0,
     now,
     rampSeconds,
   )
-  setAudioParam(
-    nodes.chorusLfoL.frequency,
-    mapChorusRateHz(chorus.rate),
-    now,
-    rampSeconds,
-  )
-  setAudioParam(
-    nodes.chorusLfoR.frequency,
-    mapChorusRateHz(chorus.rate) * 1.13,
-    now,
-    rampSeconds,
-  )
-  setAudioParam(nodes.chorusLfoGainL.gain, chorusDepth, now, rampSeconds)
-  setAudioParam(
-    nodes.chorusLfoGainR.gain,
-    chorusDepth * 0.92,
-    now,
-    rampSeconds,
-  )
-
-  const distAmount = clamp(distortion.amount, 0, 1)
-  const distDrive = clamp(distortion.drive, 0, 1)
-  setAudioParam(
-    nodes.distortionDry.gain,
-    1 - distAmount * 0.92,
-    now,
-    rampSeconds,
-  )
-  setAudioParam(nodes.distortionWet.gain, distAmount, now, rampSeconds)
-  setAudioParam(
-    nodes.distortionTone.frequency,
-    mapDistortionToneCutoff(distortion.tone),
-    now,
-    rampSeconds,
-  )
-  const driveKey = Math.round(distDrive * 24)
-  if (driveKey !== nodes.lastDistortionDrive) {
-    nodes.lastDistortionDrive = driveKey
-    nodes.distortionShaper.curve = new Float32Array(
-      makeDistortionCurve(mapDistortionDrive(distDrive)),
+  if (chorusOn) {
+    const chorusDepth = mapChorusDepthSeconds(chorus.depth)
+    setAudioParam(
+      nodes.chorusLfoL.frequency,
+      mapChorusRateHz(chorus.rate),
+      now,
+      rampSeconds,
+    )
+    setAudioParam(
+      nodes.chorusLfoR.frequency,
+      mapChorusRateHz(chorus.rate) * 1.13,
+      now,
+      rampSeconds,
+    )
+    setAudioParam(nodes.chorusLfoGainL.gain, chorusDepth, now, rampSeconds)
+    setAudioParam(
+      nodes.chorusLfoGainR.gain,
+      chorusDepth * 0.92,
+      now,
+      rampSeconds,
     )
   }
 
+  const distAmount = clamp(distortion.amount, 0, 1)
+  const distOn = distAmount > FX_ENGAGE
+  setDistortionEngaged(nodes, distOn)
+  setAudioParam(
+    nodes.distortionDry.gain,
+    distOn ? 1 - distAmount * 0.92 : 1,
+    now,
+    rampSeconds,
+  )
+  setAudioParam(nodes.distortionWet.gain, distOn ? distAmount : 0, now, rampSeconds)
+  if (distOn) {
+    const distDrive = clamp(distortion.drive, 0, 1)
+    setAudioParam(
+      nodes.distortionTone.frequency,
+      mapDistortionToneCutoff(distortion.tone),
+      now,
+      rampSeconds,
+    )
+    const driveKey = Math.round(distDrive * 24)
+    if (driveKey !== nodes.lastDistortionDrive) {
+      nodes.lastDistortionDrive = driveKey
+      nodes.distortionShaper.curve = new Float32Array(
+        makeDistortionCurve(mapDistortionDrive(distDrive)),
+      )
+    }
+  }
+
   const compAmount = clamp(compressor.amount, 0, 1)
+  const compOn = compAmount > FX_ENGAGE
+  setCompressorEngaged(nodes, compOn)
   setAudioParam(
     nodes.compressorDry.gain,
-    1 - compAmount * 0.85,
+    compOn ? 1 - compAmount * 0.85 : 1,
     now,
     rampSeconds,
   )
-  setAudioParam(nodes.compressorWet.gain, compAmount, now, rampSeconds)
-  setAudioParam(
-    nodes.compressorNode.threshold,
-    -6 - compAmount * 30,
-    now,
-    rampSeconds,
-  )
-  setAudioParam(
-    nodes.compressorNode.ratio,
-    1.4 + compAmount * 10,
-    now,
-    rampSeconds,
-  )
-  setAudioParam(nodes.compressorNode.knee, 8, now, rampSeconds)
-  setAudioParam(
-    nodes.compressorNode.attack,
-    mapCompressorAttack(compressor.attack),
-    now,
-    rampSeconds,
-  )
-  setAudioParam(
-    nodes.compressorNode.release,
-    mapCompressorRelease(compressor.release),
-    now,
-    rampSeconds,
-  )
-  setAudioParam(
-    nodes.compressorMakeup.gain,
-    10 ** ((compAmount * 9) / 20),
-    now,
-    rampSeconds,
-  )
+  setAudioParam(nodes.compressorWet.gain, compOn ? compAmount : 0, now, rampSeconds)
+  if (compOn) {
+    setAudioParam(
+      nodes.compressorNode.threshold,
+      -6 - compAmount * 30,
+      now,
+      rampSeconds,
+    )
+    setAudioParam(
+      nodes.compressorNode.ratio,
+      1.4 + compAmount * 10,
+      now,
+      rampSeconds,
+    )
+    setAudioParam(nodes.compressorNode.knee, 8, now, rampSeconds)
+    setAudioParam(
+      nodes.compressorNode.attack,
+      mapCompressorAttack(compressor.attack),
+      now,
+      rampSeconds,
+    )
+    setAudioParam(
+      nodes.compressorNode.release,
+      mapCompressorRelease(compressor.release),
+      now,
+      rampSeconds,
+    )
+    setAudioParam(
+      nodes.compressorMakeup.gain,
+      10 ** ((compAmount * 9) / 20),
+      now,
+      rampSeconds,
+    )
+  }
 
   const wetMix = Math.min(
     1,
@@ -952,7 +1196,8 @@ function buildSynthGraph(
   const delayWet = context.createGain()
   const reverbIn = context.createGain()
   const convolver = context.createConvolver()
-  convolver.buffer = createReverbImpulse(context, 2.4, 2.2)
+  // IR loaded lazily when reverb engages — avoid a multi-second stereo buffer at idle.
+  convolver.buffer = null
   convolver.normalize = false
   const reverbWet = context.createGain()
   const noiseGain = context.createGain()
@@ -1057,20 +1302,13 @@ function buildSynthGraph(
   outputGain.connect(bitcrushIn)
   bitcrushIn.connect(bitcrushDry)
   bitcrushDry.connect(bitcrushOut)
-  if (bitcrushWorklet) {
-    bitcrushIn.connect(bitcrushWorklet)
-    bitcrushWorklet.connect(bitcrushWet)
-  } else {
-    bitcrushIn.connect(bitcrushShaper)
-    bitcrushShaper.connect(bitcrushFilter)
-    bitcrushFilter.connect(bitcrushWet)
-  }
+  // Bitcrush / radio / chorus / distortion / compressor wet paths stay
+  // disconnected until amount > FX_ENGAGE (see set*Engaged).
   bitcrushWet.connect(bitcrushOut)
   bitcrushOut.connect(radioIn)
 
   radioIn.connect(radioDry)
   radioDry.connect(radioOut)
-  radioIn.connect(radioHighpass)
   radioHighpass.connect(radioLowpass)
   radioLowpass.connect(radioShaper)
   radioShaper.connect(radioWet)
@@ -1079,8 +1317,6 @@ function buildSynthGraph(
 
   chorusIn.connect(chorusDry)
   chorusDry.connect(chorusOut)
-  chorusIn.connect(chorusDelayL)
-  chorusIn.connect(chorusDelayR)
   chorusDelayL.connect(chorusPanL)
   chorusDelayR.connect(chorusPanR)
   chorusPanL.connect(chorusWet)
@@ -1088,17 +1324,13 @@ function buildSynthGraph(
   chorusWet.connect(chorusOut)
   chorusLfoL.connect(chorusLfoGainL)
   chorusLfoR.connect(chorusLfoGainR)
-  chorusLfoGainL.connect(chorusDelayL.delayTime)
-  chorusLfoGainR.connect(chorusDelayR.delayTime)
   chorusOut.connect(postInput)
 
   postInput.connect(postDry)
-  postInput.connect(delayIn)
   delayIn.connect(delayNode)
   delayNode.connect(delayFeedback)
   delayFeedback.connect(delayNode)
   delayNode.connect(delayWet)
-  postInput.connect(reverbIn)
   reverbIn.connect(convolver)
   convolver.connect(reverbWet)
   postDry.connect(postMix)
@@ -1110,14 +1342,12 @@ function buildSynthGraph(
   postMix.connect(distortionIn)
   distortionIn.connect(distortionDry)
   distortionDry.connect(distortionOut)
-  distortionIn.connect(distortionShaper)
   distortionShaper.connect(distortionTone)
   distortionTone.connect(distortionWet)
   distortionWet.connect(distortionOut)
   distortionOut.connect(compressorIn)
   compressorIn.connect(compressorDry)
   compressorDry.connect(compressorOut)
-  compressorIn.connect(compressorNode)
   compressorNode.connect(compressorMakeup)
   compressorMakeup.connect(compressorWet)
   compressorWet.connect(compressorOut)
@@ -1183,9 +1413,19 @@ function buildSynthGraph(
     noiseSource,
     lastReverbRoom: -1,
     lastReverbDecay: -1,
+    reverbUpdateTimer: 0,
     lastCrushBits: -1,
     lastRadioGrit: -1,
     lastDistortionDrive: -1,
+    fxEngaged: {
+      bitcrush: false,
+      radio: false,
+      chorus: false,
+      distortion: false,
+      compressor: false,
+      reverb: false,
+      delay: false,
+    },
     vocoder,
     bitcrushIn,
     bitcrushDry,

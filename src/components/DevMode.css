@@ -4,6 +4,9 @@
   right: 12px;
   z-index: 40;
   width: 320px;
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
   padding: 12px;
   border: var(--stroke-width) solid var(--synth-border);
   border-radius: var(--radius);
@@ -21,6 +24,14 @@
   font-weight: 400;
   color: var(--lime);
   text-shadow: var(--glow-outer);
+}
+
+.dev-mode__subtitle {
+  margin: 12px 0 8px;
+  font-family: var(--font-display);
+  font-size: var(--font-s);
+  font-weight: 400;
+  color: var(--text);
 }
 
 .dev-mode__row {

@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react'
 const N = 5
 const CENTER = 2
 const CYCLE_MS = 1700 / 1.6
+/** Decorative status only — no need for display-rate updates. */
+const FRAME_MS = 1000 / 12
 const BASE_OPACITY = 0.08
 const ORBIT_OPACITY = 0.96
 const NEAR_ORBIT_OPACITY = 0.34
@@ -60,13 +62,19 @@ export function PhaseOrb({ active = true }: { active?: boolean }) {
 
     const start = performance.now()
     let raf = 0
+    let timer = 0
     const tick = (now: number) => {
       const elapsed = ((now - start) % CYCLE_MS + CYCLE_MS) % CYCLE_MS
       paintDots(dots, elapsed / CYCLE_MS)
-      raf = requestAnimationFrame(tick)
+      timer = window.setTimeout(() => {
+        raf = requestAnimationFrame(tick)
+      }, FRAME_MS)
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(timer)
+    }
   }, [active])
 
   return (
