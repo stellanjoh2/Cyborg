@@ -73,7 +73,12 @@ const DEFAULT_TEXT =
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
-const SPLASH_TYPE_MS = 10
+const SPLASH_YEAR = '© 2026'
+/** Splash build/teardown pace (hold after full build stays absolute). */
+const SPLASH_SPEED = 1 / 0.9
+const SPLASH_TYPE_MS = Math.max(1, Math.round(10 / SPLASH_SPEED))
+/** Larynx / S mark in — scale-up / dock; same length so stagger stays readable. */
+const SPLASH_MARK_IN = 0.425 / SPLASH_SPEED
 export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
@@ -105,28 +110,42 @@ export default function App() {
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
   const [splashCreditActive, setSplashCreditActive] = useState(false)
+  const [splashYearActive, setSplashYearActive] = useState(false)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
 
   useGSAP(
     () => {
       const navBleed = document.querySelector('.scale-nav-bleed')
+      const root = appRef.current
+      const splash = root?.querySelector<HTMLElement>('.speech-splash')
+      const splashMark = root?.querySelector<HTMLElement>(
+        '.speech-splash__mark-slot',
+      )
+      const splashS = root?.querySelector<HTMLElement>('.speech-splash__s-slot')
+      const splashCredit = root?.querySelector<HTMLElement>('.speech-splash__credit')
+      const splashYear = root?.querySelector<HTMLElement>('.speech-splash__year')
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
         setSplashCreditActive(true)
-        gsap.set('.speech-splash', { autoAlpha: 0 })
+        setSplashYearActive(true)
+        document.documentElement.classList.remove('is-splash-void')
+        if (splash) gsap.set(splash, { autoAlpha: 0, y: 0, clearProps: 'transform' })
         splashLogoRef.current?.show()
         headerLogoRef.current?.show()
         return
       }
 
+      if (!root || !splash) return
+
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
       setSplashCreditActive(false)
+      setSplashYearActive(false)
 
-      const root = appRef.current
-      root?.classList.add('is-introducing')
+      root.classList.add('is-introducing')
+      document.documentElement.classList.add('is-splash-void')
 
       // Full-bleed nav lives outside the stage; hide until UI intro starts.
       if (navBleed) gsap.set(navBleed, { autoAlpha: 0 })
@@ -134,71 +153,138 @@ export default function App() {
       const D = 0.55
       const tl = gsap.timeline({
         onComplete: () => {
-          root?.classList.remove('is-introducing')
+          root.classList.remove('is-introducing')
+          document.documentElement.classList.remove('is-splash-void')
         },
       })
 
-      // —— 0. Accent splash: mark → LX01 → credit typewriter → fall out → curtain ——
-      const lineIn = 0.34
-      const staggerGap = 0.14
-      const splashOut = 0.55
-      const splashOutStagger = 0.1
+      // —— 0. Accent splash: plate in → mark → LX01 → credit → year → fall out → curtain ——
+      const splashT = (t: number) => t / SPLASH_SPEED
+      const staggerGap = splashT(0.14)
+      const splashOut = splashT(0.55)
+      const splashOutStagger = splashT(0.1)
+      // Keep absolute: pause after the splash is fully built, before teardown.
       const splashHold = 0.5
-      const curtainDur = 0.7
+      const curtainDur = splashT(0.7)
       const creditTypeDur = (SPLASH_CREDIT.length * SPLASH_TYPE_MS) / 1000
-      const splashExit = [
-        '.speech-splash__mark',
-        '.speech-splash__logo',
-        '.speech-splash__credit',
-      ]
+      const yearTypeDur = (SPLASH_YEAR.length * SPLASH_TYPE_MS) / 1000
       splashLogoRef.current?.hideParts()
-      gsap.set('.speech-splash__mark', { autoAlpha: 0, y: 0 })
-      gsap.set('.speech-splash__credit', { autoAlpha: 1, y: 0 })
+      if (splashCredit) gsap.set(splashCredit, { autoAlpha: 1, y: 0 })
+      if (splashYear) gsap.set(splashYear, { autoAlpha: 1, y: 0 })
       const splashReveal = splashLogoRef.current?.revealTimeline()
-      const charsEnd = splashReveal?.duration() ?? 1.1
-      const markAt = 0
-      const lx01At = markAt + lineIn + staggerGap
-      const creditAt = lx01At + charsEnd + staggerGap
-      const logoOutAt = creditAt + creditTypeDur + splashHold
-      const exitSpan = splashOut + splashOutStagger * (splashExit.length - 1)
-      const curtainAt = logoOutAt + exitSpan
+      const splashLogoExit = splashLogoRef.current?.exitTimeline()
+      splashReveal?.timeScale(SPLASH_SPEED)
+      splashLogoExit?.timeScale(SPLASH_SPEED)
+      const charsEnd = splashT(splashReveal?.duration() ?? 1.1)
+      const logoExitDur = splashT(splashLogoExit?.duration() ?? 0.55)
+      const sFromX = splashS
+        ? -(splashS.getBoundingClientRect().right + 24)
+        : 0
+
+      // Pixel y — yPercent is unreliable inside ScaleViewport's transform: scale().
+      const plateTravel = Math.max(splash.offsetHeight, root.offsetHeight, 1)
+      gsap.set(splash, { y: -plateTravel, autoAlpha: 1, force3D: true })
+
+      const plateInAt = 0
+      // Larynx → LX01 → S → credit → year
+      const markAt = plateInAt + Math.max(0, curtainDur - splashT(0.25))
+      const lx01At = markAt + SPLASH_MARK_IN + staggerGap
+      const sAt = lx01At + charsEnd + staggerGap
+      const creditAt = sAt + SPLASH_MARK_IN + staggerGap
+      const yearAt = creditAt + creditTypeDur
+      const logoOutAt = yearAt + yearTypeDur + splashHold
+      // Symbol scale-out → wordmark deconstruct → S slide-out → typewriter rewind.
+      const logoExitAt = logoOutAt + splashOutStagger
+      const sOutAt = logoExitAt + logoExitDur
+      const yearRewindAt = sOutAt + splashOutStagger
+      const creditRewindAt = yearRewindAt + yearTypeDur
+      const footerDoneAt = creditRewindAt + creditTypeDur
+      const curtainAt = footerDoneAt
       const SPLASH = curtainAt + curtainDur
 
-      tl.fromTo(
-        '.speech-splash__mark',
-        { autoAlpha: 0, y: 14 },
+      // Same duration / power3 curve as the exit (in ↔ out mirror).
+      tl.to(
+        splash,
         {
-          autoAlpha: 1,
           y: 0,
-          duration: lineIn,
-          ease: 'power2.out',
-          immediateRender: true,
+          duration: curtainDur,
+          ease: 'power3.out',
         },
-        markAt,
+        plateInAt,
       )
+      tl.call(
+        () => document.documentElement.classList.remove('is-splash-void'),
+        undefined,
+        plateInAt + curtainDur,
+      )
+      if (splashMark) {
+        tl.fromTo(
+          splashMark,
+          { autoAlpha: 1, scale: 0 },
+          {
+            autoAlpha: 1,
+            scale: 1,
+            duration: SPLASH_MARK_IN,
+            ease: 'power3.out',
+            immediateRender: true,
+          },
+          markAt,
+        )
+      }
       if (splashReveal) tl.add(splashReveal, lx01At)
+      if (splashS) {
+        tl.fromTo(
+          splashS,
+          { autoAlpha: 1, x: sFromX },
+          {
+            autoAlpha: 1,
+            x: 0,
+            duration: SPLASH_MARK_IN,
+            ease: 'power3.out',
+            immediateRender: true,
+          },
+          sAt,
+        )
+      }
       tl.call(() => setSplashCreditActive(true), undefined, creditAt)
+      tl.call(() => setSplashYearActive(true), undefined, yearAt)
+      if (splashMark) {
+        tl.to(
+          splashMark,
+          {
+            autoAlpha: 0,
+            scale: 0,
+            duration: splashOut,
+            ease: 'power3.in',
+          },
+          logoOutAt,
+        )
+      }
+      if (splashLogoExit) tl.add(splashLogoExit, logoExitAt)
+      if (splashS) {
+        tl.to(
+          splashS,
+          {
+            x: sFromX,
+            duration: SPLASH_MARK_IN,
+            ease: 'power3.in',
+          },
+          sOutAt,
+        )
+      }
+      // Year then credit — reverse of type-in order.
+      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
+      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
       tl.to(
-        splashExit,
+        splash,
         {
-          autoAlpha: 0,
-          y: 56,
-          duration: splashOut,
-          stagger: splashOutStagger,
-          ease: 'power2.in',
-        },
-        logoOutAt,
-      )
-      tl.to(
-        '.speech-splash',
-        {
-          yPercent: 100,
+          y: plateTravel,
           duration: curtainDur,
           ease: 'power3.in',
         },
         curtainAt,
       )
-      tl.set('.speech-splash', { autoAlpha: 0 }, SPLASH)
+      tl.set(splash, { autoAlpha: 0 }, SPLASH)
 
       const ui = gsap.timeline({
         defaults: {
@@ -387,9 +473,12 @@ export default function App() {
 
       return () => {
         root?.classList.remove('is-introducing')
+        document.documentElement.classList.remove('is-splash-void')
       }
     },
-    { scope: appRef },
+    {
+      scope: appRef,
+    },
   )
 
   useEffect(() => {
@@ -812,19 +901,43 @@ export default function App() {
     <>
       <main className="speech-app" ref={appRef}>
       <div className="speech-splash" aria-hidden="true">
+        <div className="speech-splash__cyborg">
+          <img
+            src={`${import.meta.env.BASE_URL}cyborg-intro.png`}
+            alt=""
+            decoding="async"
+          />
+        </div>
         <div className="speech-splash__frame">
-          <div className="speech-splash__mark" />
+          <div className="speech-splash__mark-slot">
+            <div className="speech-splash__mark" />
+          </div>
           <div className="speech-splash__logo-slot">
             <Logotype ref={splashLogoRef} className="speech-splash__logo" />
           </div>
-          <TypewriterReveal
-            as="p"
-            className="speech-splash__credit"
-            text={SPLASH_CREDIT}
-            active={splashCreditActive}
-            hold
-            speedMs={SPLASH_TYPE_MS}
-          />
+          <div className="speech-splash__bottom">
+            <div className="speech-splash__s-slot">
+              <div className="speech-splash__s" />
+            </div>
+            <div className="speech-splash__footer">
+              <TypewriterReveal
+                as="p"
+                className="speech-splash__credit"
+                text={SPLASH_CREDIT}
+                active={splashCreditActive}
+                hold
+                speedMs={SPLASH_TYPE_MS}
+              />
+              <TypewriterReveal
+                as="p"
+                className="speech-splash__year"
+                text={SPLASH_YEAR}
+                active={splashYearActive}
+                hold
+                speedMs={SPLASH_TYPE_MS}
+              />
+            </div>
+          </div>
         </div>
       </div>
       <header className="speech-top">

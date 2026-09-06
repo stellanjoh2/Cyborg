@@ -69,6 +69,9 @@ export function TypewriterReveal({
   const idleText = hold ? '' : text
   const [typed, setTyped] = useState(active ? '' : idleText)
   const [isComplete, setIsComplete] = useState(!active && !hold)
+  const [isRewinding, setIsRewinding] = useState(false)
+  const typedRef = useRef(typed)
+  typedRef.current = typed
   const combinedClassName = ['typewriter-reveal', className]
     .filter(Boolean)
     .join(' ')
@@ -83,20 +86,57 @@ export function TypewriterReveal({
 
   useEffect(() => {
     if (!active) {
-      setTyped(hold ? '' : text)
-      setIsComplete(!hold)
-      return
+      if (!hold) {
+        setTyped(text)
+        setIsComplete(true)
+        setIsRewinding(false)
+        return
+      }
+
+      if (reduceMotion) {
+        setTyped('')
+        setIsComplete(false)
+        setIsRewinding(false)
+        return
+      }
+
+      let i = typedRef.current.length
+      if (i <= 0) {
+        setTyped('')
+        setIsComplete(false)
+        setIsRewinding(false)
+        return
+      }
+
+      setIsRewinding(true)
+      setIsComplete(false)
+      const timer = window.setInterval(() => {
+        i -= 1
+        setTyped(text.slice(0, Math.max(0, i)))
+        if (i <= 0) {
+          window.clearInterval(timer)
+          setIsRewinding(false)
+          setIsComplete(false)
+        }
+      }, speedMs)
+
+      return () => {
+        window.clearInterval(timer)
+        setIsRewinding(false)
+      }
     }
 
     if (reduceMotion) {
       setTyped(text)
       setIsComplete(true)
+      setIsRewinding(false)
       onCompleteRef.current?.()
       return
     }
 
     setTyped('')
     setIsComplete(false)
+    setIsRewinding(false)
 
     let i = 0
     const timer = window.setInterval(() => {
@@ -112,6 +152,8 @@ export function TypewriterReveal({
     return () => window.clearInterval(timer)
   }, [active, hold, reduceMotion, speedMs, text])
 
+  const showCaret = caret && ((active && !isComplete) || isRewinding)
+
   return (
     <Tag className={combinedClassName} {...restProps}>
       <span className="typewriter-reveal__ghost" aria-hidden>
@@ -119,7 +161,7 @@ export function TypewriterReveal({
       </span>
       <span className="typewriter-reveal__live">
         {renderWithLinks(typed, links)}
-        {caret && active && !isComplete ? (
+        {showCaret ? (
           <span className="typewriter-reveal__caret" aria-hidden />
         ) : null}
       </span>

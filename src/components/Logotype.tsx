@@ -18,6 +18,8 @@ const OUT_STAGGER = 0.08
 export type LogotypeHandle = {
   /** LARYNX → INDUSTRIES → LX01 construct timeline. */
   revealTimeline: () => gsap.core.Timeline
+  /** LX01 letters → INDUSTRIES → LARYNX fall-out (reveal reverse). */
+  exitTimeline: () => gsap.core.Timeline
   /** Instant full visibility. */
   show: () => void
   /** Instant hide parts (keeps svg box). */
@@ -106,6 +108,55 @@ export function buildLogotypeReveal(root: SVGSVGElement): gsap.core.Timeline {
   return tl
 }
 
+/** Reveal reverse: LX01 letters → INDUSTRIES → LARYNX, falling down. */
+export function buildLogotypeExit(root: SVGSVGElement): gsap.core.Timeline {
+  const { larynx, industries, chars } = partsOf(root)
+  const tl = gsap.timeline()
+  const fallY = 28
+  const dur = 0.55
+  let at = 0
+  if (chars.length) {
+    tl.to(
+      chars,
+      {
+        autoAlpha: 0,
+        y: fallY,
+        duration: dur,
+        stagger: OUT_STAGGER,
+        ease: 'power2.in',
+      },
+      at,
+    )
+    at += (chars.length - 1) * OUT_STAGGER + LINE_GAP
+  }
+  if (industries) {
+    tl.to(
+      industries,
+      {
+        autoAlpha: 0,
+        y: fallY,
+        duration: dur,
+        ease: 'power2.in',
+      },
+      at,
+    )
+    at += LINE_GAP
+  }
+  if (larynx) {
+    tl.to(
+      larynx,
+      {
+        autoAlpha: 0,
+        y: fallY,
+        duration: dur,
+        ease: 'power2.in',
+      },
+      at,
+    )
+  }
+  return tl
+}
+
 /** LX01 only — L→R construct (wordmark stays put). */
 function buildCharsReveal(root: SVGSVGElement): gsap.core.Timeline {
   const { chars } = partsOf(root)
@@ -164,6 +215,11 @@ export const Logotype = forwardRef<LogotypeHandle, LogotypeProps>(
         const svg = svgRef.current
         if (!svg) return gsap.timeline()
         return buildLogotypeReveal(svg)
+      },
+      exitTimeline: () => {
+        const svg = svgRef.current
+        if (!svg) return gsap.timeline()
+        return buildLogotypeExit(svg)
       },
       show: () => {
         gsap.set(allParts(svgRef.current), { autoAlpha: 1, y: 0 })
