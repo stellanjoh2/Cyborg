@@ -248,7 +248,12 @@
 .vu-peak.is-live,
 .vu-peak.is-caution,
 .vu-peak.is-on {
-  box-shadow: var(--glow-single);
+  /* Global glow defaults (pre–25% VU boost). */
+  --glow-blur-tight: 6px;
+  --glow-blur-wide: 12px;
+  --glow-mix-tight: 38%;
+  --glow-mix-wide: 21%;
+  box-shadow: var(--glow-outer);
 }
 
 .vu-led--green.is-on {

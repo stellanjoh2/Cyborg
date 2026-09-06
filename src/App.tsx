@@ -1597,7 +1597,7 @@ export default function App() {
             placeholder={
               emptyWarning ? 'Please enter some text.' : 'Type something...'
             }
-            rows={4}
+            rows={3}
             aria-label="Input"
           />
         )}
