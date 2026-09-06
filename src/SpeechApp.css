@@ -86,8 +86,8 @@ html.is-splash-void .speech-splash {
 }
 
 .speech-splash__mark-slot {
-  width: 144px;
-  height: 144px;
+  width: 192px;
+  height: 192px;
   aspect-ratio: 1;
   justify-self: start;
   transform-origin: center center;
@@ -239,7 +239,8 @@ html.is-splash-void .speech-splash {
 
 .logotype__larynx,
 .logotype__industries,
-.logotype__char {
+.logotype__char,
+.logotype__char-flash {
   visibility: hidden;
 }
 

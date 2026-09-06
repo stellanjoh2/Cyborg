@@ -11,9 +11,20 @@ const LINE_GAP = 0.08
 const CHAR_IN = 0.32
 const CHAR_STAGGER = 0.1
 const CHAR_GAP = 0.1
+/** White LX01 flash leads black ink. */
+const FLASH_LEAD = 0.1
+/** Kill white under black as soon as ink lands (avoids edge bleed). */
+const FLASH_OUT = 2 / 60
 const HOLD = 0.18
 const OUT = 0.28
 const OUT_STAGGER = 0.08
+
+const LX01_PATHS = [
+  'M114.27,80.47h-61.49c-.19,0-.37.05-.53.14l-28.01,16.17c-2.13,1.23-4.79-.31-4.79-2.77v-50.83c0-.59-.48-1.07-1.07-1.07H1.07c-.59,0-1.07.48-1.07,1.07v55.67c0,.59.48,1.07,1.07,1.07h113.2c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z',
+  'M234.13,42.11h-25.48c-.19,0-.37.05-.53.14l-10.89,6.26c-.33.19-.53.54-.53.92v19.51c0,.82-.89,1.33-1.6.92l-48.27-27.73-.03-.02h-25.87c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h20.4c.19,0,.37.05.53.14l11.39,6.54c2.14,1.23,2.14,4.31,0,5.54l-11.39,6.54c-.16.09-.34.14-.53.14h-20.4c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h25.58c.19,0,.37-.05.53-.14l10.89-6.26c.33-.19.53-.54.53-.92v-19.51c0-.82.89-1.33,1.6-.92l48.27,27.73.03.02h25.77c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07h-20.29c-.19,0-.37-.05-.53-.14l-11.39-6.54c-2.14-1.23-2.14-4.31,0-5.54l11.39-6.54c.16-.09.34-.14.53-.14h20.29c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z',
+  'M354.52,60.94l-32.58-18.81-.03-.02h-81.12c-.59,0-1.07.48-1.07,1.07v37.02c0,.38.2.73.53.92l32.51,18.77.03.02h81.19c.59,0,1.07-.48,1.07-1.07v-36.98c0-.38-.2-.73-.53-.92ZM335.61,79.4c0,.59-.48,1.07-1.07,1.07h-74.31c-.59,0-1.07-.48-1.07-1.07v-16.78c0-.59.48-1.07,1.07-1.07h74.31c.59,0,1.07.48,1.07,1.07v16.78Z',
+  'M473.85,80.47h-45.81c-.59,0-1.07-.48-1.07-1.07v-17.43c0-.38-.2-.73-.53-.92l-32.77-18.92-.03-.02h-32.99c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h45.81c.59,0,1.07.48,1.07,1.07v16.78c0,.59-.48,1.07-1.07,1.07h-45.81c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h113.2c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z',
+] as const
 
 export type LogotypeHandle = {
   /** LARYNX → INDUSTRIES → LX01 construct timeline. */
@@ -36,17 +47,21 @@ type LogoParts = {
   larynx: SVGGElement | null
   industries: SVGGElement | null
   chars: SVGElement[]
+  flashChars: SVGElement[]
 }
 
 function partsOf(root: SVGSVGElement | null): LogoParts {
   if (!root) {
-    return { larynx: null, industries: null, chars: [] }
+    return { larynx: null, industries: null, chars: [], flashChars: [] }
   }
   return {
     larynx: root.querySelector<SVGGElement>('.logotype__larynx'),
     industries: root.querySelector<SVGGElement>('.logotype__industries'),
     chars: gsap.utils.toArray<SVGElement>(
       root.querySelectorAll('.logotype__char'),
+    ),
+    flashChars: gsap.utils.toArray<SVGElement>(
+      root.querySelectorAll('.logotype__char-flash'),
     ),
   }
 }
@@ -82,17 +97,17 @@ function revealLine(
   )
 }
 
-/** 1 LARYNX → 2 INDUSTRIES → 3 LX01 L→R. */
+/** 1 LARYNX → 2 INDUSTRIES → 3 LX01 L→R (white flash → black ink). */
 export function buildLogotypeReveal(root: SVGSVGElement): gsap.core.Timeline {
-  const { larynx, industries, chars } = partsOf(root)
+  const { larynx, industries, chars, flashChars } = partsOf(root)
   const tl = gsap.timeline()
   revealLine(tl, larynx, 0)
   const industriesAt = LINE_IN + LINE_GAP
   revealLine(tl, industries, industriesAt)
   const charsAt = industriesAt + LINE_IN + CHAR_GAP
-  if (chars.length) {
+  if (flashChars.length) {
     tl.fromTo(
-      chars,
+      flashChars,
       { autoAlpha: 0, y: 14 },
       {
         autoAlpha: 1,
@@ -105,6 +120,33 @@ export function buildLogotypeReveal(root: SVGSVGElement): gsap.core.Timeline {
       charsAt,
     )
   }
+  if (chars.length) {
+    tl.fromTo(
+      chars,
+      { autoAlpha: 0, y: 14 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: CHAR_IN,
+        stagger: CHAR_STAGGER,
+        ease: 'power2.out',
+        immediateRender: true,
+      },
+      charsAt + FLASH_LEAD,
+    )
+  }
+  // Drop white the instant each black glyph finishes — no edge bleed under ink.
+  flashChars.forEach((el, i) => {
+    tl.to(
+      el,
+      {
+        autoAlpha: 0,
+        duration: FLASH_OUT,
+        ease: 'none',
+      },
+      charsAt + FLASH_LEAD + i * CHAR_STAGGER + CHAR_IN,
+    )
+  })
   return tl
 }
 
@@ -201,7 +243,9 @@ export function logotypeRevealDuration(): number {
     LINE_IN +
     CHAR_GAP +
     3 * CHAR_STAGGER +
-    CHAR_IN
+    CHAR_IN +
+    FLASH_LEAD +
+    FLASH_OUT
   )
 }
 
@@ -222,10 +266,15 @@ export const Logotype = forwardRef<LogotypeHandle, LogotypeProps>(
         return buildLogotypeExit(svg)
       },
       show: () => {
+        const { flashChars } = partsOf(svgRef.current)
         gsap.set(allParts(svgRef.current), { autoAlpha: 1, y: 0 })
+        // Flash layer is splash-only; never leave white under the mark.
+        if (flashChars.length) gsap.set(flashChars, { autoAlpha: 0, y: 0 })
       },
       hideParts: () => {
+        const { flashChars } = partsOf(svgRef.current)
         gsap.set(allParts(svgRef.current), { autoAlpha: 0, y: 0 })
+        if (flashChars.length) gsap.set(flashChars, { autoAlpha: 0, y: 0 })
       },
     }))
 
@@ -296,23 +345,17 @@ export const Logotype = forwardRef<LogotypeHandle, LogotypeProps>(
           <polygon points="183.31 27.97 167.33 27.97 167.33 25.48 182.96 25.48 182.96 22.39 167.33 22.39 167.33 20.37 183.31 20.37 183.31 17.28 163.22 17.28 163.22 31.06 183.31 31.06 183.31 27.97" />
           <path d="M202.9,27.76h-12.65c-1.4,0-2.39-.49-2.97-1.49l-2.84,2.66c.72.78,1.54,1.35,2.46,1.71.92.35,2.04.53,3.37.53h12.56c1.22,0,2.24-.19,3.07-.58.82-.39,1.45-.91,1.87-1.58.42-.67.64-1.42.64-2.26,0-.89-.21-1.66-.63-2.32-.42-.66-1-1.17-1.75-1.53-.75-.36-1.63-.54-2.64-.54h-12.83c-.95,0-1.43-.32-1.43-.96,0-.28.11-.51.32-.69.21-.18.55-.27,1.01-.27h12.11c.84,0,1.48.1,1.93.31.45.21.78.51,1,.93l2.62-2.47c-.68-.72-1.43-1.24-2.24-1.55-.81-.32-1.77-.47-2.87-.47h-12.5c-1.17,0-2.16.18-2.96.55-.8.37-1.41.87-1.81,1.5-.4.64-.61,1.36-.61,2.17s.21,1.59.62,2.22c.41.63.99,1.12,1.75,1.47.75.35,1.63.52,2.63.52h12.79c.95,0,1.43.36,1.43,1.08,0,.31-.12.57-.36.77-.24.21-.6.31-1.09.31Z" />
         </g>
-        <g className="logotype__chars" fill="currentColor">
-          <path
-            className="logotype__char"
-            d="M114.27,80.47h-61.49c-.19,0-.37.05-.53.14l-28.01,16.17c-2.13,1.23-4.79-.31-4.79-2.77v-50.83c0-.59-.48-1.07-1.07-1.07H1.07c-.59,0-1.07.48-1.07,1.07v55.67c0,.59.48,1.07,1.07,1.07h113.2c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z"
-          />
-          <path
-            className="logotype__char"
-            d="M234.13,42.11h-25.48c-.19,0-.37.05-.53.14l-10.89,6.26c-.33.19-.53.54-.53.92v19.51c0,.82-.89,1.33-1.6.92l-48.27-27.73-.03-.02h-25.87c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h20.4c.19,0,.37.05.53.14l11.39,6.54c2.14,1.23,2.14,4.31,0,5.54l-11.39,6.54c-.16.09-.34.14-.53.14h-20.4c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h25.58c.19,0,.37-.05.53-.14l10.89-6.26c.33-.19.53-.54.53-.92v-19.51c0-.82.89-1.33,1.6-.92l48.27,27.73.03.02h25.77c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07h-20.29c-.19,0-.37-.05-.53-.14l-11.39-6.54c-2.14-1.23-2.14-4.31,0-5.54l11.39-6.54c.16-.09.34-.14.53-.14h20.29c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z"
-          />
-          <path
-            className="logotype__char"
-            d="M354.52,60.94l-32.58-18.81-.03-.02h-81.12c-.59,0-1.07.48-1.07,1.07v37.02c0,.38.2.73.53.92l32.51,18.77.03.02h81.19c.59,0,1.07-.48,1.07-1.07v-36.98c0-.38-.2-.73-.53-.92ZM335.61,79.4c0,.59-.48,1.07-1.07,1.07h-74.31c-.59,0-1.07-.48-1.07-1.07v-16.78c0-.59.48-1.07,1.07-1.07h74.31c.59,0,1.07.48,1.07,1.07v16.78Z"
-          />
-          <path
-            className="logotype__char"
-            d="M473.85,80.47h-45.81c-.59,0-1.07-.48-1.07-1.07v-17.43c0-.38-.2-.73-.53-.92l-32.77-18.92-.03-.02h-32.99c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h45.81c.59,0,1.07.48,1.07,1.07v16.78c0,.59-.48,1.07-1.07,1.07h-45.81c-.59,0-1.07.48-1.07,1.07v17.31c0,.59.48,1.07,1.07,1.07h113.2c.59,0,1.07-.48,1.07-1.07v-17.31c0-.59-.48-1.07-1.07-1.07Z"
-          />
+        <g className="logotype__chars">
+          <g className="logotype__chars-flash" fill="var(--blue)">
+            {LX01_PATHS.map((d, i) => (
+              <path key={`flash-${i}`} className="logotype__char-flash" d={d} />
+            ))}
+          </g>
+          <g className="logotype__chars-ink" fill="currentColor">
+            {LX01_PATHS.map((d, i) => (
+              <path key={`ink-${i}`} className="logotype__char" d={d} />
+            ))}
+          </g>
         </g>
       </svg>
     )

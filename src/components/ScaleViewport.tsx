@@ -56,6 +56,8 @@ export function ScaleViewport({ children }: ScaleViewportProps) {
       >
         {children}
       </div>
+      {/* Screenspace dirt above the stage; clipped to the splash plate during intro. */}
+      <div className="scale-viewport__dirt" aria-hidden />
     </div>
   )
 }

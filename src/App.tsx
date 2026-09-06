@@ -116,6 +116,10 @@ export default function App() {
   useGSAP(
     () => {
       const navBleed = document.querySelector('.scale-nav-bleed')
+      const viewportEl = document.querySelector('.scale-viewport')
+      const splashDirt = document.querySelector<HTMLElement>(
+        '.scale-viewport__dirt',
+      )
       const root = appRef.current
       const splash = root?.querySelector<HTMLElement>('.speech-splash')
       const splashMark = root?.querySelector<HTMLElement>(
@@ -125,11 +129,19 @@ export default function App() {
       const splashCredit = root?.querySelector<HTMLElement>('.speech-splash__credit')
       const splashYear = root?.querySelector<HTMLElement>('.speech-splash__year')
 
+      const clearSplashDirt = () => {
+        if (!splashDirt) return
+        splashDirt.classList.remove('is-splash')
+        splashDirt.style.clipPath = ''
+        splashDirt.style.filter = ''
+      }
+
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
         setSplashCreditActive(true)
         setSplashYearActive(true)
         document.documentElement.classList.remove('is-splash-void')
+        clearSplashDirt()
         if (splash) gsap.set(splash, { autoAlpha: 0, y: 0, clearProps: 'transform' })
         splashLogoRef.current?.show()
         headerLogoRef.current?.show()
@@ -160,6 +172,7 @@ export default function App() {
             'is-splash-void',
             'is-splash-bleed',
           )
+          clearSplashDirt()
         },
       })
 
@@ -190,7 +203,32 @@ export default function App() {
       const plateTravel = Math.max(splash.offsetHeight, root.offsetHeight, 1)
       gsap.set(splash, { y: -plateTravel, autoAlpha: 1, force3D: true })
 
-      const plateInAt = 0
+      // Screenspace dirt sits above the stage; clip it to the plate rect as it moves.
+      const syncSplashDirt = () => {
+        if (!splashDirt || !viewportEl) return
+        const v = viewportEl.getBoundingClientRect()
+        const s = splash.getBoundingClientRect()
+        if (
+          s.bottom <= v.top ||
+          s.top >= v.bottom ||
+          s.right <= v.left ||
+          s.left >= v.right
+        ) {
+          splashDirt.style.clipPath = 'inset(100% 0 0 0)'
+          return
+        }
+        const top = Math.max(0, s.top - v.top)
+        const right = Math.max(0, v.right - s.right)
+        const bottom = Math.max(0, v.bottom - s.bottom)
+        const left = Math.max(0, s.left - v.left)
+        splashDirt.style.clipPath = `inset(${top}px ${right}px ${bottom}px ${left}px)`
+      }
+      splashDirt?.classList.add('is-splash')
+      syncSplashDirt()
+      if (splashDirt) gsap.set(splashDirt, { filter: 'blur(20px)' })
+
+      // Hold black void for ~15 frames @60fps before the orange plate drops in.
+      const plateInAt = 15 / 60
       // Larynx → LX01 → S → credit → year
       const markAt = plateInAt + Math.max(0, curtainDur - splashT(0.25))
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
@@ -214,9 +252,22 @@ export default function App() {
           y: 0,
           duration: curtainDur,
           ease: 'power3.out',
+          onUpdate: syncSplashDirt,
         },
         plateInAt,
       )
+      // Difference dirt: quick blur-in as the plate reveals it.
+      if (splashDirt) {
+        tl.to(
+          splashDirt,
+          {
+            filter: 'blur(0px)',
+            duration: splashT(0.35),
+            ease: 'power2.out',
+          },
+          plateInAt,
+        )
+      }
       tl.call(
         () => document.documentElement.classList.remove('is-splash-void'),
         undefined,
@@ -292,10 +343,12 @@ export default function App() {
           y: plateTravel,
           duration: curtainDur,
           ease: 'power3.in',
+          onUpdate: syncSplashDirt,
         },
         curtainAt,
       )
       tl.set(splash, { autoAlpha: 0 }, SPLASH)
+      tl.call(clearSplashDirt, undefined, SPLASH)
 
       const ui = gsap.timeline({
         defaults: {
@@ -488,6 +541,7 @@ export default function App() {
           'is-splash-void',
           'is-splash-bleed',
         )
+        clearSplashDirt()
       }
     },
     {
