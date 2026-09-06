@@ -146,6 +146,8 @@ export default function App() {
 
       root.classList.add('is-introducing')
       document.documentElement.classList.add('is-splash-void')
+      // Accent fill for viewport letterbox (sides/top) while splash covers the stage.
+      document.documentElement.classList.add('is-splash-bleed')
 
       // Full-bleed nav lives outside the stage; hide until UI intro starts.
       if (navBleed) gsap.set(navBleed, { autoAlpha: 0 })
@@ -154,7 +156,10 @@ export default function App() {
       const tl = gsap.timeline({
         onComplete: () => {
           root.classList.remove('is-introducing')
-          document.documentElement.classList.remove('is-splash-void')
+          document.documentElement.classList.remove(
+            'is-splash-void',
+            'is-splash-bleed',
+          )
         },
       })
 
@@ -275,6 +280,12 @@ export default function App() {
       // Year then credit — reverse of type-in order.
       tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
       tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
+      // Drop letterbox fill with the curtain so orange doesn't linger over the UI.
+      tl.call(
+        () => document.documentElement.classList.remove('is-splash-bleed'),
+        undefined,
+        curtainAt,
+      )
       tl.to(
         splash,
         {
@@ -473,7 +484,10 @@ export default function App() {
 
       return () => {
         root?.classList.remove('is-introducing')
-        document.documentElement.classList.remove('is-splash-void')
+        document.documentElement.classList.remove(
+          'is-splash-void',
+          'is-splash-bleed',
+        )
       }
     },
     {

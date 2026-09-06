@@ -14,6 +14,15 @@
   background: transparent;
 }
 
+/* Letterbox outside the 16:9 stage — paint accent so the splash isn't cropped. */
+html.is-splash-bleed .scale-viewport {
+  background: var(--accent);
+}
+
+html.is-splash-bleed .scale-viewport::before {
+  opacity: 0;
+}
+
 /* Pure black void while the orange splash plate is still above the frame. */
 html.is-splash-void .scale-viewport {
   background: #000;
@@ -70,7 +79,8 @@ html.is-splash-void .speech-splash {
   z-index: 1;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* Logo is absolutely centered; mark + bottom share the frame. */
+  grid-template-rows: auto 1fr;
   align-items: start;
   justify-items: stretch;
 }
@@ -99,31 +109,38 @@ html.is-splash-void .speech-splash {
 }
 
 .speech-splash__logo-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Frame is symmetrically inset, so 50% here == stage vertical center. */
+  top: 50%;
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
   min-height: 0;
-  align-self: stretch;
-  width: 100%;
-  translate: 0 -118px;
+  width: auto;
+  pointer-events: none;
 }
 
 .speech-splash__logo {
   display: block;
-  /* Previous splash column width × 0.88 — left-aligned, not stretched to the frame. */
-  width: 66vw;
+  /* Design-space width (was 66vw — viewport units broke ScaleViewport). */
+  width: calc(2560px * 0.66);
   max-width: 100%;
   height: auto;
   aspect-ratio: var(--logo-aspect);
   color: var(--fill);
   filter: none;
   overflow: visible;
+  /* LX01 glyph mid-y in viewBox (42.11…99.91 → 71.01) / vb height 99.91 */
+  translate: 0 calc(-100% * 71.01 / 99.91);
 }
 
 .speech-splash__bottom {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  align-self: end;
   gap: 92px;
   width: 100%;
   min-width: 0;
