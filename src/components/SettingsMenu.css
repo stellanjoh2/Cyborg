@@ -113,11 +113,11 @@
 
 .settings-menu__segment {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--settings-segment-cols, 2), minmax(0, 1fr));
   align-items: stretch;
   gap: 0;
   flex: 0 0 auto;
-  width: 7.5rem;
+  width: calc(var(--settings-segment-cols, 2) * 3.75rem);
   border: var(--stroke-width) solid var(--synth-border);
   border-radius: var(--radius);
   background: var(--black);

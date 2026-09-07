@@ -21,6 +21,12 @@ export default defineConfig({
           if (id.includes('cmu-pronouncing-dictionary')) {
             return 'cmu-dict'
           }
+          if (
+            id.includes('@diffusionstudio/vits-web') ||
+            id.includes('onnxruntime')
+          ) {
+            return 'piper-tts'
+          }
         },
       },
     },

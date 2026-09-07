@@ -386,6 +386,10 @@ html.is-safari .vu-leds.is-hot {
   --master-play-accent: var(--vu);
 }
 
+.master-play.is-loading {
+  --master-play-accent: var(--accent);
+}
+
 .master-play:focus-visible {
   outline: 2px solid var(--master-play-accent);
   outline-offset: 4px;
@@ -417,9 +421,9 @@ html.is-safari .vu-leds.is-hot {
   pointer-events: none;
   background: conic-gradient(
     from 0deg,
-    var(--vu) 0deg 52deg,
+    var(--master-play-accent) 0deg 52deg,
     transparent 52deg 180deg,
-    var(--vu) 180deg 232deg,
+    var(--master-play-accent) 180deg 232deg,
     transparent 232deg 360deg
   );
   -webkit-mask: radial-gradient(
@@ -436,13 +440,21 @@ html.is-safari .vu-leds.is-hot {
     #000 100%,
     transparent 100%
   );
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--vu) 70%, transparent));
+  filter: drop-shadow(
+    0 0 6px color-mix(in srgb, var(--master-play-accent) 70%, transparent)
+  );
   transition: opacity 0.2s ease;
 }
 
-.master-play.is-playing .master-play__spin {
+.master-play.is-playing .master-play__spin,
+.master-play.is-loading .master-play__spin {
   opacity: 1;
   animation: master-play-spin 0.72s linear infinite;
+}
+
+.master-play.is-loading .master-play__spin {
+  /* 0.25× play spin speed */
+  animation-duration: 2.88s;
 }
 
 .master-play__face {
@@ -504,6 +516,26 @@ html.is-safari .vu-leds.is-hot {
 .master-play__icon-play {
   /* Optical center: triangle mass sits left of geometric center */
   transform: translateX(6%);
+}
+
+.master-play__label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 84%;
+  color: var(--master-play-accent);
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  --glow-color: var(--master-play-accent);
+  filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--glow-color) 70%, transparent)
+    )
+    drop-shadow(0 0 10px color-mix(in srgb, var(--glow-color) 40%, transparent));
 }
 
 .master-loop,
@@ -621,7 +653,8 @@ html.is-safari .vu-leds.is-hot {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .master-play.is-playing .master-play__spin {
+  .master-play.is-playing .master-play__spin,
+  .master-play.is-loading .master-play__spin {
     animation: none;
   }
 }

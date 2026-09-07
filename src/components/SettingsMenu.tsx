@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
 } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
@@ -18,6 +19,11 @@ import {
   playUiSound,
   setUiSoundsEnabled,
 } from '../ui/sounds'
+import {
+  writeVoiceEngine,
+  VOICE_ENGINE_OPTIONS,
+  type VoiceEngineId,
+} from '../voiceEngines'
 import './SettingsMenu.css'
 
 gsap.registerPlugin(useGSAP)
@@ -59,7 +65,16 @@ function SegmentedOption<T extends string>({
   return (
     <div className="settings-menu__row">
       <span className="settings-menu__label">{label}</span>
-      <div className="settings-menu__segment" role="group" aria-label={label}>
+      <div
+        className="settings-menu__segment"
+        role="group"
+        aria-label={label}
+        style={
+          {
+            '--settings-segment-cols': options.length,
+          } as CSSProperties
+        }
+      >
         {options.map((option) => {
           const selected = option.value === value
           return (
@@ -87,7 +102,13 @@ function SegmentedOption<T extends string>({
   )
 }
 
-export function SettingsMenu() {
+export function SettingsMenu({
+  engine,
+  onEngineChange,
+}: {
+  engine: VoiceEngineId
+  onEngineChange: (engine: VoiceEngineId) => void
+}) {
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
@@ -248,6 +269,19 @@ export function SettingsMenu() {
     if (enabled) playUiSound('ok')
   }
 
+  const setEngine = (next: VoiceEngineId) => {
+    writeVoiceEngine(next)
+    onEngineChange(next)
+    playUiSound('ok')
+    if (next === 'piper') {
+      void import('../piperSpeech')
+        .then(({ ensurePiperReady }) => ensurePiperReady())
+        .catch(() => {
+          // First speak will surface a clearer error if download fails.
+        })
+    }
+  }
+
   const modal =
     mounted && portalHost
       ? createPortal(
@@ -261,6 +295,12 @@ export function SettingsMenu() {
               <h2 className="settings-menu__title">Settings</h2>
             </div>
             <div className="settings-menu__body">
+              <SegmentedOption
+                label="Engine"
+                value={engine}
+                options={VOICE_ENGINE_OPTIONS}
+                onChange={setEngine}
+              />
               <SegmentedOption
                 label="Performance"
                 value={performance}

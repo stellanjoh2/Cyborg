@@ -66,6 +66,11 @@ import {
   VOICE_PRESETS,
   type VoiceId,
 } from './voicePresets'
+import {
+  DEFAULT_PITCH_BY_ENGINE,
+  readVoiceEngine,
+  type VoiceEngineId,
+} from './voiceEngines'
 import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
@@ -184,8 +189,11 @@ function sizeDirtCanvas(canvas: HTMLCanvasElement, host: HTMLElement) {
 export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
+  const [voiceEngine, setVoiceEngine] = useState<VoiceEngineId>(readVoiceEngine)
   const [speed, setSpeed] = useState(1)
-  const [pitch, setPitch] = useState(0.7)
+  const [pitch, setPitch] = useState(
+    () => DEFAULT_PITCH_BY_ENGINE[readVoiceEngine()],
+  )
   const [humanRobot, setHumanRobot] = useState(0)
   const [formant, setFormant] = useState(50)
   const [postUi, setPostUi] = useState<PostProcessUiState>(DEFAULT_POST_PROCESS_UI)
@@ -193,6 +201,7 @@ export default function App() {
   const [isLooping, setIsLooping] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -206,6 +215,7 @@ export default function App() {
   const headerLogoRef = useRef<LogotypeHandle>(null)
   const bakedVoiceRef = useRef<{
     text: string
+    engine: VoiceEngineId
     rate: number
     pitch: number
     metallic: number
@@ -1034,9 +1044,9 @@ export default function App() {
       return
     }
 
-    // Keep graph in sync, but don't retarget the playing buffer's rate —
-    // Robot/speed/pitch changes re-bake samples; applying rate early can
-    // finish the old buffer and flip STOP back to PLAY.
+    // SAM re-bakes samples for Robot/speed/pitch; don't also retarget the
+    // playing buffer's rate (that can finish the old buffer early).
+    // Piper bakes once and needs live playbackRate for realtime knobs.
     updateSamLiveParams(
       {
         speed: livePlan.rate,
@@ -1044,9 +1054,9 @@ export default function App() {
         metallic: livePlan.metallic,
         vocoder,
       },
-      { applySourceRate: false },
+      { applySourceRate: voiceEngine !== 'sam' },
     )
-  }, [isSpeaking, livePlan, vocoder])
+  }, [isSpeaking, livePlan, vocoder, voiceEngine])
 
   useEffect(() => {
     if (!isSpeaking) {
@@ -1073,18 +1083,22 @@ export default function App() {
 
     const next = {
       text: text.trim(),
+      engine: voiceEngine,
       rate: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
     }
     const baked = bakedVoiceRef.current
-    if (
-      baked &&
-      baked.text === next.text &&
-      baked.rate === next.rate &&
-      baked.pitch === next.pitch &&
-      baked.metallic === next.metallic
-    ) {
+    const sourceChanged =
+      !baked ||
+      baked.text !== next.text ||
+      baked.engine !== next.engine ||
+      (voiceEngine === 'sam' &&
+        (baked.rate !== next.rate ||
+          baked.pitch !== next.pitch ||
+          baked.metallic !== next.metallic))
+
+    if (!sourceChanged) {
       return
     }
 
@@ -1092,6 +1106,7 @@ export default function App() {
       bakedVoiceRef.current = next
       void refreshSamLiveBuffer({
         text: next.text,
+        engine: next.engine,
         speed: next.rate,
         pitch: next.pitch,
         metallic: next.metallic,
@@ -1099,7 +1114,14 @@ export default function App() {
     }, 140)
 
     return () => window.clearTimeout(handle)
-  }, [isSpeaking, livePlan.rate, livePlan.pitch, livePlan.metallic, text])
+  }, [
+    isSpeaking,
+    livePlan.rate,
+    livePlan.pitch,
+    livePlan.metallic,
+    text,
+    voiceEngine,
+  ])
 
   useEffect(() => {
     if (!isSpeaking) {
@@ -1309,6 +1331,7 @@ export default function App() {
     stopSamSpeech()
     setIsLooping(false)
     setSamLoop(false)
+    setIsLoadingSpeech(false)
     setIsSpeaking(false)
     setSpokenWordIndex(null)
     bakedVoiceRef.current = null
@@ -1329,6 +1352,7 @@ export default function App() {
 
     const trimmed = text.trim()
     if (!trimmed) {
+      setIsLoadingSpeech(false)
       setIsSpeaking(false)
       setSpokenWordIndex(null)
       setEmptyWarning(true)
@@ -1336,19 +1360,15 @@ export default function App() {
     }
 
     setEmptyWarning(false)
-    setIsSpeaking(true)
-    setSpokenWordIndex(0)
+    setIsLoadingSpeech(true)
+    setIsSpeaking(false)
+    setSpokenWordIndex(null)
     cancelSamSpeech()
     setSamLoop(isLooping)
-    bakedVoiceRef.current = {
-      text: trimmed,
-      rate: livePlan.rate,
-      pitch: livePlan.pitch,
-      metallic: livePlan.metallic,
-    }
 
     void speakSam({
       text: trimmed,
+      engine: voiceEngine,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1357,18 +1377,33 @@ export default function App() {
       masterVolume: liveMasterVolume,
       masterGainDb,
       loop: isLooping,
+      onStart: () => {
+        setIsLoadingSpeech(false)
+        setIsSpeaking(true)
+        setSpokenWordIndex(0)
+        bakedVoiceRef.current = {
+          text: trimmed,
+          engine: voiceEngine,
+          rate: livePlan.rate,
+          pitch: livePlan.pitch,
+          metallic: livePlan.metallic,
+        }
+      },
       onEnd: () => {
+        setIsLoadingSpeech(false)
         setIsSpeaking(false)
         setSpokenWordIndex(null)
         bakedVoiceRef.current = null
       },
       onError: (message) => {
+        setIsLoadingSpeech(false)
         setIsSpeaking(false)
         setSpokenWordIndex(null)
         bakedVoiceRef.current = null
         setError(message)
       },
     }).catch((err: unknown) => {
+      setIsLoadingSpeech(false)
       setIsSpeaking(false)
       setSpokenWordIndex(null)
       bakedVoiceRef.current = null
@@ -1378,7 +1413,7 @@ export default function App() {
 
   transportToggleRef.current = () => {
     if (aboutOpen || error) return
-    if (isSpeaking) handleStop()
+    if (isSpeaking || isLoadingSpeech) handleStop()
     else handlePlayback()
   }
 
@@ -1396,6 +1431,7 @@ export default function App() {
 
     void exportSamWav({
       text: trimmed,
+      engine: voiceEngine,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1515,7 +1551,13 @@ export default function App() {
           </span>
         </button>
         <ThemePicker />
-        <SettingsMenu />
+        <SettingsMenu
+          engine={voiceEngine}
+          onEngineChange={(next) => {
+            setVoiceEngine(next)
+            setPitch(DEFAULT_PITCH_BY_ENGINE[next])
+          }}
+        />
       </div>
     </header>
 
@@ -1532,9 +1574,12 @@ export default function App() {
         onReset={handleResetMaster}
         canReset={masterDirty}
         isPlaying={isSpeaking}
+        isLoading={isLoadingSpeech}
         isLooping={isLooping}
         isMuted={isMuted}
-        onPlayToggle={isSpeaking ? handleStop : handlePlayback}
+        onPlayToggle={
+          isSpeaking || isLoadingSpeech ? handleStop : handlePlayback
+        }
         onLoopToggle={handleLoopToggle}
         onMuteToggle={handleMuteToggle}
       />

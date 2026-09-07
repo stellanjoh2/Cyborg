@@ -181,6 +181,7 @@ export function MasterStrip({
   activateGain,
   activateVu,
   isPlaying,
+  isLoading = false,
   isLooping,
   isMuted,
   onPlayToggle,
@@ -200,6 +201,7 @@ export function MasterStrip({
   /** Intro-only: 0–1 climb of one ridge on VU; null = off. */
   activateVu?: number | null
   isPlaying: boolean
+  isLoading?: boolean
   isLooping: boolean
   isMuted: boolean
   onPlayToggle: () => void
@@ -416,37 +418,54 @@ export function MasterStrip({
       </div>
       <div className="master-transport">
         <button
-          className={`master-play${isPlaying ? ' is-playing' : ''}`}
+          className={[
+            'master-play',
+            isPlaying ? 'is-playing' : '',
+            isLoading ? 'is-loading' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           type="button"
           onClick={onPlayToggle}
-          title={isPlaying ? 'Stop speech' : 'Play speech'}
-          aria-pressed={isPlaying}
-          aria-label={isPlaying ? 'Stop' : 'Play'}
+          title={
+            isLoading
+              ? 'Cancel loading'
+              : isPlaying
+                ? 'Stop speech'
+                : 'Play speech'
+          }
+          aria-pressed={isPlaying || isLoading}
+          aria-busy={isLoading || undefined}
+          aria-label={isLoading ? 'Loading' : isPlaying ? 'Stop' : 'Play'}
         >
           <span className="master-play__rail" aria-hidden="true" />
           <span className="master-play__spin" aria-hidden="true" />
           <span className="master-play__face" aria-hidden="true">
-            <span className="master-play__icon">
-              {isPlaying ? (
-                <svg
-                  className="master-play__icon-stop"
-                  viewBox="0 0 28 28"
-                  focusable="false"
-                  aria-hidden="true"
-                >
-                  <rect x="6" y="6" width="16" height="16" rx="1" />
-                </svg>
-              ) : (
-                <svg
-                  className="master-play__icon-play"
-                  viewBox="0 0 28 28"
-                  focusable="false"
-                  aria-hidden="true"
-                >
-                  <path d="M8 4.5v19L24 14 8 4.5z" />
-                </svg>
-              )}
-            </span>
+            {isLoading ? (
+              <span className="master-play__label">Loading</span>
+            ) : (
+              <span className="master-play__icon">
+                {isPlaying ? (
+                  <svg
+                    className="master-play__icon-stop"
+                    viewBox="0 0 28 28"
+                    focusable="false"
+                    aria-hidden="true"
+                  >
+                    <rect x="6" y="6" width="16" height="16" rx="1" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="master-play__icon-play"
+                    viewBox="0 0 28 28"
+                    focusable="false"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 4.5v19L24 14 8 4.5z" />
+                  </svg>
+                )}
+              </span>
+            )}
           </span>
         </button>
       </div>

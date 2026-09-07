@@ -19,6 +19,10 @@ import {
 import { DEFAULT_VOCODER_PARAMS } from './vocoderParams'
 import { prepareSamPhoneticText } from './samPronunciation'
 import {
+  DEFAULT_VOICE_ENGINE,
+  type VoiceEngineId,
+} from './voiceEngines'
+import {
   downloadBlob,
   encodeAudioBufferToWav,
   makeSpeechFilename,
@@ -29,6 +33,7 @@ export interface SamSynthOptions {
   speed: number
   pitch: number
   metallic: number
+  engine?: VoiceEngineId
   betterEnglish?: boolean
 }
 
@@ -46,37 +51,48 @@ function mapMetallicToMouth(metallic: number): number {
   return Math.round(natural + metallic * (robotic - natural))
 }
 
+async function renderSamEngineSamples(
+  options: SamSynthOptions,
+): Promise<Float32Array | null> {
+  const metallic = Math.min(Math.max(options.metallic, 0), 1)
+  const pitch = Math.min(Math.max(options.pitch, 0), 2)
+  const mouth = mapMetallicToMouth(metallic)
+  const useBetterEnglish = options.betterEnglish ?? true
+
+  let phoneticText = options.text
+  let phoneticMode = false
+
+  if (useBetterEnglish) {
+    try {
+      phoneticText = await prepareSamPhoneticText(options.text)
+      phoneticMode = true
+    } catch {
+      phoneticText = classicTextToPhonemes(options.text)
+      phoneticMode = true
+    }
+  }
+
+  const sam = new SamJs({
+    speed: mapUiSpeedToSam(options.speed),
+    pitch: mapUiPitchToSam(pitch),
+    mouth,
+    throat: 128,
+  })
+
+  const buffer = sam.buf32(phoneticText, phoneticMode)
+  return buffer instanceof Float32Array ? buffer : null
+}
+
 export async function renderSamSamples(
   options: SamSynthOptions,
 ): Promise<Float32Array | null> {
+  const engine = options.engine ?? DEFAULT_VOICE_ENGINE
+  if (engine === 'piper') {
+    const { renderPiperSamples } = await import('./piperSpeech')
+    return renderPiperSamples(options.text)
+  }
   try {
-    const metallic = Math.min(Math.max(options.metallic, 0), 1)
-    const pitch = Math.min(Math.max(options.pitch, 0), 2)
-    const mouth = mapMetallicToMouth(metallic)
-    const useBetterEnglish = options.betterEnglish ?? true
-
-    let phoneticText = options.text
-    let phoneticMode = false
-
-    if (useBetterEnglish) {
-      try {
-        phoneticText = await prepareSamPhoneticText(options.text)
-        phoneticMode = true
-      } catch {
-        phoneticText = classicTextToPhonemes(options.text)
-        phoneticMode = true
-      }
-    }
-
-    const sam = new SamJs({
-      speed: mapUiSpeedToSam(options.speed),
-      pitch: mapUiPitchToSam(pitch),
-      mouth,
-      throat: 128,
-    })
-
-    const buffer = sam.buf32(phoneticText, phoneticMode)
-    return buffer instanceof Float32Array ? buffer : null
+    return await renderSamEngineSamples(options)
   } catch {
     return null
   }
@@ -124,6 +140,7 @@ export interface SamSpeakOptions extends SamSynthOptions {
   masterVolume?: number
   masterGainDb?: number
   loop?: boolean
+  onStart?: () => void
   onEnd?: () => void
   onError?: (message: string) => void
 }
@@ -177,12 +194,28 @@ export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
 
 export async function speakSam(options: SamSpeakOptions) {
   const epoch = ++speakEpoch
-  const samples = await renderSamSamples(options)
+  const engine = options.engine ?? DEFAULT_VOICE_ENGINE
+  let samples: Float32Array | null = null
+  try {
+    samples = await renderSamSamples(options)
+  } catch (err) {
+    if (epoch !== speakEpoch) {
+      return
+    }
+    options.onError?.(
+      err instanceof Error ? err.message : 'Speech synthesis failed.',
+    )
+    return
+  }
   if (epoch !== speakEpoch) {
     return
   }
   if (!samples) {
-    options.onError?.('Could not synthesize speech. Please use some actual words that the machine can understand.')
+    const hint =
+      engine === 'piper'
+        ? 'Piper voice failed to load. Check your network, then try again.'
+        : 'Could not synthesize speech. Please use some actual words that the machine can understand.'
+    options.onError?.(hint)
     return
   }
 
@@ -203,4 +236,5 @@ export async function speakSam(options: SamSpeakOptions) {
       onError: options.onError,
     },
   )
+  options.onStart?.()
 }
