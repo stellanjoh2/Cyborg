@@ -566,7 +566,7 @@ export default function App() {
         undefined,
         curtainAt,
       )
-      // Multi-column wipe out (collapse toward bottom, R→L stagger).
+      // Multi-column wipe out (collapse toward bottom, L→R stagger).
       const wipeOut = gsap.timeline({ onUpdate: syncSplashClips })
       wipeOut.set(splashCols, { transformOrigin: '50% 100%' })
       wipeOut.to(splashCols, {
@@ -574,7 +574,7 @@ export default function App() {
         scaleX: 1.04,
         duration: curtainDur,
         ease: 'power3.in',
-        stagger: { each: wipeStagger, from: 'end' },
+        stagger: { each: wipeStagger, from: 'start' },
       })
       tl.add(wipeOut, curtainAt)
       tl.set(splash, { autoAlpha: 0 }, SPLASH)
@@ -918,7 +918,7 @@ export default function App() {
         activateGainAt + volumeFillDur * 0.5,
       )
 
-      // Far-right wipe-out column lands first; UI (nav header) starts then — follows splash pace.
+      // Far-left wipe-out column lands first; UI (nav header) starts then — follows splash pace.
       tl.add(ui, curtainAt + curtainDur)
 
       return () => {
