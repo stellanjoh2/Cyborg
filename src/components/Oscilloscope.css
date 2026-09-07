@@ -6,13 +6,13 @@
   z-index: 1;
   isolation: isolate;
   box-sizing: border-box;
-  /* Centered; mirrors theme ball + buttons + settings cog on each side. */
+  /* Centered; mirrors Osci↔RESET gap + buttons + theme/settings on each side. */
   width: calc(
     100% -
       2 *
       (
-        var(--nav-theme-gap) + var(--nav-control-h) + var(--nav-theme-gap) +
-          3 * 160px + 2 * var(--section-gap) + var(--nav-theme-gap) +
+        var(--nav-theme-gap) + 3 * 160px + 2 * var(--section-gap) +
+          var(--nav-theme-gap) + var(--nav-control-h) + var(--section-gap) +
           var(--nav-control-h) + var(--app-pad)
       )
   );

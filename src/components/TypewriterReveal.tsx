@@ -228,8 +228,12 @@ export function TypewriterReveal({
 
   return (
     <Tag className={combinedClassName} {...restProps}>
+      {/* Outer ghost sizes the box; ink is translated out of an overflow clip
+          so Blink/Brave can't leave subpixel glyph crumbs under stage scale. */}
       <span className="typewriter-reveal__ghost" aria-hidden>
-        {renderWithLinks(text, links)}
+        <span className="typewriter-reveal__ghost-ink">
+          {renderWithLinks(text, links)}
+        </span>
       </span>
       <span className="typewriter-reveal__live">
         {renderWithLinks(typed, links)}

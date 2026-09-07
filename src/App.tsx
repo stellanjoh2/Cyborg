@@ -1331,7 +1331,6 @@ export default function App() {
       </div>
       <Oscilloscope />
       <div className="speech-top__right actions">
-        <ThemePicker />
         <button
           className="secondary"
           type="button"
@@ -1360,6 +1359,7 @@ export default function App() {
             {isExporting ? 'EXPORTING...' : 'EXPORT'}
           </span>
         </button>
+        <ThemePicker />
         <SettingsMenu />
       </div>
     </header>

@@ -2,8 +2,8 @@
   position: relative;
   flex: 0 0 auto;
   z-index: 5;
-  /* With --section-gap, totals --nav-theme-gap before RESET. */
-  margin-inline-end: calc(var(--nav-theme-gap) - var(--section-gap));
+  /* With --section-gap, totals --nav-theme-gap after EXPORT. */
+  margin-inline-start: calc(var(--nav-theme-gap) - var(--section-gap));
 }
 
 /* Lift trigger above neighboring nav controls while open. */

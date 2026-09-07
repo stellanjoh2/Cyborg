@@ -196,8 +196,8 @@
   --panel-gutter: 87px;
   --app-pad: 48px;
   --nav-control-h: 48px;
-  /* Osci ↔ theme ball ↔ RESET (keep Oscilloscope width + ThemePicker in sync). */
-  --nav-theme-gap: 38px;
+  /* Osci ↔ RESET … EXPORT ↔ theme (keep Oscilloscope width + ThemePicker in sync). */
+  --nav-theme-gap: 48px;
   --logo: url('/cyborg-logo.svg');
   --logo-color: var(--accent);
   --logo-aspect: 474.91 / 99.91;
