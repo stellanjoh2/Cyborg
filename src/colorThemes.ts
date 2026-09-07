@@ -116,9 +116,9 @@ export const COLOR_THEMES: ColorTheme[] = [
     label: 'T-800',
     palette: {
       text: '#FFFFFF',
-      muted: '#6A6A6A',
-      black: '#0A0A0A',
-      fill: '#1A1A1A',
+      muted: '#5A5A5A',
+      black: '#000000',
+      fill: '#0E0E0E',
       stroke: '#FFFFFF',
       lime: '#E01010',
       vu: '#E01010',
