@@ -158,7 +158,7 @@ function normalizePostProcess(
 export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
   const samples = await renderSamSamples(options)
   if (!samples) {
-    throw new Error('Could not synthesize speech.')
+    throw new Error('Could not synthesize speech. Please use some actual words that the machine can understand.')
   }
 
   const rendered = await renderSynthOffline(samples, {
@@ -182,7 +182,7 @@ export async function speakSam(options: SamSpeakOptions) {
     return
   }
   if (!samples) {
-    options.onError?.('Could not synthesize speech.')
+    options.onError?.('Could not synthesize speech. Please use some actual words that the machine can understand.')
     return
   }
 

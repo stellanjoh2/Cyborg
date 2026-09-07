@@ -196,6 +196,7 @@ export default function App() {
   const [isExporting, setIsExporting] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorOkReady, setErrorOkReady] = useState(false)
   const [emptyWarning, setEmptyWarning] = useState(false)
   const [inputTouched, setInputTouched] = useState(false)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
@@ -1134,6 +1135,22 @@ export default function App() {
     }
   }, [spokenWordIndex])
 
+  useEffect(() => {
+    setErrorOkReady(false)
+  }, [error])
+
+  useEffect(() => {
+    if (!error) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setError(null)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [error])
+
   const activePresetId = voiceId === 'custom' ? 'default' : voiceId
   const activePreset = getPresetById(activePresetId)
   const voiceDirty = !voiceMatches(activePreset, {
@@ -1360,7 +1377,7 @@ export default function App() {
   }
 
   transportToggleRef.current = () => {
-    if (aboutOpen) return
+    if (aboutOpen || error) return
     if (isSpeaking) handleStop()
     else handlePlayback()
   }
@@ -2067,10 +2084,49 @@ export default function App() {
           />
         </div>
       </section>
+      </div>
+      </div>
 
-      {error ? <p className="error">{error}</p> : null}
-      </div>
-      </div>
+      {error ? (
+        <div
+          className="error-overlay"
+          role="presentation"
+          onClick={() => setError(null)}
+        >
+          <div
+            className="error-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="error-modal-message"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <TypewriterReveal
+              as="p"
+              id="error-modal-message"
+              className="error"
+              text={error}
+              playTypeSound
+              onComplete={() => setErrorOkReady(true)}
+            />
+            <button
+              type="button"
+              className={[
+                'secondary',
+                'error-modal__ok',
+                errorOkReady ? 'is-in' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              data-ui-sound="close"
+              aria-hidden={!errorOkReady}
+              tabIndex={errorOkReady ? 0 : -1}
+              onClick={() => setError(null)}
+            >
+              <span className="error-modal__ok-label">OK</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
       </main>
       <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />
