@@ -6,16 +6,85 @@
   font-display: swap;
 }
 
+/* Registered so theme swaps can interpolate (html.theme-blend). */
+@property --text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffdbb3;
+}
+@property --muted {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #6e6e6e;
+}
+@property --muted-solid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #6e6e6e;
+}
+@property --black {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #121212;
+}
+@property --fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #171717;
+}
+@property --stroke {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+@property --lime {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffbc70;
+}
+@property --vu {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a3fff9;
+}
+@property --vu-yellow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffe666;
+}
+@property --purple {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3b00ff;
+}
+@property --error {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ff5938;
+}
+@property --theme-primary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffbc70;
+}
+@property --theme-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #171717;
+}
+
 :root {
-  --lime: #ffa238;
+  --lime: #ffbc70;
   --vu: #a3fff9;
   --vu-yellow: #ffe666;
   --purple: #3b00ff;
   --blue: var(--vu);
   --error: #ff5938;
-  --black: #0a0a0a;
-  --fill: #121212;
+  --black: #121212;
+  --fill: #171717;
   --stroke: #ffffff;
+  --theme-primary: #ffbc70;
+  --theme-secondary: #171717;
   --section-stroke-opacity: 0.1;
   --grain-opacity: 0.48;
   --grain-size: 128px;
@@ -114,9 +183,13 @@
 
   --u: 12px;
   --section-gap: 24px;
+  /* Matches --section-shadow blur (27px) + y-offset (6px) so overflow clips don't crop gutters. */
+  --section-shadow-bleed: 36px;
   --panel-gutter: 87px;
   --app-pad: 48px;
   --nav-control-h: 54px;
+  /* Osci ↔ theme ball ↔ RESET (keep Oscilloscope width + ThemePicker in sync). */
+  --nav-theme-gap: 38px;
   --logo: url('/cyborg-logo.svg');
   --logo-color: var(--accent);
   --logo-aspect: 474.91 / 99.91;
@@ -148,6 +221,61 @@
   color-scheme: dark;
   color: var(--text);
   background: var(--bg);
+}
+
+/* Gort / Baymax / TARS — flat shell, no elevation or glow drop-shadows. */
+html.theme-minimal {
+  --section-shadow: none;
+  --section-recess-shadow: none;
+  --section-inset-glow: none;
+  --section-recess-glow: none;
+  --section-shadow-bleed: 0;
+  --glow-outer: none;
+  --glow-single: none;
+  --glow-filter: none;
+  --glow-mix-tight: 0%;
+  --glow-mix-wide: 0%;
+  --bevel-top-opacity: 0;
+  --bevel-bottom-opacity: 0;
+  --bevel-left-opacity: 0;
+  --bevel-right-opacity: 0;
+  --emboss-glow-opacity: 0;
+}
+
+/* Hardcoded glow filters that don't read --glow-filter / --glow-outer. */
+html.theme-minimal .master-play__spin,
+html.theme-minimal .master-play__icon,
+html.theme-minimal .master-loop:hover:not(:disabled):not(.is-active) svg,
+html.theme-minimal .master-mute:hover:not(:disabled):not(.is-active) svg {
+  filter: none;
+}
+
+html.theme-minimal .master-mute.is-active {
+  box-shadow: none;
+}
+
+/* Enabled after first paint so boot theme apply does not animate. */
+html.theme-blend {
+  transition:
+    --text 0.25s ease,
+    --muted 0.25s ease,
+    --muted-solid 0.25s ease,
+    --black 0.25s ease,
+    --fill 0.25s ease,
+    --stroke 0.25s ease,
+    --lime 0.25s ease,
+    --vu 0.25s ease,
+    --vu-yellow 0.25s ease,
+    --purple 0.25s ease,
+    --error 0.25s ease,
+    --theme-primary 0.25s ease,
+    --theme-secondary 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-blend {
+    transition: none;
+  }
 }
 
 *,

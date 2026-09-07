@@ -24,7 +24,8 @@
   isolation: isolate;
   box-sizing: border-box;
   background: var(--fill);
-  box-shadow: var(--section-shadow);
+  /* Elevation stays on .speech-top — avoid stacking a second --section-shadow. */
+  box-shadow: none;
   pointer-events: none;
 }
 

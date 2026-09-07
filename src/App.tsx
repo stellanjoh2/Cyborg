@@ -7,6 +7,7 @@ import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
 import { Oscilloscope } from './components/Oscilloscope'
+import { ThemePicker } from './components/ThemePicker'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
 import { TypewriterReveal } from './components/TypewriterReveal'
 import {
@@ -1321,6 +1322,7 @@ export default function App() {
       </div>
       <Oscilloscope />
       <div className="speech-top__right actions">
+        <ThemePicker />
         <button
           className="secondary"
           type="button"

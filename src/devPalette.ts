@@ -17,10 +17,10 @@ export type Palette = Record<PaletteKey, string>
 export const DEFAULT_PALETTE: Palette = {
   text: '#ffdbb3',
   muted: '#6E6E6E',
-  black: '#0a0a0a',
-  fill: '#121212',
+  black: '#121212',
+  fill: '#171717',
   stroke: '#FFFFFF',
-  lime: '#ffa238',
+  lime: '#ffbc70',
   vu: '#a3fff9',
   'vu-yellow': '#ffe666',
   purple: '#3B00FF',

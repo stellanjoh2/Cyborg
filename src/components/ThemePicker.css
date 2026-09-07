@@ -1,0 +1,151 @@
+.theme-picker {
+  position: relative;
+  flex: 0 0 auto;
+  z-index: 5;
+  /* With --section-gap, totals --nav-theme-gap before RESET. */
+  margin-inline-end: calc(var(--nav-theme-gap) - var(--section-gap));
+}
+
+/* Lift trigger above neighboring nav controls while open. */
+.theme-picker.is-open {
+  z-index: 40;
+}
+
+.theme-picker__trigger {
+  display: grid;
+  place-items: center;
+  width: var(--nav-control-h);
+  height: var(--nav-control-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.theme-ball {
+  display: block;
+  box-sizing: border-box;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Same weight/feel as unlit knob/play rings (~0.25). */
+  border: 2px solid color-mix(in srgb, var(--stroke) 25%, transparent);
+  /* image (not shorthand) so background-clip isn't reset to border-box —
+     that paints under the translucent stroke and fringes at 3/9 o'clock. */
+  background-image: linear-gradient(
+    90deg,
+    var(--theme-ball-a, var(--theme-primary)) 50%,
+    var(--theme-ball-b, var(--theme-secondary)) 50%
+  );
+  background-clip: padding-box;
+}
+
+.theme-picker__sphere {
+  width: var(--nav-control-h);
+  height: var(--nav-control-h);
+  transition: transform 0.18s ease;
+}
+
+.theme-picker__trigger:hover .theme-picker__sphere,
+.theme-picker.is-open .theme-picker__sphere {
+  transform: scale(1.06);
+  filter: var(--glow-filter);
+}
+
+.theme-picker__modal {
+  /* Preview ball size; tracks ~15% wider so labels stay one line. */
+  --theme-preview: 74px;
+  --theme-col: calc(var(--theme-preview) * 1.15);
+  --theme-gap: 48px;
+  /* Portaled to .speech-app — escapes FX column compositor layers. */
+  position: absolute;
+  z-index: 100;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: max-content;
+  padding: var(--theme-gap);
+  border: none;
+  border-radius: var(--radius-panel);
+  background: var(--fill);
+  box-shadow: var(--section-shadow);
+  overflow: visible;
+  /* GSAP owns visibility on open (avoids first-paint hitch). */
+  visibility: hidden;
+}
+
+.theme-picker__modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  opacity: var(--grain-opacity);
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+}
+
+.theme-picker__head {
+  margin: 0 0 var(--theme-gap);
+}
+
+.theme-picker__title {
+  margin: 0;
+  font-size: var(--font-m);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--text);
+}
+
+.theme-picker__grid {
+  display: grid;
+  /* Wider tracks than the ball so names like “Johnny 5” fit. */
+  grid-template-columns: repeat(3, var(--theme-col));
+  gap: var(--theme-gap);
+  justify-content: center;
+}
+
+.theme-picker__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.theme-picker__option:hover,
+.theme-picker__option.is-selected {
+  color: var(--text);
+}
+
+.theme-picker__preview {
+  width: var(--theme-preview);
+  height: var(--theme-preview);
+  transition: transform 0.18s ease;
+}
+
+.theme-picker__option:hover .theme-picker__preview {
+  transform: scale(1.05);
+}
+
+.theme-picker__option.is-selected .theme-picker__preview {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.theme-picker__label {
+  font-size: var(--font-s);
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}

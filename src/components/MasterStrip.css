@@ -577,10 +577,14 @@
 }
 
 .master-mute.is-active {
-  --glow-color: var(--error);
   background: var(--error);
   color: var(--on-chrome);
-  box-shadow: var(--glow-outer);
+  /* Don't use --glow-outer: it inherits :root's resolved accent color. */
+  box-shadow:
+    0 0 var(--glow-blur-tight)
+      color-mix(in srgb, var(--error) var(--glow-mix-tight), transparent),
+    0 0 var(--glow-blur-wide)
+      color-mix(in srgb, var(--error) var(--glow-mix-wide), transparent);
 }
 
 .master-loop:focus-visible {

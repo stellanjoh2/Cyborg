@@ -1,15 +1,24 @@
 .speech-scope {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   top: 0;
   bottom: 0;
   z-index: 1;
   isolation: isolate;
   box-sizing: border-box;
-  width: 50%;
+  /* Centered; --nav-theme-gap to the theme ball (same height as other nav controls). */
+  width: calc(
+    100% -
+      2 *
+      (
+        var(--nav-theme-gap) + var(--nav-control-h) + var(--nav-theme-gap) +
+          3 * 160px + 2 * var(--section-gap) + var(--app-pad)
+      )
+  );
   height: var(--nav-control-h);
-  margin: auto;
+  margin-block: auto;
+  /* Separate from GSAP `transform` so intro x/y don't un-center a short scope. */
+  translate: -50% 0;
   padding: 3px;
   border-radius: 999px;
   overflow: hidden;
