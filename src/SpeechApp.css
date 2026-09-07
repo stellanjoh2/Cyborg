@@ -172,8 +172,8 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-splash__logo {
   display: block;
-  /* Design-space width (was 66vw — viewport units broke ScaleViewport). */
-  width: calc(2560px * 0.66);
+  /* 6 of 8 wipe columns wide; left-snapped to the frame margin. */
+  width: calc(2560px * 6 / 8);
   max-width: 100%;
   height: auto;
   aspect-ratio: var(--logo-aspect);
@@ -226,6 +226,7 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .speech-splash__credit,
+.speech-splash__version,
 .speech-splash__year {
   margin: 0;
   font-size: 24px;
@@ -234,6 +235,19 @@ html.is-splash-void .scale-nav-bleed {
   color: var(--fill);
   text-transform: none;
   letter-spacing: 0;
+}
+
+.speech-splash__version-slot {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  transform: translateY(-50%);
+}
+
+.speech-splash__version {
+  margin: 0;
+  text-align: end;
 }
 
 .speech-splash__year {
@@ -247,6 +261,9 @@ html.is-splash-void .scale-nav-bleed {
 .speech-splash__credit,
 .speech-splash__credit .typewriter-reveal__ghost,
 .speech-splash__credit .typewriter-reveal__live,
+.speech-splash__version,
+.speech-splash__version .typewriter-reveal__ghost,
+.speech-splash__version .typewriter-reveal__live,
 .speech-splash__year,
 .speech-splash__year .typewriter-reveal__ghost,
 .speech-splash__year .typewriter-reveal__live {

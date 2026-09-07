@@ -58,7 +58,7 @@
   min-width: 320px;
   padding: var(--settings-gap);
   border: none;
-  border-radius: var(--radius-panel);
+  border-radius: calc(var(--radius-panel) / 2);
   background: var(--fill);
   box-shadow: var(--section-shadow);
   overflow: visible;
@@ -112,9 +112,12 @@
 }
 
 .settings-menu__segment {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   gap: 0;
+  flex: 0 0 auto;
+  width: 7.5rem;
   border: var(--stroke-width) solid var(--synth-border);
   border-radius: var(--radius);
   background: var(--black);
@@ -123,14 +126,17 @@
 
 .settings-menu__choice {
   appearance: none;
+  box-sizing: border-box;
   margin: 0;
-  padding: 8px 14px;
+  min-width: 0;
+  padding: 8px 6px;
   border: 0;
   background: transparent;
   color: var(--muted);
   font-family: var(--font-ui);
   font-size: var(--font-s);
   line-height: 1;
+  text-align: center;
   text-transform: uppercase;
   cursor: pointer;
 }

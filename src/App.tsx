@@ -75,6 +75,7 @@ const DEFAULT_TEXT =
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
+const SPLASH_VERSION = 'v0.1.0'
 const SPLASH_YEAR = '© 2026'
 /** Splash build/teardown pace (hold after full build stays absolute). */
 const SPLASH_SPEED = 1 / 0.9
@@ -88,7 +89,7 @@ const SPLASH_DIRT_START_COLS = 2.4
 /** Discrete pixelation levels (fewer = choppier). */
 const SPLASH_DIRT_STEPS = 8
 /** Vertical wipe strips for the accent plate in/out. */
-const SPLASH_WIPE_COLS = 5
+const SPLASH_WIPE_COLS = 8
 /** Per-column wipe duration (stagger adds on top). */
 const SPLASH_WIPE_DUR = 0.95
 /** Delay between adjacent columns in the wipe. */
@@ -208,11 +209,13 @@ export default function App() {
     pitch: number
     metallic: number
   } | null>(null)
+  const transportToggleRef = useRef<() => void>(() => {})
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
   const [splashCreditActive, setSplashCreditActive] = useState(false)
+  const [splashVersionActive, setSplashVersionActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
   const liveMasterVolume = isMuted ? 0 : masterVolume / 100
@@ -237,6 +240,9 @@ export default function App() {
       )
       const splashS = root?.querySelector<HTMLElement>('.speech-splash__s-slot')
       const splashCredit = root?.querySelector<HTMLElement>('.speech-splash__credit')
+      const splashVersion = root?.querySelector<HTMLElement>(
+        '.speech-splash__version',
+      )
       const splashYear = root?.querySelector<HTMLElement>('.speech-splash__year')
 
       const dirtPix = { t: 0 }
@@ -285,6 +291,7 @@ export default function App() {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
         setSplashCreditActive(true)
+        setSplashVersionActive(true)
         setSplashYearActive(true)
         document.documentElement.classList.remove('is-splash-void')
         clearSplashDirt()
@@ -301,6 +308,7 @@ export default function App() {
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
       setSplashCreditActive(false)
+      setSplashVersionActive(false)
       setSplashYearActive(false)
 
       root.classList.add('is-introducing')
@@ -324,7 +332,7 @@ export default function App() {
         },
       })
 
-      // —— 0. Accent splash: column wipe in → mark → LX01 → credit → year → fall out → wipe out ——
+      // —— 0. Accent splash: column wipe in → mark → LX01 → version → S → credit → year → copyright-first teardown → wipe out ——
       const splashT = (t: number) => t / SPLASH_SPEED
       const staggerGap = splashT(0.14)
       const splashOut = splashT(0.55)
@@ -336,9 +344,11 @@ export default function App() {
       const wipeTotal = curtainDur + wipeStagger * (splashCols.length - 1)
       const wipeMarkLead = splashT(SPLASH_WIPE_MARK_LEAD)
       const creditTypeDur = (SPLASH_CREDIT.length * SPLASH_TYPE_MS) / 1000
+      const versionTypeDur = (SPLASH_VERSION.length * SPLASH_TYPE_MS) / 1000
       const yearTypeDur = (SPLASH_YEAR.length * SPLASH_TYPE_MS) / 1000
       splashLogoRef.current?.hideParts()
       if (splashCredit) gsap.set(splashCredit, { autoAlpha: 1, y: 0 })
+      if (splashVersion) gsap.set(splashVersion, { autoAlpha: 1, y: 0 })
       if (splashYear) gsap.set(splashYear, { autoAlpha: 1, y: 0 })
       const splashReveal = splashLogoRef.current?.revealTimeline()
       const splashLogoExit = splashLogoRef.current?.exitTimeline()
@@ -424,20 +434,21 @@ export default function App() {
 
       // Hold black void for ~15 frames @60fps before the column wipe starts.
       const plateInAt = 15 / 60
-      // Larynx → LX01 → S → credit → year (mark waits for the cascade to nearly settle).
+      // Larynx → LX01 → version → S → credit → year (mark waits for the cascade to nearly settle).
       const markAt = plateInAt + Math.max(0, wipeTotal - wipeMarkLead)
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
-      const sAt = lx01At + charsEnd + staggerGap
+      const versionAt = lx01At + charsEnd + staggerGap
+      const sAt = versionAt + versionTypeDur + staggerGap
       const creditAt = sAt + SPLASH_MARK_IN + staggerGap
       const yearAt = creditAt + creditTypeDur
-      const logoOutAt = yearAt + yearTypeDur + splashHold
-      // Symbol scale-out → wordmark deconstruct → S slide-out → typewriter rewind.
-      const logoExitAt = logoOutAt + splashOutStagger
-      const sOutAt = logoExitAt + logoExitDur
-      const yearRewindAt = sOutAt + splashOutStagger
+      // Teardown: copyright → legal → S → version → LX01 → larynx mark.
+      const yearRewindAt = yearAt + yearTypeDur + splashHold
       const creditRewindAt = yearRewindAt + yearTypeDur
-      const footerDoneAt = creditRewindAt + creditTypeDur
-      const curtainAt = footerDoneAt
+      const sOutAt = creditRewindAt + creditTypeDur + splashOutStagger
+      const versionRewindAt = sOutAt + SPLASH_MARK_IN + splashOutStagger
+      const logoExitAt = versionRewindAt + versionTypeDur + splashOutStagger
+      const logoOutAt = logoExitAt + logoExitDur + splashOutStagger
+      const curtainAt = logoOutAt + splashOut
       const SPLASH = curtainAt + wipeTotal
 
       // Multi-column wipe in (top → bottom, L→R stagger).
@@ -497,6 +508,7 @@ export default function App() {
         )
       }
       if (splashReveal) tl.add(splashReveal, lx01At)
+      tl.call(() => setSplashVersionActive(true), undefined, versionAt)
       if (splashS) {
         tl.fromTo(
           splashS,
@@ -513,6 +525,22 @@ export default function App() {
       }
       tl.call(() => setSplashCreditActive(true), undefined, creditAt)
       tl.call(() => setSplashYearActive(true), undefined, yearAt)
+      // Copyright → legal → S → version → LX01 → larynx mark.
+      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
+      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
+      if (splashS) {
+        tl.to(
+          splashS,
+          {
+            x: sFromX,
+            duration: SPLASH_MARK_IN,
+            ease: 'power3.in',
+          },
+          sOutAt,
+        )
+      }
+      tl.call(() => setSplashVersionActive(false), undefined, versionRewindAt)
+      if (splashLogoExit) tl.add(splashLogoExit, logoExitAt)
       if (splashMark) {
         tl.to(
           splashMark,
@@ -525,21 +553,6 @@ export default function App() {
           logoOutAt,
         )
       }
-      if (splashLogoExit) tl.add(splashLogoExit, logoExitAt)
-      if (splashS) {
-        tl.to(
-          splashS,
-          {
-            x: sFromX,
-            duration: SPLASH_MARK_IN,
-            ease: 'power3.in',
-          },
-          sOutAt,
-        )
-      }
-      // Year then credit — reverse of type-in order.
-      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
-      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
       // Drop letterbox fill with the curtain so orange doesn't linger over the UI.
       tl.call(
         () => document.documentElement.classList.remove('is-splash-bleed'),
@@ -861,9 +874,16 @@ export default function App() {
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'h' && event.key !== 'H') return
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (isTypingTarget(event.target)) return
+
+      if (event.code === 'Space' || event.key === ' ') {
+        event.preventDefault()
+        transportToggleRef.current()
+        return
+      }
+
+      if (event.key !== 'h' && event.key !== 'H') return
       event.preventDefault()
       document.documentElement.classList.toggle('is-app-hidden')
     }
@@ -1237,6 +1257,12 @@ export default function App() {
     })
   }
 
+  transportToggleRef.current = () => {
+    if (aboutOpen) return
+    if (isSpeaking) handleStop()
+    else handlePlayback()
+  }
+
   const handleExportWav = () => {
     setError(null)
 
@@ -1292,6 +1318,16 @@ export default function App() {
             </div>
             <div className="speech-splash__logo-slot">
               <Logotype ref={splashLogoRef} className="speech-splash__logo" />
+            </div>
+            <div className="speech-splash__version-slot">
+              <TypewriterReveal
+                as="p"
+                className="speech-splash__version"
+                text={SPLASH_VERSION}
+                active={splashVersionActive}
+                hold
+                speedMs={SPLASH_TYPE_MS}
+              />
             </div>
             <div className="speech-splash__bottom">
               <div className="speech-splash__s-slot">
