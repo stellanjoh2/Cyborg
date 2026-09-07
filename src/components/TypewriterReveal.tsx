@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import { playUiSound } from '../ui/sounds'
 
@@ -67,6 +67,42 @@ function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
   return nodes
 }
 
+type ReserveSize = { width: number; height: number }
+
+function measureTextReserve(root: HTMLElement, text: string): ReserveSize {
+  const cs = getComputedStyle(root)
+  const wrap = document.createElement('span')
+  wrap.setAttribute('aria-hidden', 'true')
+  // Zero-height paint containment: probe never composites (Brave/Blink scale crumbs).
+  wrap.style.cssText =
+    'position:absolute;left:0;top:0;width:100%;height:0;overflow:hidden;contain:paint;opacity:0;pointer-events:none;'
+
+  const probe = document.createElement('span')
+  probe.style.display = 'block'
+  probe.style.whiteSpace = cs.whiteSpace
+  probe.style.font = cs.font
+  probe.style.letterSpacing = cs.letterSpacing
+  probe.style.wordSpacing = cs.wordSpacing
+  probe.style.textTransform = cs.textTransform
+  probe.style.lineHeight = cs.lineHeight
+  probe.textContent = text
+
+  const nowrap = cs.whiteSpace === 'nowrap' || cs.whiteSpace === 'pre'
+  if (nowrap) {
+    probe.style.width = 'max-content'
+  } else {
+    const basis = root.clientWidth || root.parentElement?.clientWidth || 0
+    probe.style.width = basis > 0 ? `${basis}px` : 'max-content'
+  }
+
+  wrap.appendChild(probe)
+  root.appendChild(wrap)
+  const width = Math.ceil(probe.offsetWidth)
+  const height = Math.ceil(probe.offsetHeight)
+  root.removeChild(wrap)
+  return { width, height }
+}
+
 export function TypewriterReveal({
   as = 'span',
   text,
@@ -80,6 +116,7 @@ export function TypewriterReveal({
   className,
   links,
   onComplete,
+  style,
   ...restProps
 }: TypewriterRevealProps) {
   const Tag = as as React.ElementType
@@ -87,6 +124,8 @@ export function TypewriterReveal({
   const [typed, setTyped] = useState(active ? '' : idleText)
   const [isComplete, setIsComplete] = useState(!active && !hold)
   const [isRewinding, setIsRewinding] = useState(false)
+  const [reserve, setReserve] = useState<ReserveSize | null>(null)
+  const rootRef = useRef<HTMLElement | null>(null)
   const typedRef = useRef(typed)
   typedRef.current = typed
   const combinedClassName = ['typewriter-reveal', className]
@@ -100,6 +139,26 @@ export function TypewriterReveal({
       window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
     )
   }, [])
+
+  useLayoutEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+
+    const update = () => {
+      const next = measureTextReserve(root, text)
+      setReserve((prev) =>
+        prev && prev.width === next.width && prev.height === next.height
+          ? prev
+          : next,
+      )
+    }
+
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(root)
+    if (root.parentElement) ro.observe(root.parentElement)
+    return () => ro.disconnect()
+  }, [text])
 
   useEffect(() => {
     if (!active) {
@@ -227,14 +286,17 @@ export function TypewriterReveal({
     caret && active && !reduceMotion && (loop || !isComplete || isRewinding)
 
   return (
-    <Tag className={combinedClassName} {...restProps}>
-      {/* Outer ghost sizes the box; ink is translated out of an overflow clip
-          so Blink/Brave can't leave subpixel glyph crumbs under stage scale. */}
-      <span className="typewriter-reveal__ghost" aria-hidden>
-        <span className="typewriter-reveal__ghost-ink">
-          {renderWithLinks(text, links)}
-        </span>
-      </span>
+    <Tag
+      ref={rootRef}
+      className={combinedClassName}
+      style={{
+        ...style,
+        ...(reserve
+          ? { minWidth: reserve.width, minHeight: reserve.height }
+          : null),
+      }}
+      {...restProps}
+    >
       <span className="typewriter-reveal__live">
         {renderWithLinks(typed, links)}
         {showCaret ? (

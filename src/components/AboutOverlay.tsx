@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import {
+  ABOUT_LINKS,
+  ABOUT_LINKS_TEXT,
+  ABOUT_TEXT,
+} from '../aboutContent'
 import { playUiSound } from '../ui/sounds'
 import { TypewriterReveal } from './TypewriterReveal'
 import './AboutOverlay.css'
-
-const ABOUT_TEXT =
-  "Hi, I'm Stellan Johansson, a creative director and brand designer with 20+ years across games, 3D, motion, UI and visual identity — shipping titles at studios, running agencies, and shaping platforms used by millions of creators. LX01 is one of my sideprojects."
-
-const LINKEDIN_URL = 'https://www.linkedin.com/in/stellanj/'
-const MOBYGAMES_URL =
-  'https://www.mobygames.com/person/289121/stellan-johansson/credits/'
-const X_URL = 'https://x.com/johstell'
-const ORBY_URL = 'https://orby.studio/'
-const ABOUT_LINKS_TEXT = 'LinkedIn · MobyGames · X · Orby'
 
 type AboutOverlayProps = {
   open: boolean
@@ -101,12 +96,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             hold
             caret={false}
             onComplete={() => setOkActive(true)}
-            links={[
-              { text: 'LinkedIn', href: LINKEDIN_URL },
-              { text: 'MobyGames', href: MOBYGAMES_URL },
-              { text: 'X', href: X_URL },
-              { text: 'Orby', href: ORBY_URL },
-            ]}
+            links={[...ABOUT_LINKS]}
           />
           <button
             type="button"

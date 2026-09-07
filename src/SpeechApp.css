@@ -259,14 +259,11 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .speech-splash__credit,
-.speech-splash__credit .typewriter-reveal__ghost,
-.speech-splash__credit .typewriter-reveal__live,
+.speech-splash__credit .typewriter-reveal,
 .speech-splash__version,
-.speech-splash__version .typewriter-reveal__ghost,
-.speech-splash__version .typewriter-reveal__live,
+.speech-splash__version .typewriter-reveal,
 .speech-splash__year,
-.speech-splash__year .typewriter-reveal__ghost,
-.speech-splash__year .typewriter-reveal__live {
+.speech-splash__year .typewriter-reveal {
   white-space: nowrap;
 }
 
@@ -866,10 +863,6 @@ html.is-splash-void .scale-nav-bleed {
 
 .section-title .typewriter-reveal {
   display: block;
-}
-
-.section-title .typewriter-reveal__ghost,
-.section-title .typewriter-reveal__live {
   white-space: nowrap;
 }
 
