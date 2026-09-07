@@ -329,7 +329,7 @@ export default function App() {
       const D = 0.55
       const tl = gsap.timeline({
         onComplete: () => {
-          root.classList.remove('is-introducing')
+          root.classList.remove('is-introducing', 'is-grain-in')
           document.documentElement.classList.remove(
             'is-splash-void',
             'is-splash-bleed',
@@ -666,6 +666,10 @@ export default function App() {
         boardAt,
       )
 
+      // Soft-light grain once structural plates have docked; leaf/meter UI keeps going.
+      const platesLandAt = boardAt + sideDuration
+      ui.call(() => root.classList.add('is-grain-in'), undefined, platesLandAt)
+
       // —— 3. Side panel contents (hold until columns are well into their land) ——
       // Columns already handle the horizontal dock; only leaf UI rises into place.
       const sideContentAt = boardAt + 0.78
@@ -924,7 +928,7 @@ export default function App() {
 
       return () => {
         window.removeEventListener('resize', onSplashResize)
-        root?.classList.remove('is-introducing')
+        root?.classList.remove('is-introducing', 'is-grain-in')
         document.documentElement.classList.remove(
           'is-splash-void',
           'is-splash-bleed',
