@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
+import { playUiSound } from '../ui/sounds'
 
 type IntrinsicTag = keyof React.JSX.IntrinsicElements
 
@@ -18,6 +19,8 @@ type TypewriterRevealProps = {
   /** Type in → pause → type out → pause, forever while active. */
   loop?: boolean
   caret?: boolean
+  /** Tick hover cue on each word start while typing forward (Mozayk). */
+  playTypeSound?: boolean
   hold?: boolean
   className?: string
   links?: TypewriterLink[]
@@ -26,6 +29,12 @@ type TypewriterRevealProps = {
 
 const DEFAULT_SPEED_MS = 10
 const DEFAULT_PAUSE_MS = 900
+
+function isWordStart(text: string, index: number) {
+  const ch = text[index]
+  if (!ch || /\s/.test(ch)) return false
+  return index === 0 || /\s/.test(text[index - 1])
+}
 
 function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
   if (!links?.length) return value
@@ -66,6 +75,7 @@ export function TypewriterReveal({
   pauseMs = DEFAULT_PAUSE_MS,
   loop = false,
   caret = true,
+  playTypeSound = false,
   hold = false,
   className,
   links,
@@ -157,8 +167,16 @@ export function TypewriterReveal({
 
       const tick = () => {
         intervalId = window.setInterval(() => {
+          const next = direction === 1 ? i : i - 1
           i += direction
           setTyped(text.slice(0, Math.max(0, i)))
+          if (
+            playTypeSound &&
+            direction === 1 &&
+            isWordStart(text, next)
+          ) {
+            playUiSound('hover', true)
+          }
           if (direction === 1 && i >= text.length) {
             window.clearInterval(intervalId)
             setIsComplete(true)
@@ -191,8 +209,10 @@ export function TypewriterReveal({
 
     let i = 0
     const timer = window.setInterval(() => {
+      const next = i
       i += 1
       setTyped(text.slice(0, i))
+      if (playTypeSound && isWordStart(text, next)) playUiSound('hover', true)
       if (i >= text.length) {
         window.clearInterval(timer)
         setIsComplete(true)
@@ -201,7 +221,7 @@ export function TypewriterReveal({
     }, speedMs)
 
     return () => window.clearInterval(timer)
-  }, [active, hold, loop, pauseMs, reduceMotion, speedMs, text])
+  }, [active, hold, loop, pauseMs, playTypeSound, reduceMotion, speedMs, text])
 
   const showCaret =
     caret && active && !reduceMotion && (loop || !isComplete || isRewinding)

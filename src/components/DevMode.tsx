@@ -5,25 +5,19 @@ import {
   applyPalette,
   applyRadiusPanel,
   applyStrokeOpacity,
-  applyWallpaperBlendMode,
-  applyWallpaperOpacity,
   DEFAULT_BEVEL_EMBOSS,
   DEFAULT_GRAIN_OPACITY,
   DEFAULT_PALETTE,
   DEFAULT_RADIUS_PANEL,
   DEFAULT_STROKE_OPACITY,
-  DEFAULT_WALLPAPER_BLEND_MODE,
-  DEFAULT_WALLPAPER_OPACITY,
   formatPalette,
   isHexColor,
   PALETTE_KEYS,
   PALETTE_LABELS,
   RADIUS_PANEL_MAX,
-  WALLPAPER_BLEND_MODES,
   type BevelEmboss,
   type Palette,
   type PaletteKey,
-  type WallpaperBlendMode,
 } from '../devPalette'
 import './DevMode.css'
 
@@ -156,11 +150,6 @@ export function DevMode() {
   const [palette, setPalette] = useState<Palette>(DEFAULT_PALETTE)
   const [strokeOpacity, setStrokeOpacity] = useState(DEFAULT_STROKE_OPACITY)
   const [grainOpacity, setGrainOpacity] = useState(DEFAULT_GRAIN_OPACITY)
-  const [wallpaperOpacity, setWallpaperOpacity] = useState(
-    DEFAULT_WALLPAPER_OPACITY,
-  )
-  const [wallpaperBlendMode, setWallpaperBlendMode] =
-    useState<WallpaperBlendMode>(DEFAULT_WALLPAPER_BLEND_MODE)
   const [bevelEmboss, setBevelEmboss] = useState<BevelEmboss>(DEFAULT_BEVEL_EMBOSS)
   const [radiusPanel, setRadiusPanel] = useState(DEFAULT_RADIUS_PANEL)
   const [copied, setCopied] = useState(false)
@@ -205,21 +194,6 @@ export function DevMode() {
     applyGrainOpacity(next)
   }
 
-  const setWallpaper = (value: number) => {
-    const next = Math.min(1, Math.max(0, value))
-    setWallpaperOpacity(next)
-    applyWallpaperOpacity(next)
-  }
-
-  const setBlendMode = (value: string) => {
-    if (!(WALLPAPER_BLEND_MODES as readonly string[]).includes(value)) {
-      return
-    }
-    const next = value as WallpaperBlendMode
-    setWallpaperBlendMode(next)
-    applyWallpaperBlendMode(next)
-  }
-
   const patchBevel = (patch: Partial<BevelEmboss>) => {
     const next = { ...bevelEmboss, ...patch }
     setBevelEmboss(next)
@@ -238,8 +212,6 @@ export function DevMode() {
         palette,
         strokeOpacity,
         grainOpacity,
-        wallpaperOpacity,
-        wallpaperBlendMode,
         bevelEmboss,
         radiusPanel,
       ),
@@ -274,26 +246,6 @@ export function DevMode() {
         value={grainOpacity}
         onChange={setGrain}
       />
-      <OpacityRow
-        label="wallpaper opacity"
-        value={wallpaperOpacity}
-        onChange={setWallpaper}
-      />
-      <label className="dev-mode__row dev-mode__row--blend">
-        <span className="dev-mode__label">wallpaper blend</span>
-        <select
-          className="dev-mode__select"
-          value={wallpaperBlendMode}
-          onChange={(e) => setBlendMode(e.target.value)}
-          aria-label="wallpaper blend mode"
-        >
-          {WALLPAPER_BLEND_MODES.map((mode) => (
-            <option key={mode} value={mode}>
-              {mode}
-            </option>
-          ))}
-        </select>
-      </label>
       <PxRow
         label="panel radius"
         value={radiusPanel}

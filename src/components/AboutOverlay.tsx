@@ -89,6 +89,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             as="p"
             text={ABOUT_TEXT}
             active={entered}
+            playTypeSound
             onComplete={() => setLinksActive(true)}
           />
           <TypewriterReveal
@@ -96,6 +97,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             className="about-overlay__links"
             text={ABOUT_LINKS_TEXT}
             active={entered && linksActive}
+            playTypeSound
             hold
             caret={false}
             onComplete={() => setOkActive(true)}
@@ -124,6 +126,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
               as="span"
               text="OK"
               active={entered && okActive}
+              playTypeSound
               hold
               caret={false}
             />

@@ -42,8 +42,6 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
 
 export const DEFAULT_STROKE_OPACITY = 0.1
 export const DEFAULT_GRAIN_OPACITY = 0.48
-export const DEFAULT_WALLPAPER_OPACITY = 0.16
-export const DEFAULT_WALLPAPER_BLEND_MODE = 'screen'
 export const DEFAULT_RADIUS_PANEL = 48
 export const RADIUS_PANEL_MAX = 64
 
@@ -74,19 +72,6 @@ export const DEFAULT_BEVEL_EMBOSS: BevelEmboss = {
   glowOpacity: 0.03,
   glowRadius: 10,
 }
-
-export const WALLPAPER_BLEND_MODES = [
-  'screen',
-  'soft-light',
-  'overlay',
-  'multiply',
-  'lighten',
-  'normal',
-  'hard-light',
-  'color-dodge',
-] as const
-
-export type WallpaperBlendMode = (typeof WALLPAPER_BLEND_MODES)[number]
 
 const HEX = /^#[0-9a-fA-F]{6}$/
 
@@ -122,17 +107,6 @@ export function applyGrainOpacity(opacity: number) {
     '--grain-opacity',
     String(clampOpacity(opacity)),
   )
-}
-
-export function applyWallpaperOpacity(opacity: number) {
-  document.documentElement.style.setProperty(
-    '--wallpaper-opacity',
-    String(clampOpacity(opacity)),
-  )
-}
-
-export function applyWallpaperBlendMode(mode: WallpaperBlendMode) {
-  document.documentElement.style.setProperty('--wallpaper-blend-mode', mode)
 }
 
 export function applyRadiusPanel(px: number) {
@@ -189,8 +163,6 @@ export function formatPalette(
   palette: Palette,
   strokeOpacity = DEFAULT_STROKE_OPACITY,
   grainOpacity = DEFAULT_GRAIN_OPACITY,
-  wallpaperOpacity = DEFAULT_WALLPAPER_OPACITY,
-  wallpaperBlendMode: WallpaperBlendMode = DEFAULT_WALLPAPER_BLEND_MODE,
   bevelEmboss: BevelEmboss = DEFAULT_BEVEL_EMBOSS,
   radiusPanel = DEFAULT_RADIUS_PANEL,
 ): string {
@@ -198,8 +170,6 @@ export function formatPalette(
     ...PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`),
     `--section-stroke-opacity: ${strokeOpacity};`,
     `--grain-opacity: ${grainOpacity};`,
-    `--wallpaper-opacity: ${wallpaperOpacity};`,
-    `--wallpaper-blend-mode: ${wallpaperBlendMode};`,
     `--radius-panel: ${radiusPanel}px;`,
     `--bevel-highlight-color: ${bevelEmboss.highlightColor};`,
     `--bevel-shadow-color: ${bevelEmboss.shadowColor};`,
