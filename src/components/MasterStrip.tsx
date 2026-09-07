@@ -79,6 +79,7 @@ function VerticalFader({
   skipOnce,
   format,
   valueClassName,
+  fillWindow,
 }: {
   label: string
   value: number
@@ -88,9 +89,12 @@ function VerticalFader({
   skipOnce: () => void
   format: (value: number) => string
   valueClassName?: string
+  /** When set, paints only [start, end] % instead of 0→displayed fill. */
+  fillWindow?: { start: number; end: number } | null
 }) {
   const lit = ridgeLit(value, ridges)
-  const fillPct = litToValue(ridgeLit(displayed, ridges), ridges)
+  const fillPct = fillWindow?.end ?? litToValue(ridgeLit(displayed, ridges), ridges)
+  const fillStart = fillWindow?.start ?? 0
 
   return (
     <label className="master-fader">
@@ -99,7 +103,12 @@ function VerticalFader({
       </span>
       <span
         className="master-fader__track"
-        style={{ '--fill-pct': `${fillPct}%` } as CSSProperties}
+        style={
+          {
+            '--fill-start': `${fillStart}%`,
+            '--fill-pct': `${fillPct}%`,
+          } as CSSProperties
+        }
       >
         <input
           type="range"
@@ -121,6 +130,24 @@ function VerticalFader({
   )
 }
 
+/** Map 0–1 progress onto a single lit ridge index (0 = none). */
+function activateRidgeLit(progress: number, ridges: number): number {
+  if (progress <= 0 || ridges <= 0) {
+    return 0
+  }
+  return Math.min(ridges, Math.ceil(progress * ridges))
+}
+
+function ridgeFillWindow(lit: number, ridges: number): { start: number; end: number } {
+  if (lit <= 0 || ridges <= 0) {
+    return { start: 0, end: 0 }
+  }
+  return {
+    start: ((lit - 1) / ridges) * 100,
+    end: (lit / ridges) * 100,
+  }
+}
+
 export function MasterStrip({
   volume,
   gain,
@@ -129,6 +156,8 @@ export function MasterStrip({
   onReset,
   canReset,
   volumeFill,
+  activateGain,
+  activateVu,
   isPlaying,
   isLooping,
   isMuted,
@@ -144,6 +173,10 @@ export function MasterStrip({
   canReset: boolean
   /** When set, drives the volume meter fill/readout directly (skips ease). */
   volumeFill?: number | null
+  /** Intro-only: 0–1 climb of one ridge on gain; null = off. */
+  activateGain?: number | null
+  /** Intro-only: 0–1 climb of one ridge on VU; null = off. */
+  activateVu?: number | null
   isPlaying: boolean
   isLooping: boolean
   isMuted: boolean
@@ -168,10 +201,16 @@ export function MasterStrip({
   const [ridges, setRidges] = useState(24)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
+  const activateVuRef = useRef(activateVu)
+  activateVuRef.current = activateVu
   const volumeAnim = useAnimatedNumber(volume)
   const gainAnim = useAnimatedNumber(gain)
   const volumeShown = volumeFill ?? volumeAnim.displayed
   const volumeLit = volumeFill ?? volume
+  const gainActivateWindow =
+    activateGain != null
+      ? ridgeFillWindow(activateRidgeLit(activateGain, ridges), ridges)
+      : null
 
   useEffect(() => {
     const meters = metersRef.current
@@ -203,27 +242,47 @@ export function MasterStrip({
           : displayed.current * 0.88 + instant * 0.12
 
       const ridgesCount = ridgesRef.current
-      const meterDb = linearToMeterDb(displayed.current)
-      const lit = meterDbToLit(meterDb, ridgesCount)
-      const instantMeterDb = linearToMeterDb(instant)
-      const instantLit = meterDbToLit(instantMeterDb, ridgesCount)
+      const boot = activateVuRef.current
 
-      if (instantLit >= peakHeldLit.current) {
-        peakHeldLit.current = instantLit
-        peakHoldUntil.current = now + PEAK_HOLD_MS
-      } else if (now >= peakHoldUntil.current) {
-        peakHeldLit.current = lit
+      let lit: number
+      let heldLit: number
+      let holdingPeak: boolean
+      let inRed: boolean
+      let inYellow: boolean
+      let isLive: boolean
+
+      if (boot != null) {
+        lit = activateRidgeLit(boot, ridgesCount)
+        heldLit = lit
+        holdingPeak = false
+        const bootDb = lit > 0 ? segmentMeterDb(lit - 1, ridgesCount) : MIN_METER_DB
+        // Boot sweep: light red LEDs, but never the hot capsule stroke / peak alarm.
+        inRed = false
+        inYellow = bootDb >= YELLOW_METER_DB
+        isLive = !inYellow && lit > 0
+      } else {
+        const meterDb = linearToMeterDb(displayed.current)
+        lit = meterDbToLit(meterDb, ridgesCount)
+        const instantMeterDb = linearToMeterDb(instant)
+        const instantLit = meterDbToLit(instantMeterDb, ridgesCount)
+
+        if (instantLit >= peakHeldLit.current) {
+          peakHeldLit.current = instantLit
+          peakHoldUntil.current = now + PEAK_HOLD_MS
+        } else if (now >= peakHoldUntil.current) {
+          peakHeldLit.current = lit
+        }
+
+        heldLit = peakHeldLit.current
+        holdingPeak = now < peakHoldUntil.current && heldLit > lit
+        const heldDb = holdingPeak
+          ? segmentMeterDb(heldLit - 1, ridgesCount)
+          : meterDb
+        const zoneDb = Math.max(meterDb, heldDb)
+        inRed = zoneDb >= RED_METER_DB || instant >= 0.99
+        inYellow = !inRed && zoneDb >= YELLOW_METER_DB
+        isLive = !inRed && !inYellow && lit > 0
       }
-
-      const heldLit = peakHeldLit.current
-      const holdingPeak = now < peakHoldUntil.current && heldLit > lit
-      const heldDb = holdingPeak
-        ? segmentMeterDb(heldLit - 1, ridgesCount)
-        : meterDb
-      const zoneDb = Math.max(meterDb, heldDb)
-      const inRed = zoneDb >= RED_METER_DB || instant >= 0.99
-      const inYellow = !inRed && zoneDb >= YELLOW_METER_DB
-      const isLive = !inRed && !inYellow && lit > 0
 
       const prev = lastVuPaint.current
       if (
@@ -250,7 +309,10 @@ export function MasterStrip({
       if (root) {
         const leds = root.children
         for (let i = 0; i < leds.length; i += 1) {
-          const on = i < lit || (holdingPeak && i === heldLit - 1)
+          const on =
+            boot != null
+              ? lit > 0 && i === lit - 1
+              : i < lit || (holdingPeak && i === heldLit - 1)
           leds[i].classList.toggle('is-on', on)
         }
         root.classList.toggle('is-hot', inRed)
@@ -303,6 +365,7 @@ export function MasterStrip({
           skipOnce={gainAnim.skipOnce}
           format={formatGain}
           valueClassName="master-fader__value--gain"
+          fillWindow={gainActivateWindow}
         />
         <div className="vu">
           <span

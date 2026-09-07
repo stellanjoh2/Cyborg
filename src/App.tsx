@@ -77,8 +77,8 @@ const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
 const SPLASH_VERSION = 'v0.1.0'
 const SPLASH_YEAR = '© 2026'
-/** Splash build/teardown pace (hold after full build stays absolute). */
-const SPLASH_SPEED = 1 / 0.9
+/** Splash build/teardown pace (~15% faster than prior 1/0.9). */
+const SPLASH_SPEED = 1 / 0.765
 const SPLASH_TYPE_MS = Math.max(1, Math.round(10 / SPLASH_SPEED))
 /** Larynx / S mark in — scale-up / dock; same length so stagger stays readable. */
 const SPLASH_MARK_IN = 0.425 / SPLASH_SPEED
@@ -214,6 +214,9 @@ export default function App() {
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
+  /** Intro-only single-ridge climb on gain, then VU. */
+  const [activateGain, setActivateGain] = useState<number | null>(null)
+  const [activateVu, setActivateVu] = useState<number | null>(null)
   const [splashCreditActive, setSplashCreditActive] = useState(false)
   const [splashVersionActive, setSplashVersionActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
@@ -290,6 +293,8 @@ export default function App() {
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
+        setActivateGain(null)
+        setActivateVu(null)
         setSplashCreditActive(true)
         setSplashVersionActive(true)
         setSplashYearActive(true)
@@ -307,6 +312,8 @@ export default function App() {
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
+      setActivateGain(null)
+      setActivateVu(null)
       setSplashCreditActive(false)
       setSplashVersionActive(false)
       setSplashYearActive(false)
@@ -337,8 +344,8 @@ export default function App() {
       const staggerGap = splashT(0.14)
       const splashOut = splashT(0.55)
       const splashOutStagger = splashT(0.1)
-      // Keep absolute: pause after the splash is fully built, before teardown.
-      const splashHold = 0.5
+      // Pause after full build before teardown (~15% shorter than prior 0.5s).
+      const splashHold = 0.425
       const curtainDur = splashT(SPLASH_WIPE_DUR)
       const wipeStagger = splashT(SPLASH_WIPE_STAGGER)
       const wipeTotal = curtainDur + wipeStagger * (splashCols.length - 1)
@@ -432,8 +439,8 @@ export default function App() {
         paintDirt()
       }
 
-      // Hold black void for ~15 frames @60fps before the column wipe starts.
-      const plateInAt = 15 / 60
+      // Hold black void (~15% shorter than prior 15 frames @60fps) before the column wipe.
+      const plateInAt = (15 / 60) * 0.85
       // Larynx → LX01 → version → S → credit → year (mark waits for the cascade to nearly settle).
       const markAt = plateInAt + Math.max(0, wipeTotal - wipeMarkLead)
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
@@ -441,14 +448,14 @@ export default function App() {
       const sAt = versionAt + versionTypeDur + staggerGap
       const creditAt = sAt + SPLASH_MARK_IN + staggerGap
       const yearAt = creditAt + creditTypeDur
-      // Teardown: copyright → legal → S → version → LX01 → larynx mark.
-      const yearRewindAt = yearAt + yearTypeDur + splashHold
-      const creditRewindAt = yearRewindAt + yearTypeDur
-      const sOutAt = creditRewindAt + creditTypeDur + splashOutStagger
-      const versionRewindAt = sOutAt + SPLASH_MARK_IN + splashOutStagger
-      const logoExitAt = versionRewindAt + versionTypeDur + splashOutStagger
-      const logoOutAt = logoExitAt + logoExitDur + splashOutStagger
-      const curtainAt = logoOutAt + splashOut
+      // Teardown: larynx → LX01 → version → S → legal → copyright.
+      const logoOutAt = yearAt + yearTypeDur + splashHold
+      const logoExitAt = logoOutAt + splashOutStagger
+      const versionRewindAt = logoExitAt + logoExitDur + splashOutStagger
+      const sOutAt = versionRewindAt + versionTypeDur + splashOutStagger
+      const creditRewindAt = sOutAt + SPLASH_MARK_IN + splashOutStagger
+      const yearRewindAt = creditRewindAt + creditTypeDur
+      const curtainAt = yearRewindAt + yearTypeDur
       const SPLASH = curtainAt + wipeTotal
 
       // Multi-column wipe in (top → bottom, L→R stagger).
@@ -525,22 +532,7 @@ export default function App() {
       }
       tl.call(() => setSplashCreditActive(true), undefined, creditAt)
       tl.call(() => setSplashYearActive(true), undefined, yearAt)
-      // Copyright → legal → S → version → LX01 → larynx mark.
-      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
-      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
-      if (splashS) {
-        tl.to(
-          splashS,
-          {
-            x: sFromX,
-            duration: SPLASH_MARK_IN,
-            ease: 'power3.in',
-          },
-          sOutAt,
-        )
-      }
-      tl.call(() => setSplashVersionActive(false), undefined, versionRewindAt)
-      if (splashLogoExit) tl.add(splashLogoExit, logoExitAt)
+      // Larynx → LX01 → version → S → legal → copyright.
       if (splashMark) {
         tl.to(
           splashMark,
@@ -553,6 +545,21 @@ export default function App() {
           logoOutAt,
         )
       }
+      if (splashLogoExit) tl.add(splashLogoExit, logoExitAt)
+      tl.call(() => setSplashVersionActive(false), undefined, versionRewindAt)
+      if (splashS) {
+        tl.to(
+          splashS,
+          {
+            x: sFromX,
+            duration: SPLASH_MARK_IN,
+            ease: 'power3.in',
+          },
+          sOutAt,
+        )
+      }
+      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
+      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
       // Drop letterbox fill with the curtain so orange doesn't linger over the UI.
       tl.call(
         () => document.documentElement.classList.remove('is-splash-bleed'),
@@ -827,15 +834,54 @@ export default function App() {
         Math.max(0, masterFooter.length - 1) * masterFooterStagger +
         D
 
-      // —— 5. Volume fill waits for master footer + last knob reveal ——
+      // One playing-ring revolution after the play button lands, before meter boot.
+      const playSpinEl = root.querySelector<HTMLElement>('.master-play__spin')
+      const playSpinDur = 0.72
+      const playSpinAt = masterFooterEnd
+      if (playSpinEl) {
+        ui.fromTo(
+          playSpinEl,
+          { opacity: 0, rotation: 0 },
+          {
+            opacity: 1,
+            duration: 0.2,
+            ease: 'power2.out',
+          },
+          playSpinAt,
+        )
+        ui.to(
+          playSpinEl,
+          {
+            rotation: 360,
+            duration: playSpinDur,
+            ease: 'power2.out',
+          },
+          playSpinAt,
+        )
+        ui.to(
+          playSpinEl,
+          {
+            opacity: 0,
+            duration: 0.2,
+            clearProps: 'opacity,transform',
+          },
+          playSpinAt + playSpinDur,
+        )
+      }
+
+      // —— 5. Volume fill waits for play spin + last knob reveal ——
       const volumeProxy = { v: 0 }
-      const volumeFillAt = Math.max(masterFooterEnd, lastKnobEnd)
+      const volumeFillDur = D * 1.9
+      const volumeFillAt = Math.max(
+        playSpinAt + playSpinDur,
+        lastKnobEnd,
+      )
       ui.fromTo(
         volumeProxy,
         { v: 0 },
         {
           v: 100,
-          duration: D * 1.9,
+          duration: volumeFillDur,
           onStart: () => setVolumeFill(0),
           onUpdate: () => setVolumeFill(volumeProxy.v),
           onComplete: () => setVolumeFill(null),
@@ -843,7 +889,36 @@ export default function App() {
         volumeFillAt,
       )
 
-      // Far-right column finishes first on wipe-out; start UI as it hits the bottom.
+      // Single ridge climbs gain, then VU — each starts halfway through the prior meter.
+      const activateGainProxy = { v: 0 }
+      const activateGainAt = volumeFillAt + volumeFillDur * 0.5
+      ui.fromTo(
+        activateGainProxy,
+        { v: 0 },
+        {
+          v: 1,
+          duration: volumeFillDur,
+          onStart: () => setActivateGain(0),
+          onUpdate: () => setActivateGain(activateGainProxy.v),
+          onComplete: () => setActivateGain(null),
+        },
+        activateGainAt,
+      )
+      const activateVuProxy = { v: 0 }
+      ui.fromTo(
+        activateVuProxy,
+        { v: 0 },
+        {
+          v: 1,
+          duration: volumeFillDur,
+          onStart: () => setActivateVu(0),
+          onUpdate: () => setActivateVu(activateVuProxy.v),
+          onComplete: () => setActivateVu(null),
+        },
+        activateGainAt + volumeFillDur * 0.5,
+      )
+
+      // Far-right wipe-out column lands first; UI (nav header) starts then — follows splash pace.
       tl.add(ui, curtainAt + curtainDur)
 
       return () => {
@@ -1406,6 +1481,8 @@ export default function App() {
         volume={masterVolume}
         gain={masterGain}
         volumeFill={volumeFill}
+        activateGain={activateGain}
+        activateVu={activateVu}
         onVolumeChange={setMasterVolume}
         onGainChange={setMasterGain}
         onReset={handleResetMaster}

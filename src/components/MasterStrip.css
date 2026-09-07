@@ -113,6 +113,7 @@
 }
 
 .master-fader__track {
+  --fill-start: 0%;
   --fill-pct: 0%;
   --period: calc((100% + var(--ridge-gap)) / var(--ridges));
   --ridge: calc(var(--period) - var(--ridge-gap));
@@ -132,7 +133,8 @@
     ),
     linear-gradient(
       to top,
-      var(--lime) 0 var(--fill-pct),
+      var(--black) 0 var(--fill-start),
+      var(--lime) var(--fill-start) var(--fill-pct),
       var(--black) var(--fill-pct) 100%
     );
   background-size:
@@ -154,8 +156,8 @@
   position: absolute;
   left: 2px;
   right: 2px;
-  bottom: 2px;
-  height: calc((100% - 4px) * var(--fill-pct) / 100%);
+  bottom: calc(2px + (100% - 4px) * var(--fill-start) / 100%);
+  height: calc((100% - 4px) * (var(--fill-pct) - var(--fill-start)) / 100%);
   border-radius: 999px;
   box-shadow: var(--glow-outer);
   pointer-events: none;
