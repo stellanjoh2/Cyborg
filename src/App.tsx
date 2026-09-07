@@ -93,6 +93,8 @@ const SPLASH_WIPE_DUR = 0.95
 const SPLASH_WIPE_STAGGER = 0.12
 /** How early the Larynx mark may start before the wipe fully settles. */
 const SPLASH_WIPE_MARK_LEAD = 0.12
+/** Beat after wipe-out before the app UI (logo first) starts revealing. */
+const SPLASH_UI_LEAD = 0.18
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
@@ -194,6 +196,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [emptyWarning, setEmptyWarning] = useState(false)
+  const [inputTouched, setInputTouched] = useState(false)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
   const spokenWordRef = useRef<HTMLSpanElement>(null)
   const appRef = useRef<HTMLElement>(null)
@@ -819,7 +822,8 @@ export default function App() {
         volumeFillAt,
       )
 
-      tl.add(ui, curtainAt)
+      // Wait until the curtain is gone — starting at curtainAt hid the logo under the wipe.
+      tl.add(ui, SPLASH + splashT(SPLASH_UI_LEAD))
 
       return () => {
         window.removeEventListener('resize', onSplashResize)
@@ -1678,7 +1682,18 @@ export default function App() {
       <div className="speech-col speech-col--voice">
       <section className="knob-panel text-panel">
         <div className="section-head">
-          <h2 className="section-title">Input</h2>
+          <h2 className="section-title" aria-label="Input">
+            {inputTouched ? (
+              'Input'
+            ) : (
+              <TypewriterReveal
+                text="PLEASE INPUT YOUR OWN TEXT"
+                loop
+                speedMs={45}
+                pauseMs={1100}
+              />
+            )}
+          </h2>
         </div>
         {isSpeaking ? (
           <div className="field-textarea field-readout" aria-label="Input">
@@ -1700,7 +1715,9 @@ export default function App() {
           <textarea
             className={`field-textarea${emptyWarning ? ' is-warning' : ''}`}
             value={text}
+            onFocus={() => setInputTouched(true)}
             onChange={(e) => {
+              setInputTouched(true)
               setText(e.target.value)
               if (emptyWarning) setEmptyWarning(false)
             }}

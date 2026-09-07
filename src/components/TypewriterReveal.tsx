@@ -13,6 +13,10 @@ type TypewriterRevealProps = {
   text: string
   active?: boolean
   speedMs?: number
+  /** Pause at full text and at empty between loop cycles. */
+  pauseMs?: number
+  /** Type in → pause → type out → pause, forever while active. */
+  loop?: boolean
   caret?: boolean
   hold?: boolean
   className?: string
@@ -21,6 +25,7 @@ type TypewriterRevealProps = {
 } & Omit<React.HTMLAttributes<HTMLElement>, 'children'>
 
 const DEFAULT_SPEED_MS = 10
+const DEFAULT_PAUSE_MS = 900
 
 function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
   if (!links?.length) return value
@@ -58,6 +63,8 @@ export function TypewriterReveal({
   text,
   active = true,
   speedMs = DEFAULT_SPEED_MS,
+  pauseMs = DEFAULT_PAUSE_MS,
+  loop = false,
   caret = true,
   hold = false,
   className,
@@ -134,6 +141,50 @@ export function TypewriterReveal({
       return
     }
 
+    if (loop) {
+      let i = 0
+      let direction: 1 | -1 = 1
+      let intervalId = 0
+      let timeoutId = 0
+      setTyped('')
+      setIsComplete(false)
+      setIsRewinding(false)
+
+      const clear = () => {
+        window.clearInterval(intervalId)
+        window.clearTimeout(timeoutId)
+      }
+
+      const tick = () => {
+        intervalId = window.setInterval(() => {
+          i += direction
+          setTyped(text.slice(0, Math.max(0, i)))
+          if (direction === 1 && i >= text.length) {
+            window.clearInterval(intervalId)
+            setIsComplete(true)
+            setIsRewinding(false)
+            timeoutId = window.setTimeout(() => {
+              direction = -1
+              setIsComplete(false)
+              setIsRewinding(true)
+              tick()
+            }, pauseMs)
+          } else if (direction === -1 && i <= 0) {
+            window.clearInterval(intervalId)
+            setIsRewinding(false)
+            setIsComplete(false)
+            timeoutId = window.setTimeout(() => {
+              direction = 1
+              tick()
+            }, pauseMs)
+          }
+        }, speedMs)
+      }
+
+      tick()
+      return clear
+    }
+
     setTyped('')
     setIsComplete(false)
     setIsRewinding(false)
@@ -150,9 +201,10 @@ export function TypewriterReveal({
     }, speedMs)
 
     return () => window.clearInterval(timer)
-  }, [active, hold, reduceMotion, speedMs, text])
+  }, [active, hold, loop, pauseMs, reduceMotion, speedMs, text])
 
-  const showCaret = caret && ((active && !isComplete) || isRewinding)
+  const showCaret =
+    caret && active && !reduceMotion && (loop || !isComplete || isRewinding)
 
   return (
     <Tag className={combinedClassName} {...restProps}>

@@ -7,11 +7,12 @@
 }
 
 :root {
-  --lime: #ff8800;
-  --vu: #00ffee;
+  --lime: #ffa238;
+  --vu: #a3fff9;
+  --vu-yellow: #ffe666;
   --purple: #3b00ff;
   --blue: var(--vu);
-  --error: #ff2a00;
+  --error: #ff5938;
   --black: #0a0a0a;
   --fill: #121212;
   --stroke: #ffffff;
@@ -121,6 +122,9 @@
   --logo-aspect: 474.91 / 99.91;
   --font-s: 16px;
   --font-m: 20px;
+  /* Body copy shared by input field + about overlay */
+  --copy-size: 25px;
+  --copy-leading: 31.2px;
 
   --text-h: var(--lime);
   --bg: var(--black);

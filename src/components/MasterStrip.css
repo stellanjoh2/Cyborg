@@ -286,8 +286,8 @@
 }
 
 .vu-led--yellow.is-on {
-  --vu-glow: #ffd400;
-  background: #ffd400;
+  --vu-glow: var(--vu-yellow);
+  background: var(--vu-yellow);
 }
 
 .vu-led--red.is-on {
@@ -313,9 +313,9 @@
 }
 
 .vu-peak.is-caution {
-  --vu-glow: #ffd400;
-  border-color: #ffd400;
-  background: #ffd400;
+  --vu-glow: var(--vu-yellow);
+  border-color: var(--vu-yellow);
+  background: var(--vu-yellow);
   animation: vu-peak-blink 0.18s steps(1) infinite;
 }
 

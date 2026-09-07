@@ -509,7 +509,7 @@ html.is-splash-void .scale-nav-bleed {
   overflow-x: hidden;
   overflow-y: auto;
   color: var(--text);
-  font: 400 25px/31.2px var(--font-ui);
+  font: 400 var(--copy-size) / var(--copy-leading) var(--font-ui);
   text-transform: none;
   scrollbar-width: thin;
   scrollbar-color: var(--synth-border) var(--black);
@@ -602,7 +602,7 @@ html.is-splash-void .scale-nav-bleed {
   height: 3lh;
   max-height: 3lh;
   min-height: 0;
-  line-height: 31.2px;
+  line-height: var(--copy-leading);
   overflow-y: auto;
 }
 
@@ -833,6 +833,21 @@ html.is-splash-void .scale-nav-bleed {
   letter-spacing: 0;
   color: var(--lime);
   text-shadow: var(--glow-outer);
+}
+
+.section-title .typewriter-reveal {
+  display: block;
+}
+
+.section-title .typewriter-reveal__ghost,
+.section-title .typewriter-reveal__live {
+  white-space: nowrap;
+}
+
+.section-title .typewriter-reveal__caret {
+  /* Match title metrics — caret sits on the baseline glow color */
+  vertical-align: 0;
+  height: 0.85em;
 }
 
 .speech-app .secondary.section-reset {

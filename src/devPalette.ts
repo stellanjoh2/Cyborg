@@ -6,6 +6,7 @@ export const PALETTE_KEYS = [
   'stroke',
   'lime',
   'vu',
+  'vu-yellow',
   'purple',
   'error',
 ] as const
@@ -19,10 +20,11 @@ export const DEFAULT_PALETTE: Palette = {
   black: '#0a0a0a',
   fill: '#121212',
   stroke: '#FFFFFF',
-  lime: '#ff8800',
-  vu: '#00ffee',
+  lime: '#ffa238',
+  vu: '#a3fff9',
+  'vu-yellow': '#ffe666',
   purple: '#3B00FF',
-  error: '#ff2a00',
+  error: '#ff5938',
 }
 
 export const PALETTE_LABELS: Record<PaletteKey, string> = {
@@ -33,6 +35,7 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
   stroke: 'border',
   lime: 'accent',
   vu: 'vu meter',
+  'vu-yellow': 'vu meter yellow',
   purple: 'accent secondary',
   error: 'error',
 }

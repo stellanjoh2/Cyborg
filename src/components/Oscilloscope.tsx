@@ -7,8 +7,6 @@ const REFERENCE_DBFS = -21
 const MIN_METER_DB = -26
 const YELLOW_METER_DB = 0
 const RED_METER_DB = 12
-const YELLOW_HEX = '#ffd400'
-
 function linearToMeterDb(linear: number): number {
   if (linear <= 0.0001) {
     return MIN_METER_DB
@@ -48,7 +46,7 @@ export function Oscilloscope() {
         return cssVar('--error', '#ff2a00')
       }
       if (db >= YELLOW_METER_DB) {
-        return YELLOW_HEX
+        return cssVar('--vu-yellow', '#ffd400')
       }
       return cssVar('--vu', '#00ffee')
     }
