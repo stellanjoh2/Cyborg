@@ -236,7 +236,7 @@ let onEndCallback: (() => void) | null = null
 let graphReady: Promise<SynthGraph> | null = null
 let currentParams: LiveSynthParams = {
   speed: 1,
-  pitch: 1,
+  pitch: 0.7,
   metallic: 0,
   postProcess: mergePostProcess(DEFAULT_POST_PROCESS),
   vocoder: { ...DEFAULT_VOCODER_PARAMS, bands: DEFAULT_VOCODER_PARAMS.bands.map((b) => ({ ...b })) },
@@ -1062,6 +1062,11 @@ export function readMasterPeak(): number {
     }
   }
   return peak
+}
+
+/** Live master analyser for scope / meters; null until the synth graph exists. */
+export function getMasterAnalyser(): AnalyserNode | null {
+  return graph?.analyser ?? null
 }
 
 function applyIntensityToGraph(

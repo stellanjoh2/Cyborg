@@ -28,26 +28,26 @@
   pointer-events: none;
 }
 
-.knob-field.is-disabled .knob__track,
-.knob-field.is-disabled .knob__fill,
-.knob-field.is-zero .knob__track,
-.knob-field.is-zero .knob__fill {
+.knob-field.is-disabled .knob__ink .knob__track,
+.knob-field.is-disabled .knob__ink .knob__fill,
+.knob-field.is-zero .knob__ink .knob__track,
+.knob-field.is-zero .knob__ink .knob__fill {
   stroke: var(--muted-solid);
 }
 
-.knob-field.is-disabled .knob__needle-core,
-.knob-field.is-zero .knob__needle-core {
+.knob-field.is-disabled .knob__ink .knob__needle-core,
+.knob-field.is-zero .knob__ink .knob__needle-core {
   background: var(--muted-solid);
 }
 
-.knob-field.is-disabled .knob__needle-bloom,
-.knob-field.is-zero .knob__needle-bloom,
-.knob-field.is-disabled .knob__arc-bloom,
-.knob-field.is-zero .knob__arc-bloom {
+.knob-field.is-disabled .knob__ink .knob__needle-bloom,
+.knob-field.is-zero .knob__ink .knob__needle-bloom,
+.knob-field.is-disabled .knob__ink .knob__arc-bloom,
+.knob-field.is-zero .knob__ink .knob__arc-bloom {
   opacity: 0;
 }
 
-.knob-field.is-zero .knob-value {
+.knob-field.is-zero .knob-value__ink {
   color: var(--muted);
   text-shadow: none;
 }
@@ -94,6 +94,25 @@
   cursor: ns-resize;
   outline: none;
   overflow: visible;
+}
+
+.knob__flash,
+.knob__ink {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.knob__flash {
+  /* Intro-only cyan lead; GSAP owns autoAlpha during reveal.
+     Remap chrome tokens so track/fill/needle/glow all read cyan. */
+  --knob: var(--blue);
+  --glow-color: var(--blue);
+  visibility: hidden;
+}
+
+.knob__flash .knob__track {
+  opacity: 1;
 }
 
 .knob__arc-bloom {
@@ -198,11 +217,28 @@
 }
 
 .knob-value {
+  position: relative;
+  display: inline-block;
   font-family: var(--font-ui);
   font-size: var(--font-m);
   line-height: 1;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
+}
+
+.knob-value__flash {
+  /* Intro-only cyan lead; GSAP owns autoAlpha during reveal. */
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--blue);
+  --glow-color: var(--blue);
+  text-shadow: var(--glow-outer);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.knob-value__ink {
   color: var(--lime);
   text-shadow: var(--glow-outer);
 }

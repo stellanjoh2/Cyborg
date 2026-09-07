@@ -6,8 +6,8 @@ import { DevMode } from './components/DevMode'
 import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
+import { Oscilloscope } from './components/Oscilloscope'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
-import { PhaseOrb } from './components/PhaseOrb'
 import { TypewriterReveal } from './components/TypewriterReveal'
 import {
   DEFAULT_POST_PROCESS_UI,
@@ -85,6 +85,14 @@ const SPLASH_DIRT_SRC = `${import.meta.env.BASE_URL}remapstudio-AFKX0ei32lA-unsp
 const SPLASH_DIRT_START_COLS = 3
 /** Discrete pixelation levels (fewer = choppier). */
 const SPLASH_DIRT_STEPS = 8
+/** Vertical wipe strips for the accent plate in/out. */
+const SPLASH_WIPE_COLS = 5
+/** Per-column wipe duration (stagger adds on top). */
+const SPLASH_WIPE_DUR = 0.95
+/** Delay between adjacent columns in the wipe. */
+const SPLASH_WIPE_STAGGER = 0.12
+/** How early the Larynx mark may start before the wipe fully settles. */
+const SPLASH_WIPE_MARK_LEAD = 0.12
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
@@ -174,12 +182,13 @@ export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
   const [speed, setSpeed] = useState(1)
-  const [pitch, setPitch] = useState(1)
+  const [pitch, setPitch] = useState(0.7)
   const [humanRobot, setHumanRobot] = useState(0)
   const [formant, setFormant] = useState(50)
   const [postUi, setPostUi] = useState<PostProcessUiState>(DEFAULT_POST_PROCESS_UI)
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
   const [isLooping, setIsLooping] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -203,6 +212,7 @@ export default function App() {
   const [splashCreditActive, setSplashCreditActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
+  const liveMasterVolume = isMuted ? 0 : masterVolume / 100
 
   useGSAP(
     () => {
@@ -215,6 +225,10 @@ export default function App() {
       const splashDirtCtx = splashDirtCanvas?.getContext('2d') ?? null
       const root = appRef.current
       const splash = root?.querySelector<HTMLElement>('.speech-splash')
+      const splashBody = root?.querySelector<HTMLElement>('.speech-splash__body')
+      const splashCols = gsap.utils.toArray<HTMLElement>(
+        root?.querySelectorAll('.speech-splash__wipe-col') ?? [],
+      )
       const splashMark = root?.querySelector<HTMLElement>(
         '.speech-splash__mark-slot',
       )
@@ -258,19 +272,27 @@ export default function App() {
         }
       }
 
+      const clearSplashWipe = () => {
+        if (splashBody) splashBody.style.clipPath = ''
+        if (splashCols.length) {
+          gsap.set(splashCols, { clearProps: 'transform,transformOrigin' })
+        }
+      }
+
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
         setSplashCreditActive(true)
         setSplashYearActive(true)
         document.documentElement.classList.remove('is-splash-void')
         clearSplashDirt()
-        if (splash) gsap.set(splash, { autoAlpha: 0, y: 0, clearProps: 'transform' })
+        clearSplashWipe()
+        if (splash) gsap.set(splash, { autoAlpha: 0 })
         splashLogoRef.current?.show()
         headerLogoRef.current?.show()
         return
       }
 
-      if (!root || !splash) return
+      if (!root || !splash || !splashCols.length) return
 
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
@@ -295,17 +317,21 @@ export default function App() {
             'is-splash-bleed',
           )
           clearSplashDirt()
+          clearSplashWipe()
         },
       })
 
-      // —— 0. Accent splash: plate in → mark → LX01 → credit → year → fall out → curtain ——
+      // —— 0. Accent splash: column wipe in → mark → LX01 → credit → year → fall out → wipe out ——
       const splashT = (t: number) => t / SPLASH_SPEED
       const staggerGap = splashT(0.14)
       const splashOut = splashT(0.55)
       const splashOutStagger = splashT(0.1)
       // Keep absolute: pause after the splash is fully built, before teardown.
       const splashHold = 0.5
-      const curtainDur = splashT(0.7)
+      const curtainDur = splashT(SPLASH_WIPE_DUR)
+      const wipeStagger = splashT(SPLASH_WIPE_STAGGER)
+      const wipeTotal = curtainDur + wipeStagger * (splashCols.length - 1)
+      const wipeMarkLead = splashT(SPLASH_WIPE_MARK_LEAD)
       const creditTypeDur = (SPLASH_CREDIT.length * SPLASH_TYPE_MS) / 1000
       const yearTypeDur = (SPLASH_YEAR.length * SPLASH_TYPE_MS) / 1000
       splashLogoRef.current?.hideParts()
@@ -317,42 +343,64 @@ export default function App() {
       splashLogoExit?.timeScale(SPLASH_SPEED)
       const charsEnd = splashT(splashReveal?.duration() ?? 1.1)
       const logoExitDur = splashT(splashLogoExit?.duration() ?? 0.55)
+      // getBoundingClientRect is screenspace; GSAP x is pre-scale design px.
+      const stageScale = Math.max(
+        0.001,
+        Number.parseFloat(
+          getComputedStyle(viewportEl ?? document.documentElement).getPropertyValue(
+            '--stage-scale',
+          ),
+        ) || 1,
+      )
       const sFromX = splashS
-        ? -(splashS.getBoundingClientRect().right + 24)
+        ? -(splashS.getBoundingClientRect().right + 24) / stageScale
         : 0
 
-      // Pixel y — yPercent is unreliable inside ScaleViewport's transform: scale().
-      // Extended splash covers letterbox; travel must clear the full viewport height.
-      const plateTravel = Math.max(splash.offsetHeight, root.offsetHeight, 1)
-      gsap.set(splash, { y: -plateTravel, autoAlpha: 1, force3D: true })
+      gsap.set(splash, { autoAlpha: 1 })
+      gsap.set(splashCols, {
+        scaleY: 0,
+        transformOrigin: '50% 0%',
+        force3D: true,
+      })
 
-      // Screenspace dirt sits above the stage; clip it to the plate rect as it moves.
-      const syncSplashDirt = () => {
-        if (!splashDirt || !viewportEl) return
-        const v = viewportEl.getBoundingClientRect()
-        const s = splash.getBoundingClientRect()
-        if (
-          s.bottom <= v.top ||
-          s.top >= v.bottom ||
-          s.right <= v.left ||
-          s.left >= v.right
-        ) {
-          splashDirt.style.clipPath = 'inset(100% 0 0 0)'
-          return
+      // Clip content + screenspace dirt to the live column geometry.
+      // Body sits inside ScaleViewport's scale(); dirt is screenspace — divide accordingly.
+      const columnClipPath = (host: DOMRect, localScale: number) => {
+        const s = Math.max(0.001, localScale)
+        let d = ''
+        for (const col of splashCols) {
+          const r = col.getBoundingClientRect()
+          if (r.height < 0.5 || r.width < 0.5) continue
+          const x0 = (r.left - host.left) / s
+          const y0 = (r.top - host.top) / s
+          const x1 = (r.right - host.left) / s
+          const y1 = (r.bottom - host.top) / s
+          d += `M${x0} ${y0}L${x0} ${y1}L${x1} ${y1}L${x1} ${y0}Z`
         }
-        const top = Math.max(0, s.top - v.top)
-        const right = Math.max(0, v.right - s.right)
-        const bottom = Math.max(0, v.bottom - s.bottom)
-        const left = Math.max(0, s.left - v.left)
-        splashDirt.style.clipPath = `inset(${top}px ${right}px ${bottom}px ${left}px)`
+        return d ? `path('${d}')` : 'inset(100% 0 0 0)'
+      }
+
+      const syncSplashClips = () => {
+        if (splashBody) {
+          splashBody.style.clipPath = columnClipPath(
+            splashBody.getBoundingClientRect(),
+            stageScale,
+          )
+        }
+        if (!splashDirt || !viewportEl) return
+        splashDirt.style.clipPath = columnClipPath(
+          viewportEl.getBoundingClientRect(),
+          1,
+        )
       }
       splashDirt?.classList.add('is-splash')
-      syncSplashDirt()
+      syncSplashClips()
       fitDirtCanvas()
-      window.addEventListener('resize', () => {
-        syncSplashDirt()
+      const onSplashResize = () => {
+        syncSplashClips()
         fitDirtCanvas()
-      })
+      }
+      window.addEventListener('resize', onSplashResize)
 
       // Preload difference image; first paint stays coarse until the tween runs.
       const dirtLoader = new Image()
@@ -367,10 +415,10 @@ export default function App() {
         paintDirt()
       }
 
-      // Hold black void for ~15 frames @60fps before the orange plate drops in.
+      // Hold black void for ~15 frames @60fps before the column wipe starts.
       const plateInAt = 15 / 60
-      // Larynx → LX01 → S → credit → year
-      const markAt = plateInAt + Math.max(0, curtainDur - splashT(0.25))
+      // Larynx → LX01 → S → credit → year (mark waits for the cascade to nearly settle).
+      const markAt = plateInAt + Math.max(0, wipeTotal - wipeMarkLead)
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
       const sAt = lx01At + charsEnd + staggerGap
       const creditAt = sAt + SPLASH_MARK_IN + staggerGap
@@ -383,21 +431,19 @@ export default function App() {
       const creditRewindAt = yearRewindAt + yearTypeDur
       const footerDoneAt = creditRewindAt + creditTypeDur
       const curtainAt = footerDoneAt
-      const SPLASH = curtainAt + curtainDur
+      const SPLASH = curtainAt + wipeTotal
 
-      // Same duration / power3 curve as the exit (in ↔ out mirror).
-      tl.to(
-        splash,
-        {
-          y: 0,
-          duration: curtainDur,
-          ease: 'power3.out',
-          onUpdate: syncSplashDirt,
-        },
-        plateInAt,
-      )
+      // Multi-column wipe in (top → bottom, L→R stagger).
+      const wipeIn = gsap.timeline({ onUpdate: syncSplashClips })
+      wipeIn.to(splashCols, {
+        scaleY: 1,
+        duration: curtainDur,
+        ease: 'power3.out',
+        stagger: { each: wipeStagger, from: 'start' },
+      })
+      tl.add(wipeIn, plateInAt)
       // Difference dirt: log-space pixelate; sharp when the top-left mark settles.
-      // Out tracks the plate curtain (megablocks as it leaves).
+      // Out tracks the column wipe (megablocks as it leaves).
       if (splashDirtCanvas) {
         const dirtInEnd = markAt + SPLASH_MARK_IN
         dirtPix.t = 0
@@ -416,7 +462,7 @@ export default function App() {
           dirtPix,
           {
             t: 0,
-            duration: curtainDur,
+            duration: wipeTotal,
             ease: 'none',
             onUpdate: paintDirt,
           },
@@ -426,7 +472,7 @@ export default function App() {
       tl.call(
         () => document.documentElement.classList.remove('is-splash-void'),
         undefined,
-        plateInAt + curtainDur,
+        plateInAt + wipeTotal,
       )
       if (splashMark) {
         tl.fromTo(
@@ -492,18 +538,19 @@ export default function App() {
         undefined,
         curtainAt,
       )
-      tl.to(
-        splash,
-        {
-          y: plateTravel,
-          duration: curtainDur,
-          ease: 'power3.in',
-          onUpdate: syncSplashDirt,
-        },
-        curtainAt,
-      )
+      // Multi-column wipe out (collapse toward bottom, R→L stagger).
+      const wipeOut = gsap.timeline({ onUpdate: syncSplashClips })
+      wipeOut.set(splashCols, { transformOrigin: '50% 100%' })
+      wipeOut.to(splashCols, {
+        scaleY: 0,
+        duration: curtainDur,
+        ease: 'power3.in',
+        stagger: { each: wipeStagger, from: 'end' },
+      })
+      tl.add(wipeOut, curtainAt)
       tl.set(splash, { autoAlpha: 0 }, SPLASH)
       tl.call(clearSplashDirt, undefined, SPLASH)
+      tl.call(clearSplashWipe, undefined, SPLASH)
 
       const ui = gsap.timeline({
         defaults: {
@@ -535,13 +582,7 @@ export default function App() {
 
       const navItemsAt = D + 0.08
       const navEls = gsap.utils.toArray<HTMLElement>(
-        [
-          '.speech-title',
-          '.speech-top__transport-left',
-          '.speech-top__phase-orb',
-          '.speech-top__transport-right',
-          '.speech-top__right > *',
-        ].join(', '),
+        ['.speech-top__brand', '.speech-scope', '.speech-top__right > *'].join(', '),
       )
       const navStagger = 0.07
       ui.from(
@@ -568,15 +609,6 @@ export default function App() {
       )
 
       const sideDuration = D * 2.4
-      // getBoundingClientRect is screenspace; GSAP x is pre-scale design px.
-      const stageScale = Math.max(
-        0.001,
-        Number.parseFloat(
-          getComputedStyle(viewportEl ?? document.documentElement).getPropertyValue(
-            '--stage-scale',
-          ),
-        ) || 1,
-      )
       ui.from(
         '.speech-col--voice',
         {
@@ -606,7 +638,7 @@ export default function App() {
 
       // —— 3. Side panel contents (hold until columns are well into their land) ——
       // Columns already handle the horizontal dock; only leaf UI rises into place.
-      const sideContentAt = boardAt + 0.85
+      const sideContentAt = boardAt + 0.78
       const leftLeaves = gsap.utils.toArray<HTMLElement>(
         [
           '.speech-col--voice .section-title',
@@ -625,30 +657,95 @@ export default function App() {
           '.speech-col--fx .knob-field',
         ].join(', '),
       )
-      const leafDuration = 0.42
-      const leftStagger = 0.03
-      const rightStagger = 0.022
-      ui.from(
-        leftLeaves,
-        {
-          autoAlpha: 0,
-          y: 12,
-          stagger: leftStagger,
-          duration: leafDuration,
-          immediateRender: true,
-        },
-        sideContentAt,
-      )
-      ui.from(
-        rightLeaves,
-        {
-          autoAlpha: 0,
-          y: 12,
-          stagger: rightStagger,
-          duration: leafDuration,
-          immediateRender: true,
-        },
-        sideContentAt,
+      // Slightly tighter than pre-value-flash so dial+value cyan still fits the beat.
+      const leafDuration = 0.36
+      const leftStagger = 0.026
+      const rightStagger = 0.019
+      // Match LX01 char-flash: cyan dial+value lead, then ink lands and kills flash.
+      const knobFlashLead = 0.08
+      const knobFlashOut = 2 / 60
+      const revealLeaves = (
+        leaves: HTMLElement[],
+        stagger: number,
+        at: number,
+      ) => {
+        leaves.forEach((el, i) => {
+          const t = at + i * stagger
+          if (!el.classList.contains('knob-field')) {
+            ui.from(
+              el,
+              {
+                autoAlpha: 0,
+                y: 12,
+                duration: leafDuration,
+                immediateRender: true,
+              },
+              t,
+            )
+            return
+          }
+
+          const flash = gsap.utils.toArray<HTMLElement>(
+            el.querySelectorAll('.knob__flash, .knob-value__flash'),
+          )
+          const ink = gsap.utils.toArray<HTMLElement>(
+            el.querySelectorAll(
+              '.knob-label, .knob-hints, .knob__ink, .knob-value__ink',
+            ),
+          )
+          // Keep the field box visible so the cyan flash can show.
+          gsap.set(el, { autoAlpha: 1, y: 0 })
+          if (flash.length) {
+            ui.fromTo(
+              flash,
+              { autoAlpha: 0, y: 12 },
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: leafDuration,
+                immediateRender: true,
+              },
+              t,
+            )
+            ui.to(
+              flash,
+              {
+                autoAlpha: 0,
+                duration: knobFlashOut,
+                ease: 'none',
+              },
+              t + knobFlashLead + leafDuration,
+            )
+          }
+          if (ink.length) {
+            ui.fromTo(
+              ink,
+              { autoAlpha: 0, y: 12 },
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: leafDuration,
+                immediateRender: true,
+              },
+              t + knobFlashLead,
+            )
+          }
+        })
+      }
+      revealLeaves(leftLeaves, leftStagger, sideContentAt)
+      revealLeaves(rightLeaves, rightStagger, sideContentAt)
+
+      // Last knob: flash lead + ink land + flash kill.
+      const knobTotalDur = knobFlashLead + leafDuration + knobFlashOut
+      const lastKnobEnd = Math.max(
+        ...[leftLeaves, rightLeaves].flatMap((leaves, side) => {
+          const stagger = side === 0 ? leftStagger : rightStagger
+          return leaves.map((el, i) =>
+            el.classList.contains('knob-field')
+              ? sideContentAt + i * stagger + knobTotalDur
+              : sideContentAt,
+          )
+        }),
       )
 
       // —— 4. Master meters start with the FX leaf cascade ——
@@ -685,9 +782,30 @@ export default function App() {
         (meterColumns.length - 1) * meterStagger +
         D
 
-      // —— 5. Volume fill closes after the level bars ——
+      // Play, then mute → loop (corner pair mirrors L/R meter columns).
+      const masterFooterAt = masterMetersEnd
+      const masterFooterStagger = 0.08
+      const masterFooter = gsap.utils.toArray<HTMLElement>(
+        ['.master-transport', '.master-mute', '.master-loop'].join(', '),
+      )
+      ui.from(
+        masterFooter,
+        {
+          autoAlpha: 0,
+          y: 16,
+          stagger: masterFooterStagger,
+          immediateRender: true,
+        },
+        masterFooterAt,
+      )
+      const masterFooterEnd =
+        masterFooterAt +
+        Math.max(0, masterFooter.length - 1) * masterFooterStagger +
+        D
+
+      // —— 5. Volume fill waits for master footer + last knob reveal ——
       const volumeProxy = { v: 0 }
-      const volumeFillAt = masterMetersEnd
+      const volumeFillAt = Math.max(masterFooterEnd, lastKnobEnd)
       ui.fromTo(
         volumeProxy,
         { v: 0 },
@@ -704,13 +822,14 @@ export default function App() {
       tl.add(ui, curtainAt)
 
       return () => {
-        window.removeEventListener('resize', syncSplashDirt)
+        window.removeEventListener('resize', onSplashResize)
         root?.classList.remove('is-introducing')
         document.documentElement.classList.remove(
           'is-splash-void',
           'is-splash-bleed',
         )
         clearSplashDirt()
+        clearSplashWipe()
       }
     },
     {
@@ -806,10 +925,10 @@ export default function App() {
 
   useEffect(() => {
     updateSamLiveParams({
-      masterVolume: masterVolume / 100,
+      masterVolume: liveMasterVolume,
       masterGainDb,
     })
-  }, [masterVolume, masterGainDb])
+  }, [liveMasterVolume, masterGainDb])
 
   useEffect(() => {
     if (!isSpeaking) {
@@ -1050,6 +1169,10 @@ export default function App() {
     setSamLoop(next)
   }
 
+  const handleMuteToggle = () => {
+    setIsMuted((prev) => !prev)
+  }
+
   const handlePlayback = () => {
     setError(null)
 
@@ -1080,7 +1203,7 @@ export default function App() {
       metallic: livePlan.metallic,
       vocoder,
       postProcess,
-      masterVolume: masterVolume / 100,
+      masterVolume: liveMasterVolume,
       masterGainDb,
       loop: isLooping,
       onEnd: () => {
@@ -1138,82 +1261,63 @@ export default function App() {
     <>
       <main className="speech-app" ref={appRef}>
       <div className="speech-splash" aria-hidden="true">
-        <div className="speech-splash__cyborg">
-          <img
-            src={`${import.meta.env.BASE_URL}cyborg-intro.png`}
-            alt=""
-            decoding="async"
-          />
+        <div className="speech-splash__wipe">
+          {Array.from({ length: SPLASH_WIPE_COLS }, (_, i) => (
+            <div key={i} className="speech-splash__wipe-col" />
+          ))}
         </div>
-        <div className="speech-splash__frame">
-          <div className="speech-splash__mark-slot">
-            <div className="speech-splash__mark" />
+        <div className="speech-splash__body">
+          <div className="speech-splash__cyborg">
+            <img
+              src={`${import.meta.env.BASE_URL}cyborg-intro.png`}
+              alt=""
+              decoding="async"
+            />
           </div>
-          <div className="speech-splash__logo-slot">
-            <Logotype ref={splashLogoRef} className="speech-splash__logo" />
-          </div>
-          <div className="speech-splash__bottom">
-            <div className="speech-splash__s-slot">
-              <div className="speech-splash__s" />
+          <div className="speech-splash__frame">
+            <div className="speech-splash__mark-slot">
+              <div className="speech-splash__mark" />
             </div>
-            <div className="speech-splash__footer">
-              <TypewriterReveal
-                as="p"
-                className="speech-splash__credit"
-                text={SPLASH_CREDIT}
-                active={splashCreditActive}
-                hold
-                speedMs={SPLASH_TYPE_MS}
-              />
-              <TypewriterReveal
-                as="p"
-                className="speech-splash__year"
-                text={SPLASH_YEAR}
-                active={splashYearActive}
-                hold
-                speedMs={SPLASH_TYPE_MS}
-              />
+            <div className="speech-splash__logo-slot">
+              <Logotype ref={splashLogoRef} className="speech-splash__logo" />
+            </div>
+            <div className="speech-splash__bottom">
+              <div className="speech-splash__s-slot">
+                <div className="speech-splash__s" />
+              </div>
+              <div className="speech-splash__footer">
+                <TypewriterReveal
+                  as="p"
+                  className="speech-splash__credit"
+                  text={SPLASH_CREDIT}
+                  active={splashCreditActive}
+                  hold
+                  speedMs={SPLASH_TYPE_MS}
+                />
+                <TypewriterReveal
+                  as="p"
+                  className="speech-splash__year"
+                  text={SPLASH_YEAR}
+                  active={splashYearActive}
+                  hold
+                  speedMs={SPLASH_TYPE_MS}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
       <header className="speech-top">
-      <h1 className="speech-title" aria-label="LX01">
-        <Logotype ref={headerLogoRef} loopOnHover />
-      </h1>
-      <div className="speech-top__center">
-        <div className="speech-top__transport-left actions">
-          <button
-            className={`secondary${isSpeaking ? ' is-active' : ''}`}
-            type="button"
-            onClick={isSpeaking ? handleStop : handlePlayback}
-            title={isSpeaking ? 'Stop speech' : 'Play speech'}
-            aria-pressed={isSpeaking}
-          >
-            <span className="speech-top__btn-label">
-              {isSpeaking ? 'STOP' : 'PLAY'}
-            </span>
-          </button>
-        </div>
-        <div
-          className={`speech-top__phase-orb${isSpeaking ? '' : ' is-idle'}`}
-          aria-hidden="true"
-          title={isSpeaking ? 'Playing' : 'Idle'}
-        >
-          <PhaseOrb active={isSpeaking} />
-        </div>
-        <div className="speech-top__transport-right actions">
-          <button
-            className={`secondary${isLooping ? ' is-active' : ''}`}
-            type="button"
-            onClick={handleLoopToggle}
-            title="Loop playback"
-            aria-pressed={isLooping}
-          >
-            <span className="speech-top__btn-label">LOOP</span>
-          </button>
-        </div>
+      <div className="speech-top__brand">
+        <span className="speech-top__mark" aria-hidden="true">
+          <span className="speech-top__mark-glyph" />
+        </span>
+        <span className="speech-top__sep" aria-hidden="true" />
+        <h1 className="speech-title" aria-label="LX01">
+          <Logotype ref={headerLogoRef} loopOnHover />
+        </h1>
       </div>
+      <Oscilloscope />
       <div className="speech-top__right actions">
         <button
           className="secondary"
@@ -1244,7 +1348,7 @@ export default function App() {
           </span>
         </button>
       </div>
-      </header>
+    </header>
 
       <div className="speech-board">
       <div className="speech-col speech-col--master">
@@ -1256,6 +1360,12 @@ export default function App() {
         onGainChange={setMasterGain}
         onReset={handleResetMaster}
         canReset={masterDirty}
+        isPlaying={isSpeaking}
+        isLooping={isLooping}
+        isMuted={isMuted}
+        onPlayToggle={isSpeaking ? handleStop : handlePlayback}
+        onLoopToggle={handleLoopToggle}
+        onMuteToggle={handleMuteToggle}
       />
       </div>
       <div className="speech-col speech-col--fx">

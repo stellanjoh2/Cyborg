@@ -7,7 +7,6 @@ export const PALETTE_KEYS = [
   'lime',
   'vu',
   'purple',
-  'blue',
   'error',
 ] as const
 
@@ -21,9 +20,8 @@ export const DEFAULT_PALETTE: Palette = {
   fill: '#121212',
   stroke: '#FFFFFF',
   lime: '#ff8800',
-  vu: '#00ffe1',
+  vu: '#00ffee',
   purple: '#3B00FF',
-  blue: '#00C4FF',
   error: '#ff2a00',
 }
 
@@ -36,7 +34,6 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
   lime: 'accent',
   vu: 'vu meter',
   purple: 'accent secondary',
-  blue: 'accent tertiary',
   error: 'error',
 }
 
@@ -44,6 +41,8 @@ export const DEFAULT_STROKE_OPACITY = 0.1
 export const DEFAULT_GRAIN_OPACITY = 0.48
 export const DEFAULT_WALLPAPER_OPACITY = 0.16
 export const DEFAULT_WALLPAPER_BLEND_MODE = 'screen'
+export const DEFAULT_RADIUS_PANEL = 48
+export const RADIUS_PANEL_MAX = 64
 
 export type BevelEmboss = {
   highlightColor: string
@@ -133,6 +132,13 @@ export function applyWallpaperBlendMode(mode: WallpaperBlendMode) {
   document.documentElement.style.setProperty('--wallpaper-blend-mode', mode)
 }
 
+export function applyRadiusPanel(px: number) {
+  document.documentElement.style.setProperty(
+    '--radius-panel',
+    `${clampPx(px, RADIUS_PANEL_MAX)}px`,
+  )
+}
+
 export function applyBevelEmboss(settings: BevelEmboss) {
   const root = document.documentElement
   const highlight = isHexColor(settings.highlightColor)
@@ -183,6 +189,7 @@ export function formatPalette(
   wallpaperOpacity = DEFAULT_WALLPAPER_OPACITY,
   wallpaperBlendMode: WallpaperBlendMode = DEFAULT_WALLPAPER_BLEND_MODE,
   bevelEmboss: BevelEmboss = DEFAULT_BEVEL_EMBOSS,
+  radiusPanel = DEFAULT_RADIUS_PANEL,
 ): string {
   return [
     ...PALETTE_KEYS.map((key) => `--${key}: ${palette[key]};`),
@@ -190,6 +197,7 @@ export function formatPalette(
     `--grain-opacity: ${grainOpacity};`,
     `--wallpaper-opacity: ${wallpaperOpacity};`,
     `--wallpaper-blend-mode: ${wallpaperBlendMode};`,
+    `--radius-panel: ${radiusPanel}px;`,
     `--bevel-highlight-color: ${bevelEmboss.highlightColor};`,
     `--bevel-shadow-color: ${bevelEmboss.shadowColor};`,
     `--bevel-radius: ${bevelEmboss.radius}px;`,

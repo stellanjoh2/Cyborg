@@ -4,6 +4,7 @@ import {
   readMasterPeak,
 } from '../speechSynthEngine'
 import { useAnimatedNumber } from '../useAnimatedNumber'
+import { LoopIcon, SpeakerIcon } from './icons'
 import './MasterStrip.css'
 
 /** Target pitch of one ridge + gap. */
@@ -128,6 +129,12 @@ export function MasterStrip({
   onReset,
   canReset,
   volumeFill,
+  isPlaying,
+  isLooping,
+  isMuted,
+  onPlayToggle,
+  onLoopToggle,
+  onMuteToggle,
 }: {
   volume: number
   gain: number
@@ -137,6 +144,12 @@ export function MasterStrip({
   canReset: boolean
   /** When set, drives the volume meter fill/readout directly (skips ease). */
   volumeFill?: number | null
+  isPlaying: boolean
+  isLooping: boolean
+  isMuted: boolean
+  onPlayToggle: () => void
+  onLoopToggle: () => void
+  onMuteToggle: () => void
 }) {
   const ledsRef = useRef<HTMLDivElement>(null)
   const peakRef = useRef<HTMLSpanElement>(null)
@@ -309,6 +322,63 @@ export function MasterStrip({
           <span className="master-fader__label">VU</span>
         </div>
       </div>
+      <div className="master-transport">
+        <button
+          className={`master-play${isPlaying ? ' is-playing' : ''}`}
+          type="button"
+          onClick={onPlayToggle}
+          title={isPlaying ? 'Stop speech' : 'Play speech'}
+          aria-pressed={isPlaying}
+          aria-label={isPlaying ? 'Stop' : 'Play'}
+        >
+          <span className="master-play__rail" aria-hidden="true" />
+          <span className="master-play__spin" aria-hidden="true" />
+          <span className="master-play__face" aria-hidden="true">
+            <span className="master-play__icon">
+              {isPlaying ? (
+                <svg
+                  className="master-play__icon-stop"
+                  viewBox="0 0 28 28"
+                  focusable="false"
+                  aria-hidden="true"
+                >
+                  <rect x="6" y="6" width="16" height="16" rx="1" />
+                </svg>
+              ) : (
+                <svg
+                  className="master-play__icon-play"
+                  viewBox="0 0 28 28"
+                  focusable="false"
+                  aria-hidden="true"
+                >
+                  <path d="M8 4.5v19L24 14 8 4.5z" />
+                </svg>
+              )}
+            </span>
+          </span>
+        </button>
+      </div>
+      <button
+        className={`master-mute${isMuted ? ' is-active' : ''}`}
+        type="button"
+        onClick={onMuteToggle}
+        title={isMuted ? 'Unmute master' : 'Mute master'}
+        aria-pressed={isMuted}
+        aria-label={isMuted ? 'Unmute' : 'Mute'}
+      >
+        <SpeakerIcon />
+      </button>
+      <span className="master-s" aria-hidden="true" />
+      <button
+        className={`master-loop${isLooping ? ' is-active' : ''}`}
+        type="button"
+        onClick={onLoopToggle}
+        title="Loop playback"
+        aria-pressed={isLooping}
+        aria-label="Loop"
+      >
+        <LoopIcon />
+      </button>
     </section>
   )
 }

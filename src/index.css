@@ -8,9 +8,9 @@
 
 :root {
   --lime: #ff8800;
-  --vu: #00ffe1;
+  --vu: #00ffee;
   --purple: #3b00ff;
-  --blue: #00c4ff;
+  --blue: var(--vu);
   --error: #ff2a00;
   --black: #0a0a0a;
   --fill: #121212;
@@ -24,7 +24,7 @@
   --wallpaper-blend-mode: screen;
   --stroke-width: 1px;
   --radius: 6px;
-  --radius-panel: 24px;
+  --radius-panel: 48px;
   --bevel-highlight-color: #ffffff;
   --bevel-shadow-color: #000000;
   --bevel-radius: 3px;
@@ -116,12 +116,11 @@
   --panel-gutter: 87px;
   --app-pad: 48px;
   --nav-control-h: 54px;
-  --phase-orb-size: var(--nav-control-h);
   --logo: url('/cyborg-logo.svg');
   --logo-color: var(--accent);
   --logo-aspect: 474.91 / 99.91;
   --font-s: 16px;
-  --font-m: 22px;
+  --font-m: 20px;
 
   --text-h: var(--lime);
   --bg: var(--black);

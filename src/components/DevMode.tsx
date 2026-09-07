@@ -3,12 +3,14 @@ import {
   applyBevelEmboss,
   applyGrainOpacity,
   applyPalette,
+  applyRadiusPanel,
   applyStrokeOpacity,
   applyWallpaperBlendMode,
   applyWallpaperOpacity,
   DEFAULT_BEVEL_EMBOSS,
   DEFAULT_GRAIN_OPACITY,
   DEFAULT_PALETTE,
+  DEFAULT_RADIUS_PANEL,
   DEFAULT_STROKE_OPACITY,
   DEFAULT_WALLPAPER_BLEND_MODE,
   DEFAULT_WALLPAPER_OPACITY,
@@ -16,6 +18,7 @@ import {
   isHexColor,
   PALETTE_KEYS,
   PALETTE_LABELS,
+  RADIUS_PANEL_MAX,
   WALLPAPER_BLEND_MODES,
   type BevelEmboss,
   type Palette,
@@ -159,6 +162,7 @@ export function DevMode() {
   const [wallpaperBlendMode, setWallpaperBlendMode] =
     useState<WallpaperBlendMode>(DEFAULT_WALLPAPER_BLEND_MODE)
   const [bevelEmboss, setBevelEmboss] = useState<BevelEmboss>(DEFAULT_BEVEL_EMBOSS)
+  const [radiusPanel, setRadiusPanel] = useState(DEFAULT_RADIUS_PANEL)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -222,6 +226,12 @@ export function DevMode() {
     applyBevelEmboss(next)
   }
 
+  const setPanelRadius = (value: number) => {
+    const next = Math.min(RADIUS_PANEL_MAX, Math.max(0, Math.round(value)))
+    setRadiusPanel(next)
+    applyRadiusPanel(next)
+  }
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(
       formatPalette(
@@ -231,6 +241,7 @@ export function DevMode() {
         wallpaperOpacity,
         wallpaperBlendMode,
         bevelEmboss,
+        radiusPanel,
       ),
     )
     setCopied(true)
@@ -283,6 +294,12 @@ export function DevMode() {
           ))}
         </select>
       </label>
+      <PxRow
+        label="panel radius"
+        value={radiusPanel}
+        max={RADIUS_PANEL_MAX}
+        onChange={setPanelRadius}
+      />
 
       <h3 className="dev-mode__subtitle">Bevel / emboss</h3>
       <ColorRow

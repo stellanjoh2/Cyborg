@@ -129,7 +129,7 @@ export function formatReverbRoomSize(sliderValue: number): string {
 
 export function formatReverbDecay(sliderValue: number): string {
   const tailSeconds = 0.4 + slider(sliderValue) * 1.4
-  return `${tailSeconds.toFixed(1)} s tail`
+  return `${tailSeconds.toFixed(1)} s`
 }
 
 export function formatDelayLength(sliderValue: number): string {

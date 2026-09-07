@@ -49,7 +49,7 @@
   will-change: transform;
 }
 
-/* Screenspace dirt above the stage; GSAP clips it to the orange plate. */
+/* Screenspace dirt above the stage; GSAP clips it to the wipe columns. */
 .scale-viewport__dirt {
   position: absolute;
   inset: 0;

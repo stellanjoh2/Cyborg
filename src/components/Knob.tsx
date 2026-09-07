@@ -184,24 +184,49 @@ function KnobComponent({
         onLostPointerCapture={endDrag}
         onKeyDown={handleKeyDown}
       >
-        <div className="knob__arc-bloom" aria-hidden="true">
-          <span className="knob__arc-bloom-ring" />
+        {/* Cyan flash twin — intro reveal only (LX01 char-flash pattern). */}
+        <div className="knob__flash" aria-hidden="true">
+          <div className="knob__arc-bloom">
+            <span className="knob__arc-bloom-ring" />
+          </div>
+          <svg className="knob__dial" viewBox="0 0 100 100">
+            <circle className="knob__track" cx="50" cy="50" r={DIAL_RADIUS} />
+            {fillPath ? <path className="knob__fill" d={fillPath} /> : null}
+          </svg>
+          <span
+            className="knob__needle"
+            style={{ transform: `rotate(${angle}deg)` }}
+          >
+            <span className="knob__needle-bloom" />
+            <span className="knob__needle-core" />
+          </span>
         </div>
-        <svg className="knob__dial" viewBox="0 0 100 100" aria-hidden="true">
-          <circle className="knob__track" cx="50" cy="50" r={DIAL_RADIUS} />
-          {fillPath ? <path className="knob__fill" d={fillPath} /> : null}
-        </svg>
-        <span
-          className="knob__needle"
-          style={{ transform: `rotate(${angle}deg)` }}
-          aria-hidden="true"
-        >
-          <span className="knob__needle-bloom" />
-          <span className="knob__needle-core" />
-        </span>
+        <div className="knob__ink">
+          <div className="knob__arc-bloom">
+            <span className="knob__arc-bloom-ring" />
+          </div>
+          <svg className="knob__dial" viewBox="0 0 100 100" aria-hidden="true">
+            <circle className="knob__track" cx="50" cy="50" r={DIAL_RADIUS} />
+            {fillPath ? <path className="knob__fill" d={fillPath} /> : null}
+          </svg>
+          <span
+            className="knob__needle"
+            style={{ transform: `rotate(${angle}deg)` }}
+            aria-hidden="true"
+          >
+            <span className="knob__needle-bloom" />
+            <span className="knob__needle-core" />
+          </span>
+        </div>
       </div>
 
-      <span className="knob-value">{displayValue}</span>
+      <span className="knob-value">
+        {/* Cyan flash twin — intro reveal only (same lead as dial). */}
+        <span className="knob-value__flash" aria-hidden="true">
+          {displayValue}
+        </span>
+        <span className="knob-value__ink">{displayValue}</span>
+      </span>
     </div>
   )
 }

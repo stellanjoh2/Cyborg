@@ -19,7 +19,7 @@ export const VOICE_PRESETS: VoicePreset[] = [
     id: 'default',
     label: 'Default',
     speed: 1,
-    pitch: 1,
+    pitch: 0.7,
     humanRobot: 0,
     formant: 50,
     vocoder: DEFAULT_VOCODER_UI,

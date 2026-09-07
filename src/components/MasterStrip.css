@@ -1,5 +1,7 @@
 .master-strip {
   --meter-w: 48px;
+  --master-corner-btn: 54px;
+  --master-play-corner-gap: 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -17,8 +19,9 @@
   row-gap: 8px;
   justify-items: center;
   flex: 1 1 auto;
-  min-height: 220px;
-  padding-block: 24px;
+  min-height: 120px;
+  /* 48px: values ↔ Master/Reset; labels ↔ play */
+  padding-block: 48px;
 }
 
 .master-fader,
@@ -28,6 +31,7 @@
 
 .master-fader:nth-child(1) > * {
   grid-column: 1;
+  justify-self: start;
 }
 
 .master-fader:nth-child(2) > * {
@@ -36,6 +40,7 @@
 
 .vu > * {
   grid-column: 3;
+  justify-self: end;
 }
 
 .master-fader__value,
@@ -59,6 +64,11 @@
 }
 
 .master-fader__label {
+  /* Same width + column edge as the meter so vertical text centers under it. */
+  box-sizing: border-box;
+  width: var(--meter-w);
+  display: grid;
+  place-items: center;
   align-self: start;
   writing-mode: vertical-rl;
   text-orientation: mixed;
@@ -80,6 +90,16 @@
   text-align: center;
   white-space: nowrap;
   overflow: visible;
+}
+
+.master-fader:nth-child(1) > .master-fader__value {
+  justify-self: start;
+  width: var(--meter-w);
+  min-width: var(--meter-w);
+}
+
+.vu-peak {
+  margin-inline-end: calc((var(--meter-w) - 12px) / 2);
 }
 
 .master-fader__value--gain {
@@ -253,21 +273,25 @@
   --glow-blur-wide: 12px;
   --glow-mix-tight: 38%;
   --glow-mix-wide: 21%;
-  box-shadow: var(--glow-outer);
+  box-shadow:
+    0 0 var(--glow-blur-tight)
+      color-mix(in srgb, var(--vu-glow) var(--glow-mix-tight), transparent),
+    0 0 var(--glow-blur-wide)
+      color-mix(in srgb, var(--vu-glow) var(--glow-mix-wide), transparent);
 }
 
 .vu-led--green.is-on {
-  --glow-color: var(--vu);
+  --vu-glow: var(--vu);
   background: var(--vu);
 }
 
 .vu-led--yellow.is-on {
-  --glow-color: #ffd400;
+  --vu-glow: #ffd400;
   background: #ffd400;
 }
 
 .vu-led--red.is-on {
-  --glow-color: var(--error);
+  --vu-glow: var(--error);
   background: var(--error);
 }
 
@@ -282,21 +306,21 @@
 }
 
 .vu-peak.is-live {
-  --glow-color: var(--vu);
+  --vu-glow: var(--vu);
   border-color: var(--vu);
   background: var(--vu);
   animation: vu-peak-blink 0.36s steps(1) infinite;
 }
 
 .vu-peak.is-caution {
-  --glow-color: #ffd400;
+  --vu-glow: #ffd400;
   border-color: #ffd400;
   background: #ffd400;
   animation: vu-peak-blink 0.18s steps(1) infinite;
 }
 
 .vu-peak.is-on {
-  --glow-color: var(--error);
+  --vu-glow: var(--error);
   border-color: var(--error);
   background: var(--error);
   animation: vu-peak-blink 0.08s steps(1) infinite;
@@ -307,5 +331,276 @@
     border-color: var(--panel-border);
     background: var(--black);
     box-shadow: none;
+  }
+}
+
+/* Play spans content width — same L/R rails as mute / loop */
+.master-transport {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: auto;
+  /* Clear mute/loop height + gap under play */
+  margin-bottom: calc(var(--master-corner-btn) + var(--master-play-corner-gap));
+  padding-block: 0;
+}
+
+.master-play {
+  --master-play-stroke: 4px;
+  --master-play-accent: var(--lime);
+  appearance: none;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  color: var(--master-play-accent);
+}
+
+.master-play.is-playing {
+  --master-play-accent: var(--vu);
+}
+
+.master-play:focus-visible {
+  outline: 2px solid var(--master-play-accent);
+  outline-offset: 4px;
+}
+
+/* Unlit ring — same role/opacity as .knob__track */
+.master-play__rail {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: var(--master-play-stroke) solid var(--master-play-accent);
+  opacity: 0.25;
+  box-sizing: border-box;
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    border-color 0.2s ease;
+}
+
+.master-play:hover:not(:disabled) .master-play__rail {
+  opacity: 0.375;
+}
+
+.master-play__spin {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    var(--vu) 0deg 52deg,
+    transparent 52deg 180deg,
+    var(--vu) 180deg 232deg,
+    transparent 232deg 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--master-play-stroke)),
+    #000 calc(100% - var(--master-play-stroke)),
+    #000 100%,
+    transparent 100%
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--master-play-stroke)),
+    #000 calc(100% - var(--master-play-stroke)),
+    #000 100%,
+    transparent 100%
+  );
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--vu) 70%, transparent));
+  transition: opacity 0.2s ease;
+}
+
+.master-play.is-playing .master-play__spin {
+  opacity: 1;
+  animation: master-play-spin 0.72s linear infinite;
+}
+
+.master-play__face {
+  position: absolute;
+  inset: calc(var(--master-play-stroke) + 6px);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--fill);
+  box-shadow:
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
+  pointer-events: none;
+  transition: filter 0.2s ease;
+}
+
+.master-play:hover:not(:disabled) .master-play__face {
+  filter: brightness(1.06);
+}
+
+.master-play:active:not(:disabled) .master-play__face {
+  filter: brightness(0.94);
+}
+
+.master-play__icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34%;
+  color: var(--master-play-accent);
+  --glow-color: var(--master-play-accent);
+  filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--glow-color) 70%, transparent)
+    )
+    drop-shadow(0 0 10px color-mix(in srgb, var(--glow-color) 40%, transparent));
+  transition:
+    color 0.2s ease,
+    filter 0.2s ease;
+}
+
+.master-play__icon svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: currentColor;
+}
+
+.master-play__icon-play {
+  /* Optical center: triangle mass sits left of geometric center */
+  transform: translateX(6%);
+}
+
+.master-loop,
+.master-mute {
+  appearance: none;
+  position: absolute;
+  /* Match panel pad used by section-reset / corner chrome */
+  bottom: 24px;
+  z-index: 1;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--master-corner-btn);
+  height: var(--master-corner-btn);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted-solid) 25%, transparent);
+  color: var(--muted-solid);
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.master-loop {
+  right: 24px;
+}
+
+.master-mute {
+  left: 24px;
+}
+
+.master-s {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + (var(--master-corner-btn) - 24px) / 2);
+  z-index: 1;
+  height: 24px;
+  aspect-ratio: 198 / 248.77;
+  translate: -50% 0;
+  background-color: var(--muted-solid);
+  opacity: 0.25;
+  -webkit-mask-image: url('/s-logo.svg');
+  mask-image: url('/s-logo.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  pointer-events: none;
+}
+
+.master-loop svg,
+.master-mute svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.master-loop:hover:not(:disabled):not(.is-active) {
+  color: var(--lime);
+}
+
+.master-loop:hover:not(:disabled):not(.is-active) svg {
+  filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--lime) 70%, transparent)
+    )
+    drop-shadow(0 0 10px color-mix(in srgb, var(--lime) 40%, transparent));
+}
+
+.master-mute:hover:not(:disabled):not(.is-active) {
+  color: var(--error);
+}
+
+.master-mute:hover:not(:disabled):not(.is-active) svg {
+  filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--error) 70%, transparent)
+    )
+    drop-shadow(0 0 10px color-mix(in srgb, var(--error) 40%, transparent));
+}
+
+.master-loop.is-active {
+  background: var(--accent);
+  color: var(--on-chrome);
+  box-shadow: var(--glow-outer);
+}
+
+.master-mute.is-active {
+  --glow-color: var(--error);
+  background: var(--error);
+  color: var(--on-chrome);
+  box-shadow: var(--glow-outer);
+}
+
+.master-loop:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.master-mute:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
+}
+
+@keyframes master-play-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .master-play.is-playing .master-play__spin {
+    animation: none;
   }
 }

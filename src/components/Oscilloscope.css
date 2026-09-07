@@ -1,0 +1,63 @@
+.speech-scope {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 50%;
+  height: var(--nav-control-h);
+  margin: auto;
+  padding: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--black);
+  pointer-events: none;
+}
+
+/* Same recess bevel stack as .vu-leds (multiply dark + screen light). */
+.speech-scope::before,
+.speech-scope::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.speech-scope::before {
+  background: #fff;
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 var(--bevel-offset) var(--bevel-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+      transparent
+    );
+}
+
+.speech-scope::after {
+  background: #000;
+  mix-blend-mode: screen;
+  box-shadow:
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    var(--section-recess-glow);
+}
+
+.speech-scope__canvas {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--black);
+}
