@@ -2,6 +2,8 @@
   --meter-w: 48px;
   --master-corner-btn: 54px;
   --master-play-corner-gap: 24px;
+  /* LCD nudge; play↔LCD visual gap must match play↔mute (see .master-transport). */
+  --master-clock-nudge: 14px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -20,8 +22,9 @@
   justify-items: center;
   flex: 1 1 auto;
   min-height: 120px;
-  /* 48px: values ↔ Master/Reset; labels ↔ play */
-  padding-block: 48px;
+  /* ~32px values ↔ Master/Reset; 48px labels ↔ play — top trim grows the tracks */
+  padding-top: 32px;
+  padding-bottom: 48px;
 }
 
 .master-fader,
@@ -356,12 +359,85 @@ html.is-safari .vu-leds.is-hot {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  /* Layout gap + clock nudge = mute clearance → play optically centered */
+  gap: calc(var(--master-play-corner-gap) - var(--master-clock-nudge));
   flex: 0 0 auto;
   width: 100%;
   margin-top: auto;
   /* Clear mute/loop height + gap under play */
   margin-bottom: calc(var(--master-corner-btn) + var(--master-play-corner-gap));
   padding-block: 0;
+}
+
+/* LCD speech clock — same width as play; dark capsule, accent → VU while playing */
+.master-clock {
+  --glow-color: var(--accent);
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  padding-inline: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--black);
+  box-shadow: var(--section-recess-shadow);
+  translate: 0 calc(-1 * var(--master-clock-nudge));
+}
+
+.master-clock.is-playing {
+  --glow-color: var(--vu);
+}
+
+.master-clock::before,
+.master-clock::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.master-clock::before {
+  background: #fff;
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 var(--bevel-offset) var(--bevel-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+      transparent
+    );
+}
+
+.master-clock::after {
+  background: #000;
+  mix-blend-mode: screen;
+  box-shadow:
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    var(--section-recess-glow);
+}
+
+.master-clock__lcd {
+  position: relative;
+  z-index: 0;
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--font-m);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--glow-color);
+  text-shadow: var(--glow-outer);
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
 }
 
 .master-play {
@@ -525,7 +601,7 @@ html.is-safari .vu-leds.is-hot {
   max-width: 84%;
   color: var(--master-play-accent);
   font-family: var(--font-ui);
-  font-size: 20px;
+  font-size: var(--font-m);
   font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.1;

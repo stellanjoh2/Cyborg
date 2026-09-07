@@ -1693,6 +1693,22 @@ export function getSynthPlaybackProgress(): number {
   return Math.min(1, Math.max(0, sourceOffsetSeconds / audioBuffer.duration))
 }
 
+/** Wall-clock elapsed / total for the current buffer (resets when a loop restarts). */
+export function getSynthPlaybackClock(): { elapsed: number; duration: number } {
+  if (!audioBuffer || audioBuffer.duration <= 0) {
+    return { elapsed: 0, duration: 0 }
+  }
+
+  captureSourcePosition()
+  const rate = Math.max(0.001, sourcePlaybackRate)
+  const duration = audioBuffer.duration / rate
+  const elapsed = Math.min(
+    duration,
+    Math.max(0, sourceOffsetSeconds / rate),
+  )
+  return { elapsed, duration }
+}
+
 export function setSynthLoop(enabled: boolean) {
   loopEnabled = enabled
 }

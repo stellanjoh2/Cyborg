@@ -1,11 +1,28 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
+  getSynthPlaybackClock,
   MASTER_GAIN_MAX_DB,
   readMasterPeak,
 } from '../speechSynthEngine'
 import { useAnimatedNumber } from '../useAnimatedNumber'
 import { LoopIcon, SpeakerIcon } from './icons'
 import './MasterStrip.css'
+
+const IDLE_CLOCK = '0:00.0/0:00.0'
+
+/** Format seconds as m:ss.t (e.g. 0:03.2). */
+function formatClockSeconds(seconds: number): string {
+  const tenthsTotal = Math.max(0, Math.floor(seconds * 10 + 1e-6))
+  const mins = Math.floor(tenthsTotal / 600)
+  const secTenths = tenthsTotal % 600
+  const secs = Math.floor(secTenths / 10)
+  const tenths = secTenths % 10
+  return `${mins}:${String(secs).padStart(2, '0')}.${tenths}`
+}
+
+function formatPlaybackClock(elapsed: number, duration: number): string {
+  return `${formatClockSeconds(elapsed)}/${formatClockSeconds(duration)}`
+}
 
 /** Target pitch of one ridge + gap. */
 const RIDGE_PERIOD_PX = 14
@@ -224,6 +241,7 @@ export function MasterStrip({
   })
   const [ridges, setRidges] = useState(24)
   const [trackInnerPx, setTrackInnerPx] = useState(0)
+  const [clockLabel, setClockLabel] = useState(IDLE_CLOCK)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
   const activateVuRef = useRef(activateVu)
@@ -240,6 +258,23 @@ export function MasterStrip({
           trackInnerPx,
         )
       : null
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setClockLabel(IDLE_CLOCK)
+      return
+    }
+
+    let frame = 0
+    const tick = () => {
+      const { elapsed, duration } = getSynthPlaybackClock()
+      const next = formatPlaybackClock(elapsed, duration)
+      setClockLabel((current) => (current === next ? current : next))
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [isPlaying])
 
   useEffect(() => {
     const meters = metersRef.current
@@ -417,6 +452,13 @@ export function MasterStrip({
         </div>
       </div>
       <div className="master-transport">
+        <div
+          className={`master-clock${isPlaying ? ' is-playing' : ''}`}
+          aria-label="Speech duration"
+          aria-live="off"
+        >
+          <span className="master-clock__lcd">{clockLabel}</span>
+        </div>
         <button
           className={[
             'master-play',
