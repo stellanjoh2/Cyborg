@@ -439,8 +439,9 @@ export default function App() {
         paintDirt()
       }
 
-      // Hold black void (~15% shorter than prior 15 frames @60fps) before the column wipe.
-      const plateInAt = (15 / 60) * 0.85
+      // Hold black void (~12.75 frames prior, +10 frames) before the column wipe.
+      // Downstream splash + UI times are all relative to this, so they shift with it.
+      const plateInAt = (15 * 0.85 + 10) / 60
       // Larynx → LX01 → version → S → credit → year (mark waits for the cascade to nearly settle).
       const markAt = plateInAt + Math.max(0, wipeTotal - wipeMarkLead)
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
