@@ -69,13 +69,17 @@ function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
 
 type ReserveSize = { width: number; height: number }
 
-function measureTextReserve(root: HTMLElement, text: string): ReserveSize {
+function measureTextReserve(
+  root: HTMLElement,
+  text: string,
+  withCaret: boolean,
+): ReserveSize {
   const cs = getComputedStyle(root)
   const wrap = document.createElement('span')
   wrap.setAttribute('aria-hidden', 'true')
   // Zero-height paint containment: probe never composites (Brave/Blink scale crumbs).
   wrap.style.cssText =
-    'position:absolute;left:0;top:0;width:100%;height:0;overflow:hidden;contain:paint;opacity:0;pointer-events:none;'
+    'position:absolute;left:0;top:0;width:max-content;height:0;overflow:hidden;contain:paint;opacity:0;pointer-events:none;'
 
   const probe = document.createElement('span')
   probe.style.display = 'block'
@@ -93,6 +97,12 @@ function measureTextReserve(root: HTMLElement, text: string): ReserveSize {
   } else {
     const basis = root.clientWidth || root.parentElement?.clientWidth || 0
     probe.style.width = basis > 0 ? `${basis}px` : 'max-content'
+  }
+
+  if (withCaret) {
+    const caret = document.createElement('span')
+    caret.className = 'typewriter-reveal__caret'
+    probe.appendChild(caret)
   }
 
   wrap.appendChild(probe)
@@ -145,7 +155,7 @@ export function TypewriterReveal({
     if (!root) return
 
     const update = () => {
-      const next = measureTextReserve(root, text)
+      const next = measureTextReserve(root, text, caret && !reduceMotion)
       setReserve((prev) =>
         prev && prev.width === next.width && prev.height === next.height
           ? prev
@@ -154,11 +164,13 @@ export function TypewriterReveal({
     }
 
     update()
+    // Fallback metrics often under-measure pixel fonts before they load.
+    void document.fonts?.ready?.then(update)
     const ro = new ResizeObserver(update)
     ro.observe(root)
     if (root.parentElement) ro.observe(root.parentElement)
     return () => ro.disconnect()
-  }, [text])
+  }, [caret, reduceMotion, text])
 
   useEffect(() => {
     if (!active) {
