@@ -1,4 +1,3 @@
-import { ABOUT_LINKS, ABOUT_TEXT } from '../aboutContent'
 import './MobileUnavailable.css'
 
 export function isMobileDevice() {
@@ -20,17 +19,6 @@ export function MobileUnavailable() {
   return (
     <main className="mobile-unavailable">
       <div className="mobile-unavailable__content">
-        <p>{ABOUT_TEXT}</p>
-        <p className="mobile-unavailable__links">
-          {ABOUT_LINKS.map((link, index) => (
-            <span key={link.href}>
-              {index > 0 ? ' · ' : null}
-              <a href={link.href} target="_blank" rel="noreferrer">
-                {link.text}
-              </a>
-            </span>
-          ))}
-        </p>
         <p className="mobile-unavailable__note">
           LX01 is not available on mobile devices.
         </p>
