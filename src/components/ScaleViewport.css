@@ -4,7 +4,7 @@
   height: 100vh;
   height: 100dvh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   background: var(--synth-shell, #0e0e0e);
@@ -40,7 +40,7 @@
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-  transform-origin: center center;
+  transform-origin: top center;
   will-change: transform;
 }
 

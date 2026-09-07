@@ -54,9 +54,9 @@ html.is-splash-void .scale-nav-bleed {
 /* Extend into letterbox; content insets keep the 16:9 design frame. */
 .speech-splash {
   position: absolute;
-  top: calc(-1 * var(--stage-bleed-y, 0px));
+  top: calc(-1 * var(--stage-bleed-y-top, 0px));
   right: calc(-1 * var(--stage-bleed-x, 0px));
-  bottom: calc(-1 * var(--stage-bleed-y, 0px));
+  bottom: calc(-1 * var(--stage-bleed-y-bottom, 0px));
   left: calc(-1 * var(--stage-bleed-x, 0px));
   z-index: 30;
   display: grid;
@@ -94,7 +94,9 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-splash__cyborg {
   position: absolute;
-  inset: calc(144px + var(--stage-bleed-y, 0px))
+  inset: calc(144px + var(--stage-bleed-y-top, 0px))
+    calc(144px + var(--stage-bleed-x, 0px))
+    calc(144px + var(--stage-bleed-y-bottom, 0px))
     calc(144px + var(--stage-bleed-x, 0px));
   z-index: 0;
   box-sizing: border-box;
@@ -115,7 +117,9 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-splash__frame {
   position: absolute;
-  inset: calc(144px + var(--stage-bleed-y, 0px))
+  inset: calc(144px + var(--stage-bleed-y-top, 0px))
+    calc(144px + var(--stage-bleed-x, 0px))
+    calc(144px + var(--stage-bleed-y-bottom, 0px))
     calc(144px + var(--stage-bleed-x, 0px));
   z-index: 1;
   box-sizing: border-box;

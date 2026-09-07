@@ -183,9 +183,14 @@ html.is-about-open #root {
 }
 
 .typewriter-reveal__ghost {
+  /* Layout-only: full string sizes the box. Clip paint so fractional
+     stage scale can't leave subpixel glyph crumbs when live text is empty. */
   visibility: hidden;
   pointer-events: none;
   white-space: pre-wrap;
+  color: transparent;
+  text-shadow: none;
+  clip-path: inset(50%);
 }
 
 .typewriter-reveal__live {

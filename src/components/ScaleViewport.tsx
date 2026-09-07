@@ -17,9 +17,9 @@ interface ScaleViewportProps {
 
 interface ScaleLayout {
   scale: number
-  stageTop: number
   bleedX: number
-  bleedY: number
+  bleedYTop: number
+  bleedYBottom: number
 }
 
 function measureLayout(): ScaleLayout {
@@ -28,11 +28,15 @@ function measureLayout(): ScaleLayout {
     window.innerWidth / DESIGN_WIDTH,
     window.innerHeight / DESIGN_HEIGHT,
   )
-  const stageTop = (window.innerHeight - DESIGN_HEIGHT * scale) / 2
   // Design-space padding so plates can paint into letterbox gutters.
+  // Stage is top-aligned: any vertical excess sits below the canvas.
   const bleedX = Math.max(0, (window.innerWidth / scale - DESIGN_WIDTH) / 2)
-  const bleedY = Math.max(0, (window.innerHeight / scale - DESIGN_HEIGHT) / 2)
-  return { scale, stageTop, bleedX, bleedY }
+  const bleedYTop = 0
+  const bleedYBottom = Math.max(
+    0,
+    window.innerHeight / scale - DESIGN_HEIGHT,
+  )
+  return { scale, bleedX, bleedYTop, bleedYBottom }
 }
 
 export function ScaleViewport({ children }: ScaleViewportProps) {
@@ -46,7 +50,7 @@ export function ScaleViewport({ children }: ScaleViewportProps) {
     return () => window.removeEventListener('resize', updateScale)
   }, [])
 
-  const { scale, stageTop, bleedX, bleedY } = layout
+  const { scale, bleedX, bleedYTop, bleedYBottom } = layout
 
   return (
     <div
@@ -55,14 +59,15 @@ export function ScaleViewport({ children }: ScaleViewportProps) {
         {
           '--stage-scale': scale,
           '--stage-bleed-x': `${bleedX}px`,
-          '--stage-bleed-y': `${bleedY}px`,
+          '--stage-bleed-y-top': `${bleedYTop}px`,
+          '--stage-bleed-y-bottom': `${bleedYBottom}px`,
         } as CSSProperties
       }
     >
       <div
         className="scale-nav-bleed"
         style={{
-          top: stageTop,
+          top: 0,
           height: NAV_HEIGHT * scale,
         }}
         aria-hidden

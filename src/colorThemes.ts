@@ -248,15 +248,15 @@ export const COLOR_THEMES: ColorTheme[] = [
   },
   // Flat / minimal — no elevation/glow shadows; grayscale trio last.
   {
-    // R2-D2 (1977) — white hull, beige dome & panel blue
+    // R2-D2 (1977) — white hull plates on beige ground, panel blue
     id: 'r2d2',
     label: 'R2-D2',
     minimal: true,
     palette: {
       text: '#1A3A6E',
       muted: '#7A8494',
-      black: '#FFFFFF',
-      fill: '#EDE6DA',
+      black: '#EDE6DA',
+      fill: '#FFFFFF',
       stroke: '#1B5AA8',
       lime: '#1B5AA8',
       vu: '#2E7AD1',
