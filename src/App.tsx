@@ -82,7 +82,7 @@ const SPLASH_MARK_IN = 0.425 / SPLASH_SPEED
 /** Difference dirt: Eli Fitch–style canvas pixelate (coarse → sharp). */
 const SPLASH_DIRT_SRC = `${import.meta.env.BASE_URL}remapstudio-AFKX0ei32lA-unsplash.jpg`
 /** Columns across the viewport at the coarsest end (megablocks). */
-const SPLASH_DIRT_START_COLS = 3
+const SPLASH_DIRT_START_COLS = 2.4
 /** Discrete pixelation levels (fewer = choppier). */
 const SPLASH_DIRT_STEPS = 8
 /** Vertical wipe strips for the accent plate in/out. */
@@ -93,8 +93,6 @@ const SPLASH_WIPE_DUR = 0.95
 const SPLASH_WIPE_STAGGER = 0.12
 /** How early the Larynx mark may start before the wipe fully settles. */
 const SPLASH_WIPE_MARK_LEAD = 0.12
-/** Beat after wipe-out before the app UI (logo first) starts revealing. */
-const SPLASH_UI_LEAD = 0.18
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
@@ -822,8 +820,8 @@ export default function App() {
         volumeFillAt,
       )
 
-      // Wait until the curtain is gone — starting at curtainAt hid the logo under the wipe.
-      tl.add(ui, SPLASH + splashT(SPLASH_UI_LEAD))
+      // Far-right column finishes first on wipe-out; start UI as it hits the bottom.
+      tl.add(ui, curtainAt + curtainDur)
 
       return () => {
         window.removeEventListener('resize', onSplashResize)
