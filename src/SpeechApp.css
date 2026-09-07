@@ -580,7 +580,8 @@ html.is-splash-void .scale-nav-bleed {
   border-radius: inherit;
   pointer-events: none;
   z-index: -1;
-  opacity: var(--grain-opacity);
+  /* --panel-grain is intro-only (0→1); defaults to 1 after boot. */
+  opacity: calc(var(--grain-opacity) * var(--panel-grain, 1));
   background-image: var(--grain-image);
   background-size: var(--grain-size) var(--grain-size);
   background-repeat: repeat;
@@ -589,23 +590,17 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 /* Soft-light grain flashes hard while intro opacity/transforms recomposite.
-   Held at 0 until plates land, then fades in over 2s (does not block other UI). */
-.speech-app.is-introducing:not(.is-grain-in) .speech-top::before,
-.speech-app.is-introducing:not(.is-grain-in) .knob-panel::before,
-.speech-app.is-introducing:not(.is-grain-in) .vocoder-panel::before,
-.speech-app.is-introducing:not(.is-grain-in) .post-process::before,
-.speech-app.is-introducing:not(.is-grain-in) .master-strip::before {
-  opacity: 0;
-  transition: none;
+   Hold at 0; GSAP ramps --panel-grain after plates dock (no CSS transition snap). */
+.speech-app.is-introducing {
+  --panel-grain: 0;
 }
 
-.speech-app.is-introducing.is-grain-in .speech-top::before,
-.speech-app.is-introducing.is-grain-in .knob-panel::before,
-.speech-app.is-introducing.is-grain-in .vocoder-panel::before,
-.speech-app.is-introducing.is-grain-in .post-process::before,
-.speech-app.is-introducing.is-grain-in .master-strip::before {
-  opacity: var(--grain-opacity);
-  transition: opacity 2s ease;
+.speech-app.is-introducing .speech-top::before,
+.speech-app.is-introducing .knob-panel::before,
+.speech-app.is-introducing .vocoder-panel::before,
+.speech-app.is-introducing .post-process::before,
+.speech-app.is-introducing .master-strip::before {
+  transition: none;
 }
 
 .speech-col--voice .text-panel {

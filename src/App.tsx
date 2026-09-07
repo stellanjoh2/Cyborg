@@ -327,9 +327,17 @@ export default function App() {
       if (navBleed) gsap.set(navBleed, { autoAlpha: 0 })
 
       const D = 0.55
+      let grainTween: gsap.core.Tween | undefined
+      const clearIntroGrain = () => {
+        grainTween?.kill()
+        grainTween = undefined
+        root.style.removeProperty('--panel-grain')
+      }
+
       const tl = gsap.timeline({
         onComplete: () => {
-          root.classList.remove('is-introducing', 'is-grain-in')
+          root.classList.remove('is-introducing')
+          clearIntroGrain()
           document.documentElement.classList.remove(
             'is-splash-void',
             'is-splash-bleed',
@@ -667,8 +675,21 @@ export default function App() {
       )
 
       // Soft-light grain once structural plates have docked; leaf/meter UI keeps going.
+      // Separate tween (not on `ui`) so duration stays 2s wall-clock despite ui.timeScale.
+      // +2 frames after land so column transform completion doesn't punch soft-light.
       const platesLandAt = boardAt + sideDuration
-      ui.call(() => root.classList.add('is-grain-in'), undefined, platesLandAt)
+      ui.call(
+        () => {
+          grainTween?.kill()
+          grainTween = gsap.fromTo(
+            root,
+            { '--panel-grain': 0 },
+            { '--panel-grain': 1, duration: 2, ease: 'none' },
+          )
+        },
+        undefined,
+        platesLandAt + 2 / 60,
+      )
 
       // —— 3. Side panel contents (hold until columns are well into their land) ——
       // Columns already handle the horizontal dock; only leaf UI rises into place.
@@ -928,7 +949,8 @@ export default function App() {
 
       return () => {
         window.removeEventListener('resize', onSplashResize)
-        root?.classList.remove('is-introducing', 'is-grain-in')
+        root?.classList.remove('is-introducing')
+        clearIntroGrain()
         document.documentElement.classList.remove(
           'is-splash-void',
           'is-splash-bleed',
