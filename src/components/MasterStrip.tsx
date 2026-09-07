@@ -9,6 +9,8 @@ import './MasterStrip.css'
 
 /** Target pitch of one ridge + gap. */
 const RIDGE_PERIOD_PX = 14
+/** Must match `.master-fader__track` / `.vu-leds` `--ridge-gap`. */
+const RIDGE_GAP_PX = 2
 /** DJM-A9 default: meter 0 ≈ −21 dBFS */
 const REFERENCE_DBFS = -21
 /** Pioneer channel scale floor / ∞ ceiling (∞ sits slightly above +12) */
@@ -18,13 +20,20 @@ const YELLOW_METER_DB = 0
 const RED_METER_DB = 12
 const PEAK_HOLD_MS = 2000
 
-function ridgesForTrack(track: HTMLElement): number {
+function trackInnerHeight(track: HTMLElement): number {
   const styles = getComputedStyle(track)
-  const inner =
+  return (
     track.clientHeight -
     Number.parseFloat(styles.paddingTop) -
     Number.parseFloat(styles.paddingBottom)
-  const gap = Number.parseFloat(styles.getPropertyValue('--ridge-gap')) || 2
+  )
+}
+
+function ridgesForTrack(track: HTMLElement): number {
+  const inner = trackInnerHeight(track)
+  const gap =
+    Number.parseFloat(getComputedStyle(track).getPropertyValue('--ridge-gap')) ||
+    RIDGE_GAP_PX
   // floor keeps period ≥ target; CSS (100% + gap) / n tiles an exact integer count
   return Math.max(1, Math.floor((inner + gap) / RIDGE_PERIOD_PX))
 }
@@ -138,13 +147,26 @@ function activateRidgeLit(progress: number, ridges: number): number {
   return Math.min(ridges, Math.ceil(progress * ridges))
 }
 
-function ridgeFillWindow(lit: number, ridges: number): { start: number; end: number } {
-  if (lit <= 0 || ridges <= 0) {
+/**
+ * Single-ridge window aligned to the CSS mask: periods are
+ * (inner + gap) / ridges, not inner / ridges — equal % steps clip upper ridges.
+ */
+function ridgeFillWindow(
+  lit: number,
+  ridges: number,
+  innerPx: number,
+  gapPx = RIDGE_GAP_PX,
+): { start: number; end: number } {
+  if (lit <= 0 || ridges <= 0 || innerPx <= 0) {
     return { start: 0, end: 0 }
   }
+  const period = (innerPx + gapPx) / ridges
+  const ridge = period - gapPx
+  const startPx = (lit - 1) * period
+  const endPx = startPx + ridge
   return {
-    start: ((lit - 1) / ridges) * 100,
-    end: (lit / ridges) * 100,
+    start: (startPx / innerPx) * 100,
+    end: (endPx / innerPx) * 100,
   }
 }
 
@@ -199,6 +221,7 @@ export function MasterStrip({
     isLive: false,
   })
   const [ridges, setRidges] = useState(24)
+  const [trackInnerPx, setTrackInnerPx] = useState(0)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
   const activateVuRef = useRef(activateVu)
@@ -209,7 +232,11 @@ export function MasterStrip({
   const volumeLit = volumeFill ?? volume
   const gainActivateWindow =
     activateGain != null
-      ? ridgeFillWindow(activateRidgeLit(activateGain, ridges), ridges)
+      ? ridgeFillWindow(
+          activateRidgeLit(activateGain, ridges),
+          ridges,
+          trackInnerPx,
+        )
       : null
 
   useEffect(() => {
@@ -221,8 +248,10 @@ export function MasterStrip({
 
     const applyRidges = () => {
       const count = ridgesForTrack(track)
+      const inner = trackInnerHeight(track)
       meters.style.setProperty('--ridges', String(count))
       setRidges((prev) => (prev === count ? prev : count))
+      setTrackInnerPx((prev) => (prev === inner ? prev : inner))
     }
 
     const observer = new ResizeObserver(applyRidges)
