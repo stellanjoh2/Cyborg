@@ -11,7 +11,7 @@ const FILES = {
 
 /** Buttons and interactive chrome that get hover + click cues. */
 const HOVER_SELECTOR =
-  '.secondary, .field-select__trigger, .field-select__option, .dev-mode__copy, .about-overlay__content a, .theme-picker__trigger, .theme-picker__option, .theme-picker__close'
+  '.secondary, .field-select__trigger, .field-select__option, .dev-mode__copy, .about-overlay__content a, .theme-picker__trigger, .theme-picker__option, .theme-picker__close, .settings-menu__trigger, .settings-menu__choice'
 
 const CLICK_SELECTOR =
   '.secondary, .field-select__trigger, .field-select__option, .dev-mode__copy'

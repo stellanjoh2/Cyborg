@@ -247,6 +247,21 @@
   box-shadow: 0 0 0 1px var(--error);
 }
 
+/* Safari flashes the #fff multiply fill as a blinking hairline on the capsule edge. */
+html.is-safari .vu-leds {
+  isolation: auto;
+  box-shadow: var(--section-recess-shadow);
+}
+
+html.is-safari .vu-leds::before,
+html.is-safari .vu-leds::after {
+  content: none;
+}
+
+html.is-safari .vu-leds.is-hot {
+  box-shadow: 0 0 0 1px var(--error), var(--section-recess-shadow);
+}
+
 .vu-led {
   flex: 1 1 0;
   min-height: 0;

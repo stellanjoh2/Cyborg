@@ -7,6 +7,7 @@ import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
 import { Oscilloscope } from './components/Oscilloscope'
+import { SettingsMenu } from './components/SettingsMenu'
 import { ThemePicker } from './components/ThemePicker'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
 import { TypewriterReveal } from './components/TypewriterReveal'
@@ -359,23 +360,27 @@ export default function App() {
         : 0
 
       gsap.set(splash, { autoAlpha: 1 })
+      // scaleX > 1 overlaps neighbor paint; force3D off avoids Safari layer-edge AA seams.
       gsap.set(splashCols, {
         scaleY: 0,
+        scaleX: 1.04,
         transformOrigin: '50% 0%',
-        force3D: true,
+        force3D: false,
       })
 
       // Clip content + screenspace dirt to the live column geometry.
       // Body sits inside ScaleViewport's scale(); dirt is screenspace — divide accordingly.
       const columnClipPath = (host: DOMRect, localScale: number) => {
         const s = Math.max(0.001, localScale)
+        // ~2 screen px of pad in this coordinate space (covers Safari clip AA).
+        const padX = 2 / s
         let d = ''
         for (const col of splashCols) {
           const r = col.getBoundingClientRect()
           if (r.height < 0.5 || r.width < 0.5) continue
-          const x0 = (r.left - host.left) / s
+          const x0 = (r.left - host.left) / s - padX
           const y0 = (r.top - host.top) / s
-          const x1 = (r.right - host.left) / s
+          const x1 = (r.right - host.left) / s + padX
           const y1 = (r.bottom - host.top) / s
           d += `M${x0} ${y0}L${x0} ${y1}L${x1} ${y1}L${x1} ${y0}Z`
         }
@@ -439,6 +444,7 @@ export default function App() {
       const wipeIn = gsap.timeline({ onUpdate: syncSplashClips })
       wipeIn.to(splashCols, {
         scaleY: 1,
+        scaleX: 1.04,
         duration: curtainDur,
         ease: 'power3.out',
         stagger: { each: wipeStagger, from: 'start' },
@@ -545,6 +551,7 @@ export default function App() {
       wipeOut.set(splashCols, { transformOrigin: '50% 100%' })
       wipeOut.to(splashCols, {
         scaleY: 0,
+        scaleX: 1.04,
         duration: curtainDur,
         ease: 'power3.in',
         stagger: { each: wipeStagger, from: 'end' },
@@ -774,6 +781,8 @@ export default function App() {
             y: 16,
             stagger: 0.03,
             immediateRender: true,
+            // Drop leftover translate layers — Safari + VU mix-blend fringes on them.
+            clearProps: 'transform',
           },
           masterContentAt + 0.06 + i * meterStagger,
         )
@@ -1351,6 +1360,7 @@ export default function App() {
             {isExporting ? 'EXPORTING...' : 'EXPORT'}
           </span>
         </button>
+        <SettingsMenu />
       </div>
     </header>
 

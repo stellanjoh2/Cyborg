@@ -82,7 +82,10 @@ html.is-splash-void .scale-nav-bleed {
   background: var(--accent);
   transform: scaleY(0);
   transform-origin: 50% 0%;
-  will-change: transform;
+  /* ≥2 screen px after stage scale — Safari AA on each scaleY layer leaves hairlines. */
+  margin-right: calc(-2px / var(--stage-scale, 1));
+  /* Paint bleed beyond the layout box (survives compositor rounding). */
+  box-shadow: 2px 0 0 var(--accent), -2px 0 0 var(--accent);
 }
 
 .speech-splash__body {

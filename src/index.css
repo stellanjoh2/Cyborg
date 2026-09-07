@@ -220,6 +220,11 @@
   background: var(--bg);
 }
 
+/* Soft-light SVG grain is expensive / glitchy on Safari — keep it elsewhere. */
+html.is-safari {
+  --grain-opacity: 0;
+}
+
 /* Gort / Baymax / TARS — flat shell, no elevation or glow drop-shadows. */
 html.theme-minimal {
   --section-shadow: none;
@@ -239,15 +244,32 @@ html.theme-minimal {
   --emboss-glow-opacity: 0;
 }
 
+/* Performance Low — kill glow effects for lower-spec machines. */
+html.perf-low {
+  --section-inset-glow: none;
+  --section-recess-glow: none;
+  --glow-outer: none;
+  --glow-single: none;
+  --glow-filter: none;
+  --glow-mix-tight: 0%;
+  --glow-mix-wide: 0%;
+  --emboss-glow-opacity: 0;
+}
+
 /* Hardcoded glow filters that don't read --glow-filter / --glow-outer. */
 html.theme-minimal .master-play__spin,
 html.theme-minimal .master-play__icon,
 html.theme-minimal .master-loop:hover:not(:disabled):not(.is-active) svg,
-html.theme-minimal .master-mute:hover:not(:disabled):not(.is-active) svg {
+html.theme-minimal .master-mute:hover:not(:disabled):not(.is-active) svg,
+html.perf-low .master-play__spin,
+html.perf-low .master-play__icon,
+html.perf-low .master-loop:hover:not(:disabled):not(.is-active) svg,
+html.perf-low .master-mute:hover:not(:disabled):not(.is-active) svg {
   filter: none;
 }
 
-html.theme-minimal .master-mute.is-active {
+html.theme-minimal .master-mute.is-active,
+html.perf-low .master-mute.is-active {
   box-shadow: none;
 }
 

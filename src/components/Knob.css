@@ -45,7 +45,9 @@
 .knob-field.is-disabled .knob__ink .knob__arc-bloom,
 .knob-field.is-zero .knob__ink .knob__arc-bloom,
 html.theme-minimal .knob__needle-bloom,
-html.theme-minimal .knob__arc-bloom {
+html.theme-minimal .knob__arc-bloom,
+html.perf-low .knob__needle-bloom,
+html.perf-low .knob__arc-bloom {
   opacity: 0;
 }
 
