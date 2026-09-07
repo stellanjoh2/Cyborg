@@ -266,7 +266,8 @@ html.is-splash-void .scale-nav-bleed {
   margin: calc(var(--app-pad) * -1) calc(var(--app-pad) * -1) 0;
   padding: var(--section-gap) var(--app-pad);
   background: var(--fill);
-  box-shadow: var(--section-shadow);
+  /* Soft drop only — bottom emboss is on .scale-nav-bleed (full bleed, no top highlight). */
+  box-shadow: var(--nav-bar-elevation);
 }
 
 .speech-top__brand {

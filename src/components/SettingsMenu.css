@@ -13,33 +13,41 @@
 .settings-menu__trigger {
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: var(--nav-control-h);
   height: var(--nav-control-h);
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: var(--radius);
-  background: transparent;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted-solid) 25%, transparent);
   cursor: pointer;
-  color: var(--muted);
-  transition: color 0.18s ease;
+  color: var(--muted-solid);
+  box-shadow: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
 
 .settings-menu__trigger svg {
-  width: 28px;
-  height: 28px;
+  display: block;
+  width: 24px;
+  height: 24px;
   transition: transform 0.18s ease;
 }
 
 .settings-menu__trigger:hover,
 .settings-menu.is-open .settings-menu__trigger {
   color: var(--accent);
-  filter: var(--glow-filter);
 }
 
 .settings-menu__trigger:hover svg,
 .settings-menu.is-open .settings-menu__trigger svg {
   transform: scale(1.06);
+  filter: var(--glow-filter);
+}
+
+.settings-menu__trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .settings-menu__modal {

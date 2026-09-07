@@ -18,8 +18,8 @@
   isolation: isolate;
   box-sizing: border-box;
   background: var(--fill);
-  /* Elevation stays on .speech-top — avoid stacking a second --section-shadow. */
-  box-shadow: none;
+  /* Bottom emboss spans the letterbox; elevation stays on .speech-top for stacking. */
+  box-shadow: var(--nav-bar-emboss);
   pointer-events: none;
 }
 

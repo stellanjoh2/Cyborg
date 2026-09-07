@@ -125,6 +125,17 @@
         var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
         transparent
       );
+  /* Full-bleed top bar: bottom emboss only (no top highlight). Elevation stays on .speech-top. */
+  --nav-bar-emboss: inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+    color-mix(
+      in srgb,
+      var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+      transparent
+    );
+  /* Soft drop under the nav — no inset bevel (emboss is on .scale-nav-bleed). */
+  --nav-bar-elevation:
+    0 1px 3px color-mix(in srgb, #000 55%, transparent),
+    0 6px 27px color-mix(in srgb, #000 40%, transparent);
   /* Inverted bevel for recessed “holes” (meters, wells). */
   --section-recess-glow: inset 0 0 var(--emboss-glow-radius)
     color-mix(
@@ -184,7 +195,7 @@
   --section-shadow-bleed: 36px;
   --panel-gutter: 87px;
   --app-pad: 48px;
-  --nav-control-h: 54px;
+  --nav-control-h: 48px;
   /* Osci ↔ theme ball ↔ RESET (keep Oscilloscope width + ThemePicker in sync). */
   --nav-theme-gap: 38px;
   --logo: url('/cyborg-logo.svg');
@@ -232,6 +243,8 @@ html.theme-minimal {
   --section-inset-glow: none;
   --section-recess-glow: none;
   --section-shadow-bleed: 0;
+  --nav-bar-emboss: none;
+  --nav-bar-elevation: none;
   --glow-outer: none;
   --glow-single: none;
   --glow-filter: none;
