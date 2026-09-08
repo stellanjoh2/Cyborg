@@ -643,10 +643,12 @@ html.is-safari .vu-leds.is-hot {
 
 .master-loop {
   right: 24px;
+  --glow-color: var(--lime);
 }
 
 .master-mute {
   left: 24px;
+  --glow-color: var(--error);
 }
 
 .master-s {
@@ -675,7 +677,7 @@ html.is-safari .vu-leds.is-hot {
   display: block;
   width: 28px;
   height: 28px;
-  transition: filter 0.18s ease;
+  transition: transform 0.18s ease;
 }
 
 .master-loop:hover:not(:disabled):not(.is-active) {
@@ -683,10 +685,8 @@ html.is-safari .vu-leds.is-hot {
 }
 
 .master-loop:hover:not(:disabled):not(.is-active) svg {
-  filter: drop-shadow(
-      0 0 4px color-mix(in srgb, var(--lime) 70%, transparent)
-    )
-    drop-shadow(0 0 10px color-mix(in srgb, var(--lime) 40%, transparent));
+  transform: scale(1.06);
+  filter: var(--glow-filter);
 }
 
 .master-mute:hover:not(:disabled):not(.is-active) {
@@ -694,10 +694,8 @@ html.is-safari .vu-leds.is-hot {
 }
 
 .master-mute:hover:not(:disabled):not(.is-active) svg {
-  filter: drop-shadow(
-      0 0 4px color-mix(in srgb, var(--error) 70%, transparent)
-    )
-    drop-shadow(0 0 10px color-mix(in srgb, var(--error) 40%, transparent));
+  transform: scale(1.06);
+  filter: var(--glow-filter);
 }
 
 .master-loop.is-active {

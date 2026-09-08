@@ -277,12 +277,8 @@ html.perf-low {
 /* Hardcoded glow filters that don't read --glow-filter / --glow-outer. */
 html.theme-minimal .master-play__spin,
 html.theme-minimal .master-play__icon,
-html.theme-minimal .master-loop:hover:not(:disabled):not(.is-active) svg,
-html.theme-minimal .master-mute:hover:not(:disabled):not(.is-active) svg,
 html.perf-low .master-play__spin,
-html.perf-low .master-play__icon,
-html.perf-low .master-loop:hover:not(:disabled):not(.is-active) svg,
-html.perf-low .master-mute:hover:not(:disabled):not(.is-active) svg {
+html.perf-low .master-play__icon {
   filter: none;
 }
 
