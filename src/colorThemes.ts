@@ -15,7 +15,7 @@ export type ColorTheme = {
 const STORAGE_KEY = 'lx01-color-theme'
 
 /** TEMP: force this theme on boot while tuning intro; set null to restore. */
-const TEMP_BOOT_THEME_ID: string | null = 'ed209'
+const TEMP_BOOT_THEME_ID: string | null = null
 
 /**
  * UI themes named for classic robots (Metropolis → today).

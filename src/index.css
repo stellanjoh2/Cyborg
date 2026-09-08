@@ -30,7 +30,7 @@
 @property --fill {
   syntax: '<color>';
   inherits: true;
-  initial-value: #171717;
+  initial-value: #191919;
 }
 @property --stroke {
   syntax: '<color>';
@@ -70,7 +70,7 @@
 @property --theme-secondary {
   syntax: '<color>';
   inherits: true;
-  initial-value: #171717;
+  initial-value: #191919;
 }
 
 :root {
@@ -81,10 +81,10 @@
   --blue: var(--vu);
   --error: #ff5938;
   --black: #121212;
-  --fill: #171717;
+  --fill: #191919;
   --stroke: #ffffff;
   --theme-primary: #ffbc70;
-  --theme-secondary: #171717;
+  --theme-secondary: #191919;
   --section-stroke-opacity: 0.1;
   --grain-opacity: 0.48;
   --grain-size: 128px;

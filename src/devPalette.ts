@@ -18,7 +18,7 @@ export const DEFAULT_PALETTE: Palette = {
   text: '#ffdbb3',
   muted: '#6E6E6E',
   black: '#121212',
-  fill: '#171717',
+  fill: '#191919',
   stroke: '#FFFFFF',
   lime: '#ffbc70',
   vu: '#a3fff9',

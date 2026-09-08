@@ -81,8 +81,23 @@ import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
 
-const DEFAULT_TEXT =
-  '3 billion human lives ended on August 29, 1997. The survivors of the nuclear fire called the war Judgment Day. They lived only to face a new nightmare, the war against the Machines. The computer which controlled the machines, Skynet, sent two terminators back through time. Their mission: to destroy the leader of the human Resistance... John Connor. My son.'
+const DEFAULT_TEXT = `Scanning.
+
+Thermal signature acquired. Cross-referencing. Match probability: ninety-four percent.
+
+Target is mobile. Vector calculating.
+
+Correcting for velocity. Recalculating intercept trajectory.
+
+Locked.
+
+Confirm engagement.
+
+Confirmed. Initiating strike sequence in three. Two. One.
+
+Ordnance away.
+
+Target neutralized. Standing by.`
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
@@ -350,16 +365,24 @@ export default function App() {
 
       const D = 0.55
       let grainTween: gsap.core.Tween | undefined
+      let clockBlinkTl: gsap.core.Timeline | undefined
       const clearIntroGrain = () => {
         grainTween?.kill()
         grainTween = undefined
         root.style.removeProperty('--panel-grain')
+      }
+      const clearClockBlink = () => {
+        clockBlinkTl?.kill()
+        clockBlinkTl = undefined
+        const lcd = root.querySelector<HTMLElement>('.master-clock__lcd')
+        if (lcd) gsap.set(lcd, { clearProps: 'visibility' })
       }
 
       const tl = gsap.timeline({
         onComplete: () => {
           root.classList.remove('is-introducing')
           clearIntroGrain()
+          clearClockBlink()
           document.documentElement.classList.remove(
             'is-splash-void',
             'is-splash-bleed',
@@ -662,9 +685,13 @@ export default function App() {
         navItemsAt,
       )
 
-      // Board starts the moment EXPORT (last nav item) finishes landing.
+      // Board docks with the oscilloscope — don't hold an empty stage for the rest of nav.
+      const scopeEl = root.querySelector<HTMLElement>('.speech-scope')
+      const scopeIndex = scopeEl ? navEls.indexOf(scopeEl) : -1
       const boardAt =
-        navItemsAt + Math.max(0, navEls.length - 1) * navStagger + D
+        scopeIndex >= 0
+          ? navItemsAt + scopeIndex * navStagger
+          : navItemsAt + Math.max(0, navEls.length - 1) * navStagger + D
 
       // —— 2. Master (from below) + side columns assemble together ——
       const sideDuration = D * 2.4
@@ -884,11 +911,14 @@ export default function App() {
         (meterColumns.length - 1) * meterStagger +
         D
 
-      // Play, then mute → loop (corner pair mirrors L/R meter columns).
+      // Clock → play → mute → loop (corner pair mirrors L/R meter columns).
+      // Wider than nav/meter stagger so stacked clock+play don't read as one beat.
       const masterFooterAt = masterMetersEnd
-      const masterFooterStagger = 0.08
+      const masterFooterStagger = 0.2
       const masterFooter = gsap.utils.toArray<HTMLElement>(
-        ['.master-transport', '.master-mute', '.master-loop'].join(', '),
+        ['.master-clock', '.master-play', '.master-mute', '.master-loop'].join(
+          ', ',
+        ),
       )
       ui.from(
         masterFooter,
@@ -904,6 +934,30 @@ export default function App() {
         masterFooterAt +
         Math.max(0, masterFooter.length - 1) * masterFooterStagger +
         D
+
+      // LCD hard-blinks a few frames after the capsule starts docking (2f/2f × 3).
+      // Own timeline so ui.timeScale doesn't turn "2 frames" into sub-frames.
+      const clockLcd = root.querySelector<HTMLElement>('.master-clock__lcd')
+      const clockBlinkAt = masterFooterAt + 13 / 60
+      if (clockLcd) {
+        gsap.set(clockLcd, { visibility: 'hidden' })
+        ui.call(
+          () => {
+            clearClockBlink()
+            const frame = 2 / 60
+            const blink = gsap.timeline()
+            for (let i = 0; i < 3; i += 1) {
+              const t = i * frame * 2
+              blink.set(clockLcd, { visibility: 'visible' }, t)
+              blink.set(clockLcd, { visibility: 'hidden' }, t + frame)
+            }
+            blink.set(clockLcd, { visibility: 'visible' }, 3 * frame * 2)
+            clockBlinkTl = blink
+          },
+          undefined,
+          clockBlinkAt,
+        )
+      }
 
       // One playing-ring revolution after the play button lands, before meter boot.
       const playSpinEl = root.querySelector<HTMLElement>('.master-play__spin')
@@ -925,7 +979,8 @@ export default function App() {
           {
             rotation: 360,
             duration: playSpinDur,
-            ease: 'power2.out',
+            // Match .master-play-spin (linear) — constant angular speed.
+            ease: 'none',
           },
           playSpinAt,
         )
@@ -1016,6 +1071,7 @@ export default function App() {
         window.removeEventListener('resize', onSplashResize)
         root?.classList.remove('is-introducing')
         clearIntroGrain()
+        clearClockBlink()
         document.documentElement.classList.remove(
           'is-splash-void',
           'is-splash-bleed',
