@@ -1,5 +1,7 @@
 import {
+  createContext,
   memo,
+  useContext,
   useEffect,
   useId,
   useRef,
@@ -19,6 +21,9 @@ import { useAnimatedNumber } from '../useAnimatedNumber'
 import './Knob.css'
 
 const DIAL_RADIUS = 46
+
+/** Intro-only 0→1 arm progress; null = live value. */
+export const KnobBootContext = createContext<number | null>(null)
 
 export type KnobSize = 'lg' | 'md'
 
@@ -55,13 +60,17 @@ function KnobComponent({
   const lastDragYRef = useRef<number | null>(null)
   const dragValueRef = useRef<number | null>(null)
   const labelId = useId()
+  const boot = useContext(KnobBootContext)
   const safeValue = clampKnobValue(value, min, max, step)
   const { displayed, beginImmediate, endImmediate, skipOnce } =
     useAnimatedNumber(safeValue)
-  const angle = valueToKnobAngle(displayed, min, max)
-  const fill = valueToKnobFill(displayed, min, max)
+  // Boot: arms start at min and ease toward the committed value.
+  const shown =
+    boot == null ? displayed : min + (displayed - min) * boot
+  const angle = valueToKnobAngle(shown, min, max)
+  const fill = valueToKnobFill(shown, min, max)
   const fillPath = knobFillArcPath(fill, 50, 50, DIAL_RADIUS)
-  const displayValue = format ? format(displayed) : String(displayed)
+  const displayValue = format ? format(shown) : String(shown)
   const committedText = format ? format(safeValue) : String(safeValue)
 
   valueRef.current = safeValue

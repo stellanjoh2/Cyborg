@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { FieldSelect } from './components/FieldSelect'
-import { Knob } from './components/Knob'
+import { Knob, KnobBootContext } from './components/Knob'
 import { MasterStrip } from './components/MasterStrip'
 import { Oscilloscope } from './components/Oscilloscope'
 import { SettingsMenu } from './components/SettingsMenu'
@@ -232,6 +232,8 @@ export default function App() {
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
+  /** Intro-only knob arm progress 0→1; null hands control back to live values. */
+  const [knobBoot, setKnobBoot] = useState<number | null>(0)
   /** Intro-only single-ridge climb on gain, then VU. */
   const [activateGain, setActivateGain] = useState<number | null>(null)
   const [activateVu, setActivateVu] = useState<number | null>(null)
@@ -311,6 +313,7 @@ export default function App() {
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
+        setKnobBoot(null)
         setActivateGain(null)
         setActivateVu(null)
         setSplashCreditActive(true)
@@ -330,6 +333,7 @@ export default function App() {
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
+      setKnobBoot(0)
       setActivateGain(null)
       setActivateVu(null)
       setSplashCreditActive(false)
@@ -972,6 +976,7 @@ export default function App() {
         activateGainAt,
       )
       const activateVuProxy = { v: 0 }
+      const activateVuAt = activateGainAt + volumeFillDur * 0.5
       ui.fromTo(
         activateVuProxy,
         { v: 0 },
@@ -982,7 +987,26 @@ export default function App() {
           onUpdate: () => setActivateVu(activateVuProxy.v),
           onComplete: () => setActivateVu(null),
         },
-        activateGainAt + volumeFillDur * 0.5,
+        activateVuAt,
+      )
+
+      // Knobs: arms start at min and ease-out to defaults; land with VU solo ridge.
+      // Runs in parallel with panel leaf reveals (not gated on meter boot).
+      const knobBootProxy = { v: 0 }
+      const activateVuEnd = activateVuAt + volumeFillDur
+      const knobBootDur = Math.max(0.01, activateVuEnd - sideContentAt)
+      ui.fromTo(
+        knobBootProxy,
+        { v: 0 },
+        {
+          v: 1,
+          duration: knobBootDur,
+          ease: 'power3.out',
+          onStart: () => setKnobBoot(0),
+          onUpdate: () => setKnobBoot(knobBootProxy.v),
+          onComplete: () => setKnobBoot(null),
+        },
+        sideContentAt,
       )
 
       // Far-left wipe-out column lands first; UI (nav header) starts then — follows splash pace.
@@ -1547,6 +1571,7 @@ export default function App() {
 
   return (
     <>
+      <KnobBootContext.Provider value={knobBoot}>
       <main className="speech-app" ref={appRef}>
       <div className="speech-splash" aria-hidden="true">
         <div className="speech-splash__wipe">
@@ -2295,6 +2320,7 @@ export default function App() {
         </div>
       ) : null}
       </main>
+      </KnobBootContext.Provider>
       <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />
     </>

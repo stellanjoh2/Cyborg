@@ -14,6 +14,9 @@ export type ColorTheme = {
 
 const STORAGE_KEY = 'lx01-color-theme'
 
+/** TEMP: force this theme on boot while tuning intro; set null to restore. */
+const TEMP_BOOT_THEME_ID: string | null = 'ed209'
+
 /**
  * UI themes named for classic robots (Metropolis → today).
  * Each palette leans into a visual cue from that machine.
@@ -326,6 +329,12 @@ export function getThemeById(id: string): ColorTheme {
 }
 
 export function readStoredThemeId(): string {
+  if (
+    TEMP_BOOT_THEME_ID &&
+    COLOR_THEMES.some((theme) => theme.id === TEMP_BOOT_THEME_ID)
+  ) {
+    return TEMP_BOOT_THEME_ID
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw && COLOR_THEMES.some((theme) => theme.id === raw)) {
