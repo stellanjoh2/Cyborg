@@ -37,9 +37,9 @@ html.is-splash-bleed .scale-viewport::before {
   opacity: 0;
 }
 
-/* Pure black void while the orange splash plate is still above the frame. */
+/* Theme shell void while the splash plate is still above the frame. */
 html.is-splash-void .scale-viewport {
-  background: #000;
+  background: var(--synth-shell, var(--black));
 }
 
 html.is-splash-void .scale-viewport::before {

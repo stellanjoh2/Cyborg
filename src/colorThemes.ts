@@ -154,7 +154,7 @@ export const COLOR_THEMES: ColorTheme[] = [
     palette: {
       text: '#E4E8EC',
       muted: '#6A727A',
-      black: '#0A0C0E',
+      black: '#121417',
       fill: '#1A1E22',
       stroke: '#C8D0D8',
       lime: '#00FF9C',
