@@ -238,7 +238,6 @@ export function MasterStrip({
     isLive: false,
   })
   const [ridges, setRidges] = useState(24)
-  const [trackInnerPx, setTrackInnerPx] = useState(0)
   const [clockLabel, setClockLabel] = useState(IDLE_CLOCK)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
@@ -286,10 +285,8 @@ export function MasterStrip({
 
     const applyRidges = () => {
       const count = ridgesForTrack(track)
-      const inner = trackInnerHeight(track)
       meters.style.setProperty('--ridges', String(count))
       setRidges((prev) => (prev === count ? prev : count))
-      setTrackInnerPx((prev) => (prev === inner ? prev : inner))
     }
 
     const observer = new ResizeObserver(applyRidges)
