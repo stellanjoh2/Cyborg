@@ -73,6 +73,18 @@
   initial-value: #191919;
 }
 
+/* Glow intensity — tweened after intro (see .speech-app.is-introducing). */
+@property --glow-mix-tight {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 38%;
+}
+@property --glow-mix-wide {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 21%;
+}
+
 :root {
   --lime: #ffbc70;
   --vu: #a3fff9;

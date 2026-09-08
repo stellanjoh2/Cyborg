@@ -51,6 +51,13 @@ html.perf-low .knob__arc-bloom {
   opacity: 0;
 }
 
+/* Bloom is filter:blur, not --glow-* — hide until post-intro warm-up. */
+.speech-app.is-introducing .knob__needle-bloom,
+.speech-app.is-introducing .knob__arc-bloom {
+  opacity: 0;
+  transition: none;
+}
+
 .knob-field.is-zero .knob-value__ink {
   color: var(--muted);
   text-shadow: none;
@@ -123,6 +130,7 @@ html.perf-low .knob__arc-bloom {
   position: absolute;
   inset: -16px;
   pointer-events: none;
+  transition: opacity 0.7s ease;
   -webkit-mask-image: conic-gradient(
     from 225deg,
     #000 calc(var(--knob-fill, 0) * 270deg),
@@ -212,6 +220,7 @@ html.perf-low .knob__arc-bloom {
   opacity: 0.41;
   filter: blur(6px);
   pointer-events: none;
+  transition: opacity 0.7s ease;
 }
 
 .knob__needle-core {

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { introBoot } from '../introBoot'
 import { getMasterAnalyser, readMasterPeak } from '../speechSynthEngine'
 import './Oscilloscope.css'
 
@@ -83,6 +84,12 @@ export function Oscilloscope() {
     }
 
     const tick = () => {
+      // Intro is paint-heavy; keep the scope dark until VU lamp boot finishes.
+      if (!introBoot.scopeLive) {
+        frame = requestAnimationFrame(tick)
+        return
+      }
+
       resize()
       const w = cssW
       const h = cssH

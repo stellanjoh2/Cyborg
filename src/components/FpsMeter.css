@@ -1,0 +1,19 @@
+.fps-meter {
+  position: fixed;
+  top: 50%;
+  left: 12px;
+  z-index: 50;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lime);
+  font-family: var(--font-ui);
+  font-size: 100px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: var(--glow-outer);
+  pointer-events: none;
+  user-select: none;
+}

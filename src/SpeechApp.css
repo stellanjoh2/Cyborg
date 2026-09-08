@@ -602,9 +602,15 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 /* Soft-light grain flashes hard while intro opacity/transforms recomposite.
-   Hold at 0; GSAP ramps --panel-grain after plates dock (no CSS transition snap). */
+   Hold at 0; GSAP ramps --panel-grain after plates dock (no CSS transition snap).
+   Accent glows stay off until timeline complete, then GSAP warms mixes back in. */
 .speech-app.is-introducing {
   --panel-grain: 0;
+  --glow-mix-tight: 0%;
+  --glow-mix-wide: 0%;
+  --glow-outer: none;
+  --glow-single: none;
+  --glow-filter: none;
 }
 
 .speech-app.is-introducing .speech-top::before,
@@ -647,6 +653,8 @@ html.is-splash-void .scale-nav-bleed {
   min-height: 0;
   line-height: var(--copy-leading);
   overflow-y: auto;
+  /* Fractional stage scale can leave a 1px crumb of the next line in the 3lh crop. */
+  clip-path: inset(0.5px);
 }
 
 .field-readout {

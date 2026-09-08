@@ -1,14 +1,17 @@
 import {
-  createContext,
   memo,
-  useContext,
   useEffect,
   useId,
   useRef,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
+import {
+  getKnobBootSnapshot,
+  subscribeKnobBoot,
+} from '../introBoot'
 import {
   clampKnobValue,
   knobFillArcPath,
@@ -21,9 +24,6 @@ import { useAnimatedNumber } from '../useAnimatedNumber'
 import './Knob.css'
 
 const DIAL_RADIUS = 46
-
-/** Intro-only 0→1 arm progress; null = live value. */
-export const KnobBootContext = createContext<number | null>(null)
 
 export type KnobSize = 'lg' | 'md'
 
@@ -60,7 +60,11 @@ function KnobComponent({
   const lastDragYRef = useRef<number | null>(null)
   const dragValueRef = useRef<number | null>(null)
   const labelId = useId()
-  const boot = useContext(KnobBootContext)
+  const boot = useSyncExternalStore(
+    subscribeKnobBoot,
+    getKnobBootSnapshot,
+    getKnobBootSnapshot,
+  )
   const safeValue = clampKnobValue(value, min, max, step)
   const { displayed, beginImmediate, endImmediate, skipOnce } =
     useAnimatedNumber(safeValue)

@@ -3,9 +3,16 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
+import { FpsMeter } from './components/FpsMeter'
 import { FieldSelect } from './components/FieldSelect'
-import { Knob, KnobBootContext } from './components/Knob'
-import { MasterStrip } from './components/MasterStrip'
+import { Knob } from './components/Knob'
+import {
+  activateRidgeLit,
+  MasterStrip,
+  ridgeFillWindow,
+  trackInnerHeight,
+} from './components/MasterStrip'
+import { introBoot, setKnobBootProgress } from './introBoot'
 import { Oscilloscope } from './components/Oscilloscope'
 import { SettingsMenu } from './components/SettingsMenu'
 import { ThemePicker } from './components/ThemePicker'
@@ -81,23 +88,7 @@ import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
 
-const DEFAULT_TEXT = `Scanning.
-
-Thermal signature acquired. Cross-referencing. Match probability: ninety-four percent.
-
-Target is mobile. Vector calculating.
-
-Correcting for velocity. Recalculating intercept trajectory.
-
-Locked.
-
-Confirm engagement.
-
-Confirmed. Initiating strike sequence in three. Two. One.
-
-Ordnance away.
-
-Target neutralized. Standing by.`
+const DEFAULT_TEXT = `You will be required to do wrong no matter where you go. It is the basic condition of life, to be required to violate your own identity. At some time, every creature which lives must do so. It is the ultimate shadow, the defeat of creation; this is the curse at work, the curse that feeds on all life. Everywhere in the universe.`
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
@@ -247,11 +238,6 @@ export default function App() {
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
   const [volumeFill, setVolumeFill] = useState<number | null>(0)
-  /** Intro-only knob arm progress 0→1; null hands control back to live values. */
-  const [knobBoot, setKnobBoot] = useState<number | null>(0)
-  /** Intro-only single-ridge climb on gain, then VU. */
-  const [activateGain, setActivateGain] = useState<number | null>(null)
-  const [activateVu, setActivateVu] = useState<number | null>(null)
   const [splashCreditActive, setSplashCreditActive] = useState(false)
   const [splashVersionActive, setSplashVersionActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
@@ -328,9 +314,11 @@ export default function App() {
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setVolumeFill(null)
-        setKnobBoot(null)
-        setActivateGain(null)
-        setActivateVu(null)
+        introBoot.volumeFill = null
+        introBoot.gainProgress = null
+        introBoot.vuProgress = null
+        introBoot.scopeLive = true
+        setKnobBootProgress(null)
         setSplashCreditActive(true)
         setSplashVersionActive(true)
         setSplashYearActive(true)
@@ -348,9 +336,11 @@ export default function App() {
       // Keep masterVolume at 100 so Reset buttons stay dormant; only the
       // meter fill is overridden visually during intro.
       setVolumeFill(0)
-      setKnobBoot(0)
-      setActivateGain(null)
-      setActivateVu(null)
+      introBoot.volumeFill = null
+      introBoot.gainProgress = null
+      introBoot.vuProgress = null
+      introBoot.scopeLive = false
+      setKnobBootProgress(0)
       setSplashCreditActive(false)
       setSplashVersionActive(false)
       setSplashYearActive(false)
@@ -378,9 +368,29 @@ export default function App() {
         if (lcd) gsap.set(lcd, { clearProps: 'visibility' })
       }
 
+      let glowWarmTween: gsap.core.Tween | undefined
+      const clearGlowWarm = () => {
+        glowWarmTween?.kill()
+        glowWarmTween = undefined
+        root.style.removeProperty('--glow-mix-tight')
+        root.style.removeProperty('--glow-mix-wide')
+      }
+      const warmGlows = () => {
+        // Keep mixes at 0 while restoring glow shorthand tokens, then ramp bloom.
+        gsap.set(root, { '--glow-mix-tight': '0%', '--glow-mix-wide': '0%' })
+        root.classList.remove('is-introducing')
+        glowWarmTween = gsap.to(root, {
+          '--glow-mix-tight': '38%',
+          '--glow-mix-wide': '21%',
+          duration: 0.7,
+          ease: 'power2.out',
+          onComplete: clearGlowWarm,
+        })
+      }
+
       const tl = gsap.timeline({
         onComplete: () => {
-          root.classList.remove('is-introducing')
+          warmGlows()
           clearIntroGrain()
           clearClockBlink()
           document.documentElement.classList.remove(
@@ -392,7 +402,7 @@ export default function App() {
         },
       })
 
-      // —— 0. Accent splash: column wipe in → mark → LX01 → version → S → credit → year → copyright-first teardown → wipe out ——
+      // —— 0. Accent splash: column wipe in → mark → LX01 → version → S → credit+copyright → teardown → wipe out ——
       const splashT = (t: number) => t / SPLASH_SPEED
       const staggerGap = splashT(0.14)
       const splashOut = splashT(0.55)
@@ -406,6 +416,8 @@ export default function App() {
       const creditTypeDur = (SPLASH_CREDIT.length * SPLASH_TYPE_MS) / 1000
       const versionTypeDur = (SPLASH_VERSION.length * SPLASH_TYPE_MS) / 1000
       const yearTypeDur = (SPLASH_YEAR.length * SPLASH_TYPE_MS) / 1000
+      // Credit + © share one beat; hold/teardown wait for the longer typewriter.
+      const legalTypeDur = Math.max(creditTypeDur, yearTypeDur)
       splashLogoRef.current?.hideParts()
       if (splashCredit) gsap.set(splashCredit, { autoAlpha: 1, y: 0 })
       if (splashVersion) gsap.set(splashVersion, { autoAlpha: 1, y: 0 })
@@ -495,21 +507,19 @@ export default function App() {
       // Hold black void (~12.75 frames prior, +10 frames) before the column wipe.
       // Downstream splash + UI times are all relative to this, so they shift with it.
       const plateInAt = (15 * 0.85 + 10) / 60
-      // Larynx → LX01 → version → S → credit → year (mark waits for the cascade to nearly settle).
+      // Larynx → LX01 → version → S → credit+© together (mark waits for the cascade to nearly settle).
       const markAt = plateInAt + Math.max(0, wipeTotal - wipeMarkLead)
       const lx01At = markAt + SPLASH_MARK_IN + staggerGap
       const versionAt = lx01At + charsEnd + staggerGap
       const sAt = versionAt + versionTypeDur + staggerGap
-      const creditAt = sAt + SPLASH_MARK_IN + staggerGap
-      const yearAt = creditAt + creditTypeDur
-      // Teardown: larynx → LX01 → version → S → legal → copyright.
-      const logoOutAt = yearAt + yearTypeDur + splashHold
+      const legalAt = sAt + SPLASH_MARK_IN + staggerGap
+      // Teardown: larynx → LX01 → version → S → credit+© together.
+      const logoOutAt = legalAt + legalTypeDur + splashHold
       const logoExitAt = logoOutAt + splashOutStagger
       const versionRewindAt = logoExitAt + logoExitDur + splashOutStagger
       const sOutAt = versionRewindAt + versionTypeDur + splashOutStagger
-      const creditRewindAt = sOutAt + SPLASH_MARK_IN + splashOutStagger
-      const yearRewindAt = creditRewindAt + creditTypeDur
-      const curtainAt = yearRewindAt + yearTypeDur
+      const legalRewindAt = sOutAt + SPLASH_MARK_IN + splashOutStagger
+      const curtainAt = legalRewindAt + legalTypeDur
       const SPLASH = curtainAt + wipeTotal
 
       // Multi-column wipe in (top → bottom, L→R stagger).
@@ -584,9 +594,9 @@ export default function App() {
           sAt,
         )
       }
-      tl.call(() => setSplashCreditActive(true), undefined, creditAt)
-      tl.call(() => setSplashYearActive(true), undefined, yearAt)
-      // Larynx → LX01 → version → S → legal → copyright.
+      tl.call(() => setSplashCreditActive(true), undefined, legalAt)
+      tl.call(() => setSplashYearActive(true), undefined, legalAt)
+      // Teardown: larynx → LX01 → version → S → credit+©.
       if (splashMark) {
         tl.to(
           splashMark,
@@ -612,8 +622,8 @@ export default function App() {
           sOutAt,
         )
       }
-      tl.call(() => setSplashCreditActive(false), undefined, creditRewindAt)
-      tl.call(() => setSplashYearActive(false), undefined, yearRewindAt)
+      tl.call(() => setSplashCreditActive(false), undefined, legalRewindAt)
+      tl.call(() => setSplashYearActive(false), undefined, legalRewindAt)
       // Drop letterbox fill with the curtain so orange doesn't linger over the UI.
       tl.call(
         () => document.documentElement.classList.remove('is-splash-bleed'),
@@ -687,6 +697,16 @@ export default function App() {
 
       // Board docks with the oscilloscope — don't hold an empty stage for the rest of nav.
       const scopeEl = root.querySelector<HTMLElement>('.speech-scope')
+      const scopeCanvas = scopeEl?.querySelector<HTMLElement>(
+        '.speech-scope__canvas',
+      )
+      const clearScopeCurtain = () => {
+        if (scopeCanvas) gsap.set(scopeCanvas, { clearProps: 'clipPath' })
+      }
+      // Center slit until VU lamp boot finishes — curtain opens horizontally.
+      if (scopeCanvas) {
+        gsap.set(scopeCanvas, { clipPath: 'inset(0 50% 0 50%)' })
+      }
       const scopeIndex = scopeEl ? navEls.indexOf(scopeEl) : -1
       const boardAt =
         scopeIndex >= 0
@@ -861,62 +881,25 @@ export default function App() {
       }
       revealLeaves(leftLeaves, leftStagger, sideContentAt)
       revealLeaves(rightLeaves, rightStagger, sideContentAt)
+      // Last FX knob fully settled — Master rises 0.5s (wall) before that.
+      const fxLeavesEnd =
+        sideContentAt +
+        Math.max(0, rightLeaves.length - 1) * rightStagger +
+        knobFlashLead +
+        leafDuration +
+        knobFlashOut
 
-      // Last knob: flash lead + ink land + flash kill.
-      const knobTotalDur = knobFlashLead + leafDuration + knobFlashOut
-      const lastKnobEnd = Math.max(
-        ...[leftLeaves, rightLeaves].flatMap((leaves, side) => {
-          const stagger = side === 0 ? leftStagger : rightStagger
-          return leaves.map((el, i) =>
-            el.classList.contains('knob-field')
-              ? sideContentAt + i * stagger + knobTotalDur
-              : sideContentAt,
-          )
-        }),
+      // —— 4. Master: bottom → up wave, cresting at the scope ——
+      const masterContentAt = Math.max(
+        sideContentAt,
+        fxLeavesEnd - 0.5 * ui.timeScale(),
       )
 
-      // —— 4. Master meters start with the FX leaf cascade ——
-      const masterContentAt = sideContentAt
-      ui.from(
-        '.speech-col--master .section-head',
-        { autoAlpha: 0, y: -12, immediateRender: true },
-        masterContentAt,
-      )
-
-      const meterColumns = [
-        '.master-meters > .master-fader:nth-child(1) > *',
-        '.master-meters > .master-fader:nth-child(2) > *',
-        '.master-meters > .vu > *',
-      ]
-      const meterStagger = 0.1
-      meterColumns.forEach((selector, i) => {
-        const els = gsap.utils.toArray<HTMLElement>(selector)
-        if (!els.length) return
-        ui.from(
-          els,
-          {
-            autoAlpha: 0,
-            y: 16,
-            stagger: 0.03,
-            immediateRender: true,
-            // Drop leftover translate layers — Safari + VU mix-blend fringes on them.
-            clearProps: 'transform',
-          },
-          masterContentAt + 0.06 + i * meterStagger,
-        )
-      })
-      const masterMetersEnd =
-        masterContentAt +
-        0.06 +
-        (meterColumns.length - 1) * meterStagger +
-        D
-
-      // Clock → play → mute → loop (corner pair mirrors L/R meter columns).
-      // Wider than nav/meter stagger so stacked clock+play don't read as one beat.
-      const masterFooterAt = masterMetersEnd
-      const masterFooterStagger = 0.2
+      // Corners → play → clock (visual bottom → up).
+      const masterFooterAt = masterContentAt
+      const masterFooterStagger = 0.14
       const masterFooter = gsap.utils.toArray<HTMLElement>(
-        ['.master-clock', '.master-play', '.master-mute', '.master-loop'].join(
+        ['.master-mute', '.master-loop', '.master-play', '.master-clock'].join(
           ', ',
         ),
       )
@@ -930,15 +913,12 @@ export default function App() {
         },
         masterFooterAt,
       )
-      const masterFooterEnd =
-        masterFooterAt +
-        Math.max(0, masterFooter.length - 1) * masterFooterStagger +
-        D
 
       // LCD hard-blinks a few frames after the capsule starts docking (2f/2f × 3).
       // Own timeline so ui.timeScale doesn't turn "2 frames" into sub-frames.
       const clockLcd = root.querySelector<HTMLElement>('.master-clock__lcd')
-      const clockBlinkAt = masterFooterAt + 13 / 60
+      const clockBlinkAt =
+        masterFooterAt + 3 * masterFooterStagger + 13 / 60
       if (clockLcd) {
         gsap.set(clockLcd, { visibility: 'hidden' })
         ui.call(
@@ -959,58 +939,133 @@ export default function App() {
         )
       }
 
-      // One playing-ring revolution after the play button lands, before meter boot.
-      const playSpinEl = root.querySelector<HTMLElement>('.master-play__spin')
-      const playSpinDur = 0.72
-      const playSpinAt = masterFooterEnd
-      if (playSpinEl) {
-        ui.fromTo(
-          playSpinEl,
-          { opacity: 0, rotation: 0 },
+      // Meter rows rise next: labels → tracks → values (L→R within each band).
+      // Kick off as play docks so the wave stays continuous through the clock.
+      const meterRows = [
+        gsap.utils.toArray<HTMLElement>('.master-meters .master-fader__label'),
+        gsap.utils.toArray<HTMLElement>(
+          '.master-meters .master-fader__track-wrap, .master-meters .vu-leds',
+        ),
+        gsap.utils.toArray<HTMLElement>(
+          '.master-meters .master-fader__value, .master-meters .vu-peak',
+        ),
+      ]
+      const meterRowStagger = 0.11
+      const meterChildStagger = 0.04
+      const meterRowsAt = masterFooterAt + 2 * masterFooterStagger
+      meterRows.forEach((els, row) => {
+        if (!els.length) return
+        ui.from(
+          els,
           {
-            opacity: 1,
-            duration: 0.2,
-            ease: 'power2.out',
+            autoAlpha: 0,
+            y: 16,
+            stagger: meterChildStagger,
+            immediateRender: true,
+            // Drop leftover translate layers — Safari + VU mix-blend fringes on them.
+            clearProps: 'transform',
           },
-          playSpinAt,
+          meterRowsAt + row * meterRowStagger,
         )
-        ui.to(
-          playSpinEl,
-          {
-            rotation: 360,
-            duration: playSpinDur,
-            // Match .master-play-spin (linear) — constant angular speed.
-            ease: 'none',
-          },
-          playSpinAt,
-        )
-        ui.to(
-          playSpinEl,
-          {
-            opacity: 0,
-            duration: 0.2,
-            clearProps: 'opacity,transform',
-          },
-          playSpinAt + playSpinDur,
-        )
+      })
+
+      // Title lands as the wave reaches the top of the strip.
+      const masterHeadAt =
+        meterRowsAt + (meterRows.length - 1) * meterRowStagger + D * 0.4
+      ui.from(
+        '.speech-col--master .section-head',
+        { autoAlpha: 0, y: 12, immediateRender: true },
+        masterHeadAt,
+      )
+
+      // —— 5. Volume fill as the track band docks — bars climb with the wave ——
+      // Drive meters via introBoot + DOM (not setState) so App doesn't re-render 60fps.
+      const volumeWrap = root.querySelector<HTMLElement>(
+        '.master-meters .master-fader:nth-child(1) .master-fader__track-wrap',
+      )
+      const volumeValue = root.querySelector<HTMLElement>(
+        '.master-meters .master-fader:nth-child(1) .master-fader__value',
+      )
+      const gainWrap = root.querySelector<HTMLElement>(
+        '.master-meters .master-fader:nth-child(2) .master-fader__track-wrap',
+      )
+      const volumeTrack = root.querySelector<HTMLElement>(
+        '.master-meters .master-fader__track',
+      )
+      const volumeFillEl = volumeWrap?.querySelector<HTMLElement>(
+        '.master-fader__fill',
+      )
+      const gainFillEl = gainWrap?.querySelector<HTMLElement>(
+        '.master-fader__fill',
+      )
+      let bootRidges = 24
+      let bootInnerPx = 0
+      let lastGainLit = -1
+      let lastVolumeLabel = -1
+      const cacheBootMeterGeometry = () => {
+        if (!volumeTrack) return
+        const meters = volumeTrack.closest('.master-meters')
+        bootRidges =
+          Number.parseFloat(
+            meters
+              ? getComputedStyle(meters).getPropertyValue('--ridges')
+              : '',
+          ) || 24
+        bootInnerPx = trackInnerHeight(volumeTrack)
+      }
+      /** Direct transform — CSS vars inside transform still cost a style recalc / frame. */
+      const setFillTransform = (
+        el: HTMLElement | null | undefined,
+        start: number,
+        end: number,
+      ) => {
+        if (!el) return
+        const a = start / 100
+        const b = end / 100
+        el.style.transform = `translateZ(0) translateY(${-a * 100}%) scaleY(${Math.max(0, b - a)})`
+      }
+      const paintVolumeBoot = (v: number) => {
+        introBoot.volumeFill = v
+        setFillTransform(volumeFillEl, 0, v)
+        const rounded = Math.round(v)
+        if (volumeValue && rounded !== lastVolumeLabel) {
+          lastVolumeLabel = rounded
+          volumeValue.textContent = String(rounded)
+        }
+      }
+      const paintGainBoot = (progress: number) => {
+        const lit = activateRidgeLit(progress, bootRidges)
+        if (lit === lastGainLit) return
+        lastGainLit = lit
+        introBoot.gainProgress = progress
+        const window = ridgeFillWindow(lit, bootRidges, bootInnerPx)
+        setFillTransform(gainFillEl, window.start, window.end)
       }
 
-      // —— 5. Volume fill waits for play spin + last knob reveal ——
       const volumeProxy = { v: 0 }
       const volumeFillDur = D * 1.9
-      const volumeFillAt = Math.max(
-        playSpinAt + playSpinDur,
-        lastKnobEnd,
-      )
+      // Tracks = row 1 — start the climb as that band settles in.
+      const volumeFillAt =
+        meterRowsAt + 1 * meterRowStagger + D * 0.35
       ui.fromTo(
         volumeProxy,
         { v: 0 },
         {
           v: 100,
           duration: volumeFillDur,
-          onStart: () => setVolumeFill(0),
-          onUpdate: () => setVolumeFill(volumeProxy.v),
-          onComplete: () => setVolumeFill(null),
+          onStart: () => {
+            cacheBootMeterGeometry()
+            lastVolumeLabel = -1
+            setVolumeFill(0)
+            paintVolumeBoot(0)
+          },
+          onUpdate: () => paintVolumeBoot(volumeProxy.v),
+          onComplete: () => {
+            // Leave inline transform until MasterStrip commits live --fill-*
+            // (removing here flashes empty while volumeFill is still 0).
+            introBoot.volumeFill = null
+            setVolumeFill(null)
+          },
         },
         volumeFillAt,
       )
@@ -1024,9 +1079,18 @@ export default function App() {
         {
           v: 1,
           duration: volumeFillDur,
-          onStart: () => setActivateGain(0),
-          onUpdate: () => setActivateGain(activateGainProxy.v),
-          onComplete: () => setActivateGain(null),
+          onStart: () => {
+            cacheBootMeterGeometry()
+            lastGainLit = -1
+            paintGainBoot(0)
+          },
+          onUpdate: () => paintGainBoot(activateGainProxy.v),
+          onComplete: () => {
+            // Match live gain (default 0) before dropping the boot transform.
+            introBoot.gainProgress = null
+            setFillTransform(gainFillEl, 0, 0)
+            gainFillEl?.style.removeProperty('transform')
+          },
         },
         activateGainAt,
       )
@@ -1038,17 +1102,53 @@ export default function App() {
         {
           v: 1,
           duration: volumeFillDur,
-          onStart: () => setActivateVu(0),
-          onUpdate: () => setActivateVu(activateVuProxy.v),
-          onComplete: () => setActivateVu(null),
+          onStart: () => {
+            introBoot.vuProgress = 0
+          },
+          onUpdate: () => {
+            introBoot.vuProgress = activateVuProxy.v
+          },
+          onComplete: () => {
+            introBoot.vuProgress = null
+          },
         },
         activateVuAt,
       )
+      const activateVuEnd = activateVuAt + volumeFillDur
+      // Last VU segment lights at ceil(p * ridges) === ridges → just past (n-1)/n.
+      // Start the scope there — don't wait for the peak lamp / tween tail.
+      const vuCrestAt =
+        activateVuAt +
+        volumeFillDur *
+          (bootRidges <= 1 ? 1 : (bootRidges - 1) / bootRidges + 1e-4)
+
+      // Scope CRT: horizontal curtain from center → full width (ease-out).
+      if (scopeCanvas) {
+        ui.fromTo(
+          scopeCanvas,
+          { clipPath: 'inset(0 50% 0 50%)' },
+          {
+            clipPath: 'inset(0 0% 0 0%)',
+            // 1s wall-clock despite ui.timeScale.
+            duration: 1 * ui.timeScale(),
+            ease: 'power2.out',
+            immediateRender: false,
+            onStart: () => {
+              introBoot.scopeLive = true
+            },
+            onComplete: clearScopeCurtain,
+          },
+          vuCrestAt,
+        )
+      } else {
+        ui.call(() => {
+          introBoot.scopeLive = true
+        }, undefined, vuCrestAt)
+      }
 
       // Knobs: arms start at min and ease-out to defaults; land with VU solo ridge.
-      // Runs in parallel with panel leaf reveals (not gated on meter boot).
+      // External store — knobs subscribe; App does not re-render each frame.
       const knobBootProxy = { v: 0 }
-      const activateVuEnd = activateVuAt + volumeFillDur
       const knobBootDur = Math.max(0.01, activateVuEnd - sideContentAt)
       ui.fromTo(
         knobBootProxy,
@@ -1057,9 +1157,9 @@ export default function App() {
           v: 1,
           duration: knobBootDur,
           ease: 'power3.out',
-          onStart: () => setKnobBoot(0),
-          onUpdate: () => setKnobBoot(knobBootProxy.v),
-          onComplete: () => setKnobBoot(null),
+          onStart: () => setKnobBootProgress(0),
+          onUpdate: () => setKnobBootProgress(knobBootProxy.v),
+          onComplete: () => setKnobBootProgress(null),
         },
         sideContentAt,
       )
@@ -1072,6 +1172,13 @@ export default function App() {
         root?.classList.remove('is-introducing')
         clearIntroGrain()
         clearClockBlink()
+        clearGlowWarm()
+        introBoot.volumeFill = null
+        introBoot.gainProgress = null
+        introBoot.vuProgress = null
+        introBoot.scopeLive = true
+        setKnobBootProgress(null)
+        clearScopeCurtain()
         document.documentElement.classList.remove(
           'is-splash-void',
           'is-splash-bleed',
@@ -1627,7 +1734,6 @@ export default function App() {
 
   return (
     <>
-      <KnobBootContext.Provider value={knobBoot}>
       <main className="speech-app" ref={appRef}>
       <div className="speech-splash" aria-hidden="true">
         <div className="speech-splash__wipe">
@@ -1770,8 +1876,6 @@ export default function App() {
         volume={masterVolume}
         gain={masterGain}
         volumeFill={volumeFill}
-        activateGain={activateGain}
-        activateVu={activateVu}
         onVolumeChange={setMasterVolume}
         onGainChange={setMasterGain}
         onReset={handleResetMaster}
@@ -2376,9 +2480,9 @@ export default function App() {
         </div>
       ) : null}
       </main>
-      </KnobBootContext.Provider>
       <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />
+      <FpsMeter />
     </>
   )
 }
