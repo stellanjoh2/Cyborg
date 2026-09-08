@@ -256,6 +256,7 @@ export function MasterStrip({
     )
     if (fill instanceof HTMLElement) {
       fill.style.removeProperty('transform')
+      fill.style.removeProperty('clip-path')
     }
   }, [volumeFill])
 

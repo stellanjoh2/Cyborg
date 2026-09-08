@@ -3,15 +3,10 @@ import {
   useEffect,
   useId,
   useRef,
-  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
-import {
-  getKnobBootSnapshot,
-  subscribeKnobBoot,
-} from '../introBoot'
 import {
   clampKnobValue,
   knobFillArcPath,
@@ -60,17 +55,10 @@ function KnobComponent({
   const lastDragYRef = useRef<number | null>(null)
   const dragValueRef = useRef<number | null>(null)
   const labelId = useId()
-  const boot = useSyncExternalStore(
-    subscribeKnobBoot,
-    getKnobBootSnapshot,
-    getKnobBootSnapshot,
-  )
   const safeValue = clampKnobValue(value, min, max, step)
   const { displayed, beginImmediate, endImmediate, skipOnce } =
     useAnimatedNumber(safeValue)
-  // Boot: arms start at min and ease toward the committed value.
-  const shown =
-    boot == null ? displayed : min + (safeValue - min) * boot
+  const shown = displayed
   const angle = valueToKnobAngle(shown, min, max)
   const fill = valueToKnobFill(shown, min, max)
   const fillPath = knobFillArcPath(fill, 50, 50, DIAL_RADIUS)

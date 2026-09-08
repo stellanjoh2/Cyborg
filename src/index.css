@@ -274,8 +274,9 @@ html.theme-minimal {
   --emboss-glow-opacity: 0;
 }
 
-/* Performance Low — kill glow effects for lower-spec machines. */
+/* Performance Low — kill glow + soft-light grain for lower-spec machines. */
 html.perf-low {
+  --grain-opacity: 0;
   --section-inset-glow: none;
   --section-recess-glow: none;
   --glow-outer: none;

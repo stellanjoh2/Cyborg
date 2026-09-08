@@ -183,7 +183,7 @@
 }
 
 .speech-app.is-introducing .master-fader__fill {
-  will-change: transform;
+  will-change: transform, clip-path;
 }
 
 /* Static ridge mask above the fill — geometry does not depend on level. */
