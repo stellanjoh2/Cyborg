@@ -13,7 +13,7 @@ export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'sam'
 /** Per-engine pitch when you switch to that voice. */
 export const DEFAULT_PITCH_BY_ENGINE: Record<VoiceEngineId, number> = {
   sam: 0.7,
-  piper: 0.45,
+  piper: 0.5,
 }
 
 const STORAGE_KEY = 'lx01-voice-engine'
