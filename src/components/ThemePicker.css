@@ -74,10 +74,10 @@
   border: none;
   border-radius: var(--radius-panel);
   background: var(--fill);
-  /* Drop is section elevation +25% blur / −25% opacity; bevels match --section-shadow (no-ops on minimal). */
+  /* Drop is section elevation +25% blur / −25% opacity (applied twice); bevels match --section-shadow. */
   box-shadow:
-    0 1px 3.75px color-mix(in srgb, #000 41.25%, transparent),
-    0 6px 33.75px color-mix(in srgb, #000 30%, transparent),
+    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
+    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
     inset 0 var(--bevel-offset) var(--bevel-radius)
       color-mix(
         in srgb,
