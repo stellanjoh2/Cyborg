@@ -420,7 +420,26 @@ html.is-splash-void .scale-nav-bleed {
   /* Override global hover-plate z-index:-1 so masks sit on the ridge */
   z-index: 0;
   border-radius: 0;
-  background: var(--fill);
+  /* Match .speech-top::before soft-light grain so masks aren't smooth stripes */
+  --ridge-grain: calc(var(--grain-opacity) * var(--panel-grain, 1));
+  background-color: var(--fill);
+  background-image:
+    linear-gradient(
+      color-mix(
+        in srgb,
+        var(--fill) calc((1 - var(--ridge-grain)) * 100%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--fill) calc((1 - var(--ridge-grain)) * 100%),
+        transparent
+      )
+    ),
+    var(--grain-image);
+  background-size: auto, var(--grain-size) var(--grain-size);
+  background-repeat: no-repeat, repeat;
+  background-blend-mode: normal, soft-light;
   opacity: 1;
   pointer-events: none;
   transform-origin: center;
@@ -490,7 +509,6 @@ html.is-splash-void .scale-nav-bleed {
 .speech-top .secondary:disabled::before,
 .speech-top .primary:disabled::after,
 .speech-top .secondary:disabled::after {
-  background: var(--fill);
   transform: none;
 }
 
