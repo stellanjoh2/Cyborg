@@ -1,25 +1,23 @@
 .speech-scope {
   position: absolute;
-  left: 50%;
   top: 0;
   bottom: 0;
   z-index: 1;
   isolation: isolate;
   box-sizing: border-box;
-  /* Centered; mirrors Osci↔RESET gap + buttons + theme/settings on each side. */
-  width: calc(
-    100% -
-      2 *
-      (
-        var(--nav-theme-gap) + 3 * 160px + 2 * var(--section-gap) +
-          var(--nav-theme-gap) + var(--nav-control-h) + var(--section-gap) +
-          var(--nav-control-h) + var(--app-pad)
-      )
+  /* Clear logo + LOAD/SAVE on the left; RESET…settings on the right. */
+  left: calc(
+    var(--app-pad) + var(--nav-brand-w) + var(--nav-theme-gap) + 2 * 160px +
+      var(--section-gap) + var(--nav-theme-gap)
   );
+  right: calc(
+    var(--nav-theme-gap) + 3 * 160px + 2 * var(--section-gap) +
+      var(--nav-theme-gap) + var(--nav-control-h) + var(--section-gap) +
+      var(--nav-control-h) + var(--app-pad)
+  );
+  width: auto;
   height: var(--nav-control-h);
   margin-block: auto;
-  /* Separate from GSAP `transform` so intro x/y don't un-center a short scope. */
-  translate: -50% 0;
   padding: 3px;
   border-radius: 999px;
   overflow: hidden;

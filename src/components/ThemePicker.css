@@ -74,7 +74,22 @@
   border: none;
   border-radius: var(--radius-panel);
   background: var(--fill);
-  box-shadow: var(--section-shadow);
+  /* Drop is section elevation +25% blur / −25% opacity; bevels match --section-shadow (no-ops on minimal). */
+  box-shadow:
+    0 1px 3.75px color-mix(in srgb, #000 41.25%, transparent),
+    0 6px 33.75px color-mix(in srgb, #000 30%, transparent),
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
   overflow: visible;
   /* GSAP owns visibility on open (avoids first-paint hitch). */
   visibility: hidden;

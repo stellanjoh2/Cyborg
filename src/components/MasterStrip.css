@@ -635,6 +635,10 @@ html.is-safari .vu-leds.is-hot {
   color: var(--muted-solid);
   cursor: pointer;
   box-shadow: none;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .master-loop {
@@ -671,6 +675,7 @@ html.is-safari .vu-leds.is-hot {
   display: block;
   width: 28px;
   height: 28px;
+  transition: filter 0.18s ease;
 }
 
 .master-loop:hover:not(:disabled):not(.is-active) {

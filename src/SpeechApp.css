@@ -284,11 +284,23 @@ html.is-splash-void .scale-nav-bleed {
   box-shadow: var(--nav-bar-elevation);
 }
 
+.speech-top__left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--nav-theme-gap);
+  min-width: 0;
+}
+
 .speech-top__brand {
   justify-self: start;
   display: flex;
   align-items: center;
   min-width: 0;
+}
+
+.speech-top__voice-files {
+  flex: 0 0 auto;
 }
 
 .speech-top__mark {
@@ -867,7 +879,7 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .error.typewriter-reveal {
-  white-space: normal;
+  white-space: pre-line;
 }
 
 .error-modal .secondary.error-modal__ok {

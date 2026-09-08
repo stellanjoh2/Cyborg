@@ -109,10 +109,13 @@
       var(--emboss-glow-color) calc(var(--emboss-glow-opacity) * 100%),
       transparent
     );
+  /* Soft drop used by elevated panels / nav. */
+  --section-elevation:
+    0 1px 3px color-mix(in srgb, #000 55%, transparent),
+    0 6px 27px color-mix(in srgb, #000 40%, transparent);
   /* Elevation + top/bottom bevel only (no emboss glow, no L/R) — cheaper idle paint. */
   --section-shadow:
-    0 1px 3px color-mix(in srgb, #000 55%, transparent),
-    0 6px 27px color-mix(in srgb, #000 40%, transparent),
+    var(--section-elevation),
     inset 0 var(--bevel-offset) var(--bevel-radius)
       color-mix(
         in srgb,
@@ -133,9 +136,7 @@
       transparent
     );
   /* Soft drop under the nav — no inset bevel (emboss is on .scale-nav-bleed). */
-  --nav-bar-elevation:
-    0 1px 3px color-mix(in srgb, #000 55%, transparent),
-    0 6px 27px color-mix(in srgb, #000 40%, transparent);
+  --nav-bar-elevation: var(--section-elevation);
   /* Inverted bevel for recessed “holes” (meters, wells). */
   --section-recess-glow: inset 0 0 var(--emboss-glow-radius)
     color-mix(
@@ -198,6 +199,10 @@
   --nav-control-h: 48px;
   /* Osci ↔ RESET … EXPORT ↔ theme (keep Oscilloscope width + ThemePicker in sync). */
   --nav-theme-gap: 48px;
+  /* Mark + sep (24+2+24) + LX01 wordmark at --nav-control-h. */
+  --nav-brand-w: calc(
+    var(--nav-control-h) + 50px + var(--nav-control-h) * 474.91 / 99.91
+  );
   --logo: url('/cyborg-logo.svg');
   --logo-color: var(--accent);
   --logo-aspect: 474.91 / 99.91;

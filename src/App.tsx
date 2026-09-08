@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { AboutOverlay } from './components/AboutOverlay'
@@ -71,6 +71,12 @@ import {
   readVoiceEngine,
   type VoiceEngineId,
 } from './voiceEngines'
+import {
+  buildLxVoiceFile,
+  LXVOICE_EXTENSION,
+  parseLxVoiceFile,
+  saveLxVoiceFile,
+} from './lxVoiceFile'
 import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
@@ -213,6 +219,7 @@ export default function App() {
   const appRef = useRef<HTMLElement>(null)
   const splashLogoRef = useRef<LogotypeHandle>(null)
   const headerLogoRef = useRef<LogotypeHandle>(null)
+  const lxVoiceInputRef = useRef<HTMLInputElement>(null)
   const bakedVoiceRef = useRef<{
     text: string
     engine: VoiceEngineId
@@ -631,7 +638,12 @@ export default function App() {
 
       const navItemsAt = D + 0.08
       const navEls = gsap.utils.toArray<HTMLElement>(
-        ['.speech-top__brand', '.speech-scope', '.speech-top__right > *'].join(', '),
+        [
+          '.speech-top__brand',
+          '.speech-top__voice-files > *',
+          '.speech-scope',
+          '.speech-top__right > *',
+        ].join(', '),
       )
       const navStagger = 0.07
       ui.from(
@@ -650,14 +662,32 @@ export default function App() {
       const boardAt =
         navItemsAt + Math.max(0, navEls.length - 1) * navStagger + D
 
-      // —— 2. Master + side columns assemble together ——
+      // —— 2. Master (from below) + side columns assemble together ——
+      const sideDuration = D * 2.4
+      // Fade early so the plate is solid while it flies (same issue as a long
+      // autoAlpha + power3.out: most of the travel would stay invisible).
+      const masterPlate = '.speech-col--master .master-strip'
       ui.from(
-        '.speech-col--master .master-strip',
-        { autoAlpha: 0, y: 24, immediateRender: true },
+        masterPlate,
+        {
+          autoAlpha: 0,
+          duration: sideDuration * 0.28,
+          immediateRender: true,
+        },
         boardAt,
       )
-
-      const sideDuration = D * 2.4
+      ui.from(
+        masterPlate,
+        {
+          y: (_i, el) => {
+            const top = (el as HTMLElement).getBoundingClientRect().top
+            return (window.innerHeight - top + 24) / stageScale
+          },
+          duration: sideDuration,
+          immediateRender: true,
+        },
+        boardAt,
+      )
       ui.from(
         '.speech-col--voice',
         {
@@ -1206,6 +1236,71 @@ export default function App() {
     setVocoderUi(clonePresetVocoder(preset))
   }
 
+  const applyLoadedVoice = (loaded: {
+    speed: number
+    pitch: number
+    humanRobot: number
+    formant: number
+    vocoder: VocoderUiState
+  }) => {
+    const match = VOICE_PRESETS.find((preset) =>
+      presetMatches(preset, {
+        speed: loaded.speed,
+        pitch: loaded.pitch,
+        humanRobot: loaded.humanRobot,
+        formant: loaded.formant,
+        vocoder: loaded.vocoder,
+      }),
+    )
+    setVoiceId(match?.id ?? 'custom')
+    setSpeed(loaded.speed)
+    setPitch(loaded.pitch)
+    setHumanRobot(loaded.humanRobot)
+    setFormant(loaded.formant)
+    setVocoderUi({ ...DEFAULT_VOCODER_UI, ...loaded.vocoder })
+  }
+
+  const handleSaveLxVoice = () => {
+    const name =
+      voiceId === 'custom' ? 'custom' : getPresetById(voiceId).label
+    saveLxVoiceFile(
+      buildLxVoiceFile(
+        {
+          speed,
+          pitch,
+          humanRobot,
+          formant,
+          vocoder: vocoderUi,
+        },
+        name,
+      ),
+    )
+  }
+
+  const handleLoadLxVoiceClick = () => {
+    lxVoiceInputRef.current?.click()
+  }
+
+  const handleLoadLxVoiceFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) {
+      return
+    }
+
+    void file
+      .text()
+      .then((text) => {
+        applyLoadedVoice(parseLxVoiceFile(text))
+        setError(null)
+      })
+      .catch((err: unknown) => {
+        setError(
+          err instanceof Error ? err.message : 'Failed to load .lxvoice file.',
+        )
+      })
+  }
+
   const handleVoiceChange = (nextVoiceId: VoiceId) => {
     if (nextVoiceId === 'custom') {
       setVoiceId('custom')
@@ -1511,14 +1606,41 @@ export default function App() {
         </div>
       </div>
       <header className="speech-top">
-      <div className="speech-top__brand">
-        <span className="speech-top__mark" aria-hidden="true">
-          <span className="speech-top__mark-glyph" />
-        </span>
-        <span className="speech-top__sep" aria-hidden="true" />
-        <h1 className="speech-title" aria-label="LX01">
-          <Logotype ref={headerLogoRef} loopOnHover />
-        </h1>
+      <div className="speech-top__left">
+        <div className="speech-top__brand">
+          <span className="speech-top__mark" aria-hidden="true">
+            <span className="speech-top__mark-glyph" />
+          </span>
+          <span className="speech-top__sep" aria-hidden="true" />
+          <h1 className="speech-title" aria-label="LX01">
+            <Logotype ref={headerLogoRef} loopOnHover />
+          </h1>
+        </div>
+        <div className="speech-top__voice-files actions">
+          <input
+            ref={lxVoiceInputRef}
+            type="file"
+            accept={LXVOICE_EXTENSION}
+            hidden
+            onChange={handleLoadLxVoiceFile}
+          />
+          <button
+            className="secondary"
+            type="button"
+            onClick={handleLoadLxVoiceClick}
+            title={`Load voice preset (${LXVOICE_EXTENSION})`}
+          >
+            <span className="speech-top__btn-label">LOAD</span>
+          </button>
+          <button
+            className="secondary"
+            type="button"
+            onClick={handleSaveLxVoice}
+            title={`Save voice preset (${LXVOICE_EXTENSION})`}
+          >
+            <span className="speech-top__btn-label">SAVE</span>
+          </button>
+        </div>
       </div>
       <Oscilloscope />
       <div className="speech-top__right actions">

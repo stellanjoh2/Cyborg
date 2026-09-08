@@ -172,10 +172,36 @@ function normalizePostProcess(
   return mergePostProcess(DEFAULT_POST_PROCESS, postProcess)
 }
 
+function isSafariBrowser(): boolean {
+  const ua = navigator.userAgent
+  return (
+    /Safari/i.test(ua) &&
+    !/Chrome|Chromium|CriOS|Edg|EdgiOS|OPR|Firefox|FxiOS/i.test(ua)
+  )
+}
+
+function piperLoadFailedMessage(): string {
+  if (isSafariBrowser()) {
+    return [
+      'Piper could not load in Safari.',
+      '',
+      'This voice downloads a model and needs browser storage Safari often lacks — especially before Safari 26, or in Private Browsing.',
+      '',
+      'Switch the engine to SAM in Settings (works offline, no download). Or try Chrome, Firefox, or Safari 26+. Leave Private Browsing, and check that Hugging Face and CDNs aren’t blocked.',
+    ].join('\n')
+  }
+  return 'Piper voice failed to load. Check your network, then try again.'
+}
+
 export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
   const samples = await renderSamSamples(options)
   if (!samples) {
-    throw new Error('Could not synthesize speech. Please use some actual words that the machine can understand.')
+    const engine = options.engine ?? DEFAULT_VOICE_ENGINE
+    throw new Error(
+      engine === 'piper'
+        ? piperLoadFailedMessage()
+        : 'Could not synthesize speech. Please use some actual words that the machine can understand.',
+    )
   }
 
   const rendered = await renderSynthOffline(samples, {
@@ -213,7 +239,7 @@ export async function speakSam(options: SamSpeakOptions) {
   if (!samples) {
     const hint =
       engine === 'piper'
-        ? 'Piper voice failed to load. Check your network, then try again.'
+        ? piperLoadFailedMessage()
         : 'Could not synthesize speech. Please use some actual words that the machine can understand.'
     options.onError?.(hint)
     return
