@@ -323,9 +323,11 @@ export function MasterStrip({
         holdingPeak = false
         const bootDb = lit > 0 ? segmentMeterDb(lit - 1, ridgesCount) : MIN_METER_DB
         // Boot sweep: light red LEDs, but never the hot capsule stroke / peak alarm.
+        // Peak lamp stays dark until the solo ridge reaches the top segment.
+        const atTop = lit >= ridgesCount
         inRed = false
-        inYellow = bootDb >= YELLOW_METER_DB
-        isLive = !inYellow && lit > 0
+        inYellow = atTop && bootDb >= YELLOW_METER_DB
+        isLive = atTop && !inYellow && lit > 0
       } else {
         const meterDb = linearToMeterDb(displayed.current)
         lit = meterDbToLit(meterDb, ridgesCount)
