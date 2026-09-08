@@ -13,7 +13,7 @@ export function readPerformanceMode(): PerformanceMode {
   } catch {
     // ignore
   }
-  return 'high'
+  return 'low'
 }
 
 export function applyPerformanceMode(mode: PerformanceMode) {

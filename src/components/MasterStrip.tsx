@@ -25,8 +25,6 @@ function formatPlaybackClock(elapsed: number, duration: number): string {
   return `${formatClockSeconds(elapsed)}/${formatClockSeconds(duration)}`
 }
 
-/** Target pitch of one ridge + gap. */
-const RIDGE_PERIOD_PX = 14
 /** Must match `.master-fader__track` / `.vu-leds` `--ridge-gap`. */
 const RIDGE_GAP_PX = 2
 /** DJM-A9 default: meter 0 ≈ −21 dBFS */
@@ -69,22 +67,23 @@ export function activateRidgeLit(progress: number, ridges: number): number {
   return Math.min(ridges, Math.ceil(progress * ridges))
 }
 
+/** Height the fill/ridge mask use (full padding box — tips bleed like VU LEDs). */
 export function trackInnerHeight(track: HTMLElement): number {
-  const styles = getComputedStyle(track)
-  return (
-    track.clientHeight -
-    Number.parseFloat(styles.paddingTop) -
-    Number.parseFloat(styles.paddingBottom)
-  )
+  return track.clientHeight
 }
 
+/**
+ * Integer ridge count so tip segments ≈ pill radius.
+ * First/last dividers land on the cap tangents (not mid-curve).
+ */
 function ridgesForTrack(track: HTMLElement): number {
   const inner = trackInnerHeight(track)
   const gap =
     Number.parseFloat(getComputedStyle(track).getPropertyValue('--ridge-gap')) ||
     RIDGE_GAP_PX
-  // floor keeps period ≥ target; CSS (100% + gap) / n tiles an exact integer count
-  return Math.max(1, Math.floor((inner + gap) / RIDGE_PERIOD_PX))
+  const radius = track.clientWidth / 2
+  const period = Math.max(gap + 1, radius + gap)
+  return Math.max(1, Math.round((inner + gap) / period))
 }
 
 function linearToMeterDb(linear: number): number {
@@ -247,7 +246,7 @@ export function MasterStrip({
   const volumeShown = volumeFill ?? volumeAnim.displayed
   const volumeLit = volumeFill ?? volume
 
-  // After intro volume boot, clear the imperative transform only once live
+  // After intro volume boot, clear the imperative clip only once live
   // --fill-* are committed — otherwise the bar flashes empty (React still at 0).
   useLayoutEffect(() => {
     if (volumeFill != null) return
@@ -255,7 +254,6 @@ export function MasterStrip({
       '.master-fader:nth-child(1) .master-fader__fill',
     )
     if (fill instanceof HTMLElement) {
-      fill.style.removeProperty('transform')
       fill.style.removeProperty('clip-path')
     }
   }, [volumeFill])
@@ -398,7 +396,6 @@ export function MasterStrip({
             leds[i].classList.toggle('is-on', on)
           }
         }
-        root.classList.toggle('is-hot', inRed)
       }
 
       const peak = peakRef.current

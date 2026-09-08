@@ -986,23 +986,16 @@ export default function App() {
           ) || 24
         bootInnerPx = trackInnerHeight(volumeTrack)
       }
-      /** Volume boot: clip-path inset (no scaleY) — scaled fills under overflow+radius thrash the stage layer. */
-      const setVolumeBootClip = (end: number) => {
-        if (!volumeFillEl) return
-        const top = Math.max(0, Math.min(100, 100 - end))
-        volumeFillEl.style.transform = 'translateZ(0)'
-        volumeFillEl.style.clipPath = `inset(${top}% 0 0 0)`
-      }
-      /** Gain solo-ridge still uses transform window (small band, few updates). */
-      const setFillTransform = (
+      /** Meter boot/live: clip-path inset — scaleY under overflow+radius flattens tips. */
+      const setFillClip = (
         el: HTMLElement | null | undefined,
         start: number,
         end: number,
       ) => {
         if (!el) return
-        const a = start / 100
-        const b = end / 100
-        el.style.transform = `translateZ(0) translateY(${-a * 100}%) scaleY(${Math.max(0, b - a)})`
+        const top = Math.max(0, Math.min(100, 100 - end))
+        const bottom = Math.max(0, Math.min(100, start))
+        el.style.clipPath = `inset(${top}% 0 ${bottom}% 0)`
       }
       // Snap to ridge steps — avoid per-frame style writes under the ridge mask.
       const paintVolumeBoot = (progress: number) => {
@@ -1015,7 +1008,7 @@ export default function App() {
             : lit >= bootRidges
               ? 100
               : ridgeFillWindow(lit, bootRidges, bootInnerPx).end
-        setVolumeBootClip(end)
+        setFillClip(volumeFillEl, 0, end)
         if (volumeValue) {
           volumeValue.textContent = String(
             Math.round(bootRidges > 0 ? (lit / bootRidges) * 100 : 0),
@@ -1028,7 +1021,7 @@ export default function App() {
         lastGainLit = lit
         introBoot.gainProgress = progress
         const window = ridgeFillWindow(lit, bootRidges, bootInnerPx)
-        setFillTransform(gainFillEl, window.start, window.end)
+        setFillClip(gainFillEl, window.start, window.end)
       }
 
       const volumeProxy = { v: 0 }
@@ -1050,7 +1043,7 @@ export default function App() {
           },
           onUpdate: () => paintVolumeBoot(volumeProxy.v),
           onComplete: () => {
-            // Leave inline transform until MasterStrip commits live --fill-*
+            // Leave inline clip until MasterStrip commits live --fill-*
             // (removing here flashes empty while volumeFill is still 0).
             setVolumeFill(null)
           },
@@ -1074,10 +1067,10 @@ export default function App() {
           },
           onUpdate: () => paintGainBoot(activateGainProxy.v),
           onComplete: () => {
-            // Match live gain (default 0) before dropping the boot transform.
+            // Match live gain (default 0) before dropping the boot clip.
             introBoot.gainProgress = null
-            setFillTransform(gainFillEl, 0, 0)
-            gainFillEl?.style.removeProperty('transform')
+            setFillClip(gainFillEl, 0, 0)
+            gainFillEl?.style.removeProperty('clip-path')
           },
         },
         activateGainAt,

@@ -60,7 +60,22 @@
   border: none;
   border-radius: calc(var(--radius-panel) / 2);
   background: var(--fill);
-  box-shadow: var(--section-shadow);
+  /* Match theme-picker modal: section elevation +25% blur / −25% opacity ×2 + bevels. */
+  box-shadow:
+    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
+    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
   overflow: visible;
   visibility: hidden;
 }

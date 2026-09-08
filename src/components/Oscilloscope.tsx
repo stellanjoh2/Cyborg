@@ -8,11 +8,35 @@ const REFERENCE_DBFS = -21
 const MIN_METER_DB = -26
 const YELLOW_METER_DB = 0
 const RED_METER_DB = 12
+const SCOPE_BG_FALLBACK = '#0a0a0a'
+
 function linearToMeterDb(linear: number): number {
   if (linear <= 0.0001) {
     return MIN_METER_DB
   }
   return Math.max(MIN_METER_DB, 20 * Math.log10(linear) - REFERENCE_DBFS)
+}
+
+/** Relative luminance 0–1 for #rgb / #rrggbb (enough for theme hex palettes). */
+function hexLuma(color: string): number {
+  const raw = color.trim()
+  const hex = raw.startsWith('#') ? raw.slice(1) : raw
+  let r = 0
+  let g = 0
+  let b = 0
+  if (hex.length === 3) {
+    r = Number.parseInt(hex[0]! + hex[0]!, 16)
+    g = Number.parseInt(hex[1]! + hex[1]!, 16)
+    b = Number.parseInt(hex[2]! + hex[2]!, 16)
+  } else if (hex.length >= 6) {
+    r = Number.parseInt(hex.slice(0, 2), 16)
+    g = Number.parseInt(hex.slice(2, 4), 16)
+    b = Number.parseInt(hex.slice(4, 6), 16)
+  } else {
+    return 0
+  }
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return 0
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
 }
 
 /**
@@ -66,9 +90,14 @@ export function Oscilloscope() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    const drawGrid = (w: number, h: number, color: string) => {
+    const drawGrid = (
+      w: number,
+      h: number,
+      color: string,
+      alpha: number,
+    ) => {
       ctx.strokeStyle = color
-      ctx.globalAlpha = 0.14
+      ctx.globalAlpha = alpha
       ctx.lineWidth = 1
       ctx.beginPath()
       const midY = h * 0.5
@@ -83,25 +112,40 @@ export function Oscilloscope() {
       ctx.globalAlpha = 1
     }
 
+    const scopeBg = () =>
+      cssVar('--scope-bg', '') ||
+      cssVar('--black', SCOPE_BG_FALLBACK) ||
+      SCOPE_BG_FALLBACK
+
     const tick = () => {
-      // Intro is paint-heavy; keep the scope dark until VU lamp boot finishes.
+      resize()
+      const w = cssW
+      const h = cssH
+      const bg = scopeBg()
+
+      // Intro is paint-heavy; hold a themed plate until VU crest opens the curtain.
       if (!introBoot.scopeLive) {
+        ctx.globalAlpha = 1
+        ctx.fillStyle = bg
+        ctx.fillRect(0, 0, w, h)
         frame = requestAnimationFrame(tick)
         return
       }
 
-      resize()
-      const w = cssW
-      const h = cssH
       const peak = readMasterPeak()
       const phosphor = beamColor(peak)
+      const lightPlate = hexLuma(bg) > 0.42
+      const gridAlpha = lightPlate ? 0.28 : 0.14
+      const beamWidth = lightPlate ? 2 : 1.5
+      const idleAlpha = lightPlate ? 0.8 : 0.45
+      const glow = lightPlate ? 3 : 6
 
-      // Phosphor persistence fade
-      ctx.fillStyle = '#0a0a0a'
+      // Phosphor persistence fade toward the themed plate (not hardcoded CRT black).
+      ctx.fillStyle = bg
       ctx.globalAlpha = 0.35
       ctx.fillRect(0, 0, w, h)
       ctx.globalAlpha = 1
-      drawGrid(w, h, phosphor)
+      drawGrid(w, h, phosphor, gridAlpha)
 
       const analyser = getMasterAnalyser()
       if (analyser) {
@@ -110,10 +154,10 @@ export function Oscilloscope() {
         }
         analyser.getByteTimeDomainData(data)
 
-        ctx.lineWidth = 1.5
+        ctx.lineWidth = beamWidth
         ctx.strokeStyle = phosphor
         ctx.shadowColor = phosphor
-        ctx.shadowBlur = 6
+        ctx.shadowBlur = glow
         ctx.beginPath()
 
         // Extra hot beam: 8× mid-rail excursion (clamped to CRT).
@@ -136,8 +180,8 @@ export function Oscilloscope() {
       } else {
         // Idle beam
         ctx.strokeStyle = phosphor
-        ctx.globalAlpha = 0.45
-        ctx.lineWidth = 1.25
+        ctx.globalAlpha = idleAlpha
+        ctx.lineWidth = lightPlate ? 1.75 : 1.25
         ctx.beginPath()
         ctx.moveTo(0, h * 0.5)
         ctx.lineTo(w, h * 0.5)
