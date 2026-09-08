@@ -66,7 +66,7 @@ function KnobComponent({
     useAnimatedNumber(safeValue)
   // Boot: arms start at min and ease toward the committed value.
   const shown =
-    boot == null ? displayed : min + (displayed - min) * boot
+    boot == null ? displayed : min + (safeValue - min) * boot
   const angle = valueToKnobAngle(shown, min, max)
   const fill = valueToKnobFill(shown, min, max)
   const fillPath = knobFillArcPath(fill, 50, 50, DIAL_RADIUS)
