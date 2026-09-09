@@ -5,7 +5,7 @@ import { PRONUNCIATION_OVERRIDES } from './pronunciationOverrides'
 type CmuDictionary = Record<string, string>
 
 let dictionaryPromise: Promise<CmuDictionary> | null = null
-const toWords = new ToWords()
+const toWords = new ToWords({ localeCode: 'en-US' })
 
 function loadDictionary(): Promise<CmuDictionary> {
   if (!dictionaryPromise) {

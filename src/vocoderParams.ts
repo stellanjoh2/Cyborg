@@ -94,27 +94,27 @@ function clampBandHz(hz: number): number {
 }
 
 /**
- * Cutoff shifts the analysis bank (~0.5×…2×). Formant shifts synthesis
- * independently from the same base. Relative mismatch is what you hear —
- * synthesis must not track analysis or Cutoff disappears.
+ * Formant shifts the whole bank (~0.35×…2.8×) — vocal-tract length.
+ * Cutoff offsets analysis only so the modulator/carrier mismatch stays audible.
  */
 export function analysisCenterHz(
   bandIndex: number,
   params: VocoderParams,
 ): number {
   const base = BASE_BAND_HZ[bandIndex] ?? 1000
-  const shift = (clamp(params.cutoff, -63, 63) / 63) * 1.0
-  return clampBandHz(base * 2 ** shift)
+  const formantShift = (clamp(params.formant, 0, 1) - 0.5) * 2 * 1.5
+  const cutoffShift = (clamp(params.cutoff, -63, 63) / 63) * 1.0
+  return clampBandHz(base * 2 ** (formantShift + cutoffShift))
 }
 
-/** Formant shifts synthesis (~0.35×…2.8×) off the unshifted base. */
+/** Synthesis tracks formant with analysis; cutoff does not follow. */
 export function synthesisCenterHz(
   bandIndex: number,
   params: VocoderParams,
 ): number {
   const base = BASE_BAND_HZ[bandIndex] ?? 1000
-  const coarse = (clamp(params.formant, 0, 1) - 0.5) * 2
-  return clampBandHz(base * 2 ** (coarse * 1.5))
+  const formantShift = (clamp(params.formant, 0, 1) - 0.5) * 2 * 1.5
+  return clampBandHz(base * 2 ** formantShift)
 }
 
 export function bandCenterHz(
