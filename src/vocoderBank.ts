@@ -4,6 +4,7 @@ import {
   mapBandLevel,
   mapBandPan,
   mapCarrierCutoffHz,
+  mapCarrierResonanceGainDb,
   mapCarrierResonanceQ,
   mapEfSenseToSmoothingHz,
   mapResonanceToQ,
@@ -41,6 +42,8 @@ export interface AnalogCarrierGraph {
   sawGain: GainNode
   squareGain: GainNode
   filter: BiquadFilterNode
+  /** Wide peaking stage so Reso isn't killed between vocoder bands. */
+  reso: BiquadFilterNode
   oscGain: GainNode
   speechGain: GainNode
 }
@@ -233,6 +236,11 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
   filter.type = 'lowpass'
   filter.Q.value = mapCarrierResonanceQ(0.32)
   filter.frequency.value = mapCarrierCutoffHz(0.58)
+  const reso = context.createBiquadFilter()
+  reso.type = 'peaking'
+  reso.Q.value = 1
+  reso.gain.value = mapCarrierResonanceGainDb(0.32)
+  reso.frequency.value = mapCarrierCutoffHz(0.58)
   const oscGain = context.createGain()
   oscGain.gain.value = 0
   const speechGain = context.createGain()
@@ -243,7 +251,8 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
   square.connect(squareGain)
   sawGain.connect(filter)
   squareGain.connect(filter)
-  filter.connect(oscGain)
+  filter.connect(reso)
+  reso.connect(oscGain)
   oscGain.connect(carrierBus)
   input.connect(speechGain)
   speechGain.connect(carrierBus)
@@ -267,6 +276,7 @@ export function buildVocoderBank(context: BaseAudioContext): VocoderBankGraph {
       sawGain,
       squareGain,
       filter,
+      reso,
       oscGain,
       speechGain,
     },
@@ -304,7 +314,8 @@ export function applyVocoderParams(
   const amount = Math.min(Math.max(params.carrierAmount, 0), 1)
   const mix = Math.min(Math.max(params.carrierMix, 0), 1)
   const unvoice = Math.min(Math.max(params.unvoice, 0), 1)
-  const carrierHz = analogCarrierHz(voicePitch)
+  const oscHz = analogCarrierHz(voicePitch)
+  const toneHz = mapCarrierCutoffHz(params.carrierCutoff)
 
   setBankParam(bank.dryBlend.gain, DRY_BLEND * (1 - amount), now, rampSeconds)
   setBankParam(bank.carrier.speechGain.gain, 1 - amount, now, rampSeconds)
@@ -332,20 +343,22 @@ export function applyVocoderParams(
     now,
     rampSeconds,
   )
-  setBankParam(
-    bank.carrier.filter.frequency,
-    mapCarrierCutoffHz(params.carrierCutoff),
-    now,
-    rampSeconds,
-  )
+  setBankParam(bank.carrier.filter.frequency, toneHz, now, rampSeconds)
   setBankParam(
     bank.carrier.filter.Q,
     mapCarrierResonanceQ(params.carrierResonance),
     now,
     rampSeconds,
   )
-  setBankParam(bank.carrier.saw.frequency, carrierHz, now, rampSeconds)
-  setBankParam(bank.carrier.square.frequency, carrierHz, now, rampSeconds)
+  setBankParam(bank.carrier.reso.frequency, toneHz, now, rampSeconds)
+  setBankParam(
+    bank.carrier.reso.gain,
+    mapCarrierResonanceGainDb(params.carrierResonance),
+    now,
+    rampSeconds,
+  )
+  setBankParam(bank.carrier.saw.frequency, oscHz, now, rampSeconds)
+  setBankParam(bank.carrier.square.frequency, oscHz, now, rampSeconds)
   setBankParam(
     bank.unvoice.amountGain.gain,
     unvoice * UNVOICE_GAIN_MAX,

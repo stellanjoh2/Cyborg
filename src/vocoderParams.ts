@@ -140,8 +140,14 @@ export function mapCarrierCutoffHz(amount: number): number {
   return 120 * 2 ** (clamp(amount, 0, 1) * 6)
 }
 
+/** Mild lowpass whistle — a narrow LPF peak alone gets eaten by the band bank. */
 export function mapCarrierResonanceQ(amount: number): number {
-  return 0.5 + clamp(amount, 0, 1) * 11.5
+  return 0.7 + clamp(amount, 0, 1) * 6
+}
+
+/** Wide peaking boost (dB) at Tone so Reso stays audible through the bandpasses. */
+export function mapCarrierResonanceGainDb(amount: number): number {
+  return clamp(amount, 0, 1) * 14
 }
 
 export function formatCarrierMix(value: number): string {
@@ -164,5 +170,5 @@ export function formatCarrierCutoff(value: number): string {
 }
 
 export function formatCarrierResonance(value: number): string {
-  return mapCarrierResonanceQ(value / 100).toFixed(1)
+  return mapCarrierResonanceGainDb(value / 100).toFixed(1)
 }
