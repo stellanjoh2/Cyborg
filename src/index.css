@@ -274,9 +274,13 @@ html.theme-minimal {
   --emboss-glow-opacity: 0;
 }
 
-/* Performance Low — kill glow + soft-light grain for lower-spec machines. */
-html.perf-low {
+/* Soft-light grain off — cheaper paint for lower-spec machines. */
+html.grain-off {
   --grain-opacity: 0;
+}
+
+/* Accent / emboss glow off — cheaper paint for lower-spec machines. */
+html.glow-off {
   --section-inset-glow: none;
   --section-recess-glow: none;
   --glow-outer: none;
@@ -290,13 +294,13 @@ html.perf-low {
 /* Hardcoded glow filters that don't read --glow-filter / --glow-outer. */
 html.theme-minimal .master-play__spin,
 html.theme-minimal .master-play__icon,
-html.perf-low .master-play__spin,
-html.perf-low .master-play__icon {
+html.glow-off .master-play__spin,
+html.glow-off .master-play__icon {
   filter: none;
 }
 
 html.theme-minimal .master-mute.is-active,
-html.perf-low .master-mute.is-active {
+html.glow-off .master-mute.is-active {
   box-shadow: none;
 }
 

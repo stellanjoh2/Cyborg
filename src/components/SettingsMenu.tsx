@@ -10,10 +10,11 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { SettingsIcon } from './icons'
 import {
-  applyPerformanceMode,
-  readPerformanceMode,
-  type PerformanceMode,
-} from '../ui/performance'
+  applyGrainEnabled,
+  applyGlowEnabled,
+  readGrainEnabled,
+  readGlowEnabled,
+} from '../ui/visualFx'
 import {
   getUiSoundsEnabled,
   playUiSound,
@@ -116,7 +117,8 @@ export function SettingsMenu({
   const introRef = useRef(true)
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [performance, setPerformance] = useState(readPerformanceMode)
+  const [grain, setGrain] = useState(readGrainEnabled)
+  const [glow, setGlow] = useState(readGlowEnabled)
   const [uiSounds, setUiSounds] = useState(getUiSoundsEnabled)
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null)
 
@@ -257,9 +259,15 @@ export function SettingsMenu({
     { dependencies: [open, mounted] },
   )
 
-  const setPerformanceMode = (mode: PerformanceMode) => {
-    setPerformance(mode)
-    applyPerformanceMode(mode)
+  const setGrainEnabled = (enabled: boolean) => {
+    setGrain(enabled)
+    applyGrainEnabled(enabled)
+    playUiSound('ok')
+  }
+
+  const setGlowEnabled = (enabled: boolean) => {
+    setGlow(enabled)
+    applyGlowEnabled(enabled)
     playUiSound('ok')
   }
 
@@ -302,13 +310,22 @@ export function SettingsMenu({
                 onChange={setEngine}
               />
               <SegmentedOption
-                label="Performance"
-                value={performance}
+                label="Grain"
+                value={grain ? 'on' : 'off'}
                 options={[
-                  { value: 'low', label: 'Low' },
-                  { value: 'high', label: 'High' },
+                  { value: 'off', label: 'Off' },
+                  { value: 'on', label: 'On' },
                 ]}
-                onChange={setPerformanceMode}
+                onChange={(value) => setGrainEnabled(value === 'on')}
+              />
+              <SegmentedOption
+                label="Glow"
+                value={glow ? 'on' : 'off'}
+                options={[
+                  { value: 'off', label: 'Off' },
+                  { value: 'on', label: 'On' },
+                ]}
+                onChange={(value) => setGlowEnabled(value === 'on')}
               />
               <SegmentedOption
                 label="UI Sounds"

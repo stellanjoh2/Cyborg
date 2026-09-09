@@ -683,7 +683,12 @@ html.is-splash-void .scale-nav-bleed {
 .field-readout .is-spoken {
   --glow-color: var(--vu);
   color: var(--vu);
-  text-shadow: var(--glow-outer);
+  /* Don't use --glow-outer: it inherits :root's resolved lime, not local --glow-color. */
+  text-shadow:
+    0 0 var(--glow-blur-tight)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent),
+    0 0 var(--glow-blur-wide)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent);
 }
 
 .post-process,

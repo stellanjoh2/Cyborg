@@ -392,7 +392,7 @@ html.is-safari .vu-leds::after {
   padding-block: 0;
 }
 
-/* LCD speech clock — same width as play; dark capsule, accent → VU while playing */
+/* LCD speech clock — accent idle; VU + matching glow while playing (with play / meters). */
 .master-clock {
   --glow-color: var(--accent);
   position: relative;
@@ -457,7 +457,12 @@ html.is-safari .vu-leds::after {
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--glow-color);
-  text-shadow: var(--glow-outer);
+  /* Don't use --glow-outer: it inherits :root's resolved lime, not local --glow-color. */
+  text-shadow:
+    0 0 var(--glow-blur-tight)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-tight), transparent),
+    0 0 var(--glow-blur-wide)
+      color-mix(in srgb, var(--glow-color) var(--glow-mix-wide), transparent);
   text-align: center;
   white-space: nowrap;
   user-select: none;

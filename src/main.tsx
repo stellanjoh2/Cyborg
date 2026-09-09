@@ -12,14 +12,11 @@ import {
 } from './colorThemes'
 import './index.css'
 import App from './App.tsx'
-import {
-  applyPerformanceMode,
-  readPerformanceMode,
-} from './ui/performance'
+import { applyVisualFx } from './ui/visualFx'
 import { initUiSounds } from './ui/sounds'
 
 applyColorTheme(getThemeById(readStoredThemeId()))
-applyPerformanceMode(readPerformanceMode())
+applyVisualFx()
 initUiSounds()
 
 const mobile = isMobileDevice()

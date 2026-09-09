@@ -57,6 +57,7 @@ import {
   updateSamLiveParams,
 } from './samSpeech'
 import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
+import { readGrainEnabled } from './ui/visualFx'
 import { preloadPronunciationDictionary } from './samPronunciation'
 import {
   splitSpokenParts,
@@ -352,12 +353,17 @@ export default function App() {
       if (navBleed) gsap.set(navBleed, { autoAlpha: 0 })
 
       const D = 0.55
+      // Grain on: stay visible from frame one. Grain off: hold/fade (opacity already 0).
+      const grainAlwaysOn = readGrainEnabled()
       let grainTween: gsap.core.Tween | undefined
       let clockBlinkTl: gsap.core.Timeline | undefined
       const clearIntroGrain = () => {
         grainTween?.kill()
         grainTween = undefined
         root.style.removeProperty('--panel-grain')
+      }
+      if (grainAlwaysOn) {
+        gsap.set(root, { '--panel-grain': 1 })
       }
       const clearClockBlink = () => {
         clockBlinkTl?.kill()
@@ -389,7 +395,7 @@ export default function App() {
       const tl = gsap.timeline({
         onComplete: () => {
           warmGlows()
-          clearIntroGrain()
+          // Grain fades on its own tween — don't kill/snap it here.
           clearClockBlink()
           document.documentElement.classList.remove(
             'is-splash-void',
@@ -1099,13 +1105,20 @@ export default function App() {
             },
           )
         }
-        // Soft-light grain after meters — never during volume climb.
-        grainTween?.kill()
-        grainTween = gsap.fromTo(
-          root,
-          { '--panel-grain': 0 },
-          { '--panel-grain': 1, duration: 2, ease: 'none' },
-        )
+        // Soft-light grain after meters — never during volume climb (grain off path).
+        if (!grainAlwaysOn) {
+          grainTween?.kill()
+          grainTween = gsap.fromTo(
+            root,
+            { '--panel-grain': 0 },
+            {
+              '--panel-grain': 1,
+              duration: 1,
+              ease: 'none',
+              onComplete: clearIntroGrain,
+            },
+          )
+        }
       }
       ui.fromTo(
         activateVuProxy,
