@@ -138,7 +138,7 @@ export function formatDelayLength(sliderValue: number): string {
 }
 
 export function formatDelayFeedback(sliderValue: number): string {
-  const percent = Math.round(slider(sliderValue) * 88)
+  const percent = Math.round(slider(sliderValue) * 100)
   return `${percent}%`
 }
 

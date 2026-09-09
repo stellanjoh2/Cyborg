@@ -823,7 +823,7 @@ function applyPostProcessToGraph(
   )
   setAudioParam(
     nodes.delayFeedback.gain,
-    clamp(delay.feedback, 0, 1) * 0.88,
+    clamp(delay.feedback, 0, 1),
     now,
     rampSeconds,
   )
@@ -1128,10 +1128,12 @@ export function computeExportTailSeconds(postProcess: PostProcessParams): number
   const delay = postProcess.delay
   if (delay.amount > 0.01) {
     const delayTime = mapDelayTimeMs(delay.length)
-    const feedback = clamp(delay.feedback, 0, 1) * 0.88
+    const feedback = clamp(delay.feedback, 0, 1)
 
     if (feedback > 0.05) {
-      const echoCount = Math.log(0.001) / Math.log(feedback)
+      // At unity feedback, log(1)=0 → Infinity; clamp for a finite export pad.
+      const safeFb = Math.min(feedback, 0.999)
+      const echoCount = Math.log(0.001) / Math.log(safeFb)
       tail = Math.max(tail, delayTime * echoCount + delayTime)
     } else {
       tail = Math.max(tail, delayTime * 2)
@@ -1837,6 +1839,8 @@ export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
   lastPositionTime = 0
   onEndCallback = null
   if (graph) {
+    // Unity feedback recirculates forever; clear the delay line on stop.
+    flushDelayNode(graph)
     const liveContext = graph.context as AudioContext
     if (liveContext.state === 'suspended') {
       void liveContext.resume()
