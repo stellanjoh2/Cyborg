@@ -103,7 +103,7 @@ import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
 
-const DEFAULT_TEXT = `Watching John with the machine, it was suddenly so clear. The terminator would never stop. It would never leave him, and it would never hurt him, never shout at him, or get drunk and hit him, or say it was too busy to spend time with him. It would always be there. And it would die to protect him.`
+const DEFAULT_TEXT = `August 29, 1997 came and went. Nothing much happened. Michael Jackson turned 40. There was no Judgment Day. People went to work as they always do. Laughed, complained, watched TV, made love. I wanted to run to through the street yelling to grab them all and say, "Every day from this day on is a gift. Use it well.`
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
