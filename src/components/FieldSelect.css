@@ -46,19 +46,6 @@
   transform: translateY(1px);
 }
 
-.field-select--voice .field-select__option {
-  font-size: var(--font-m);
-  padding: 8px 10px 8px 0;
-}
-
-.field-select--voice .field-select__menu {
-  /* Pull left so option glyphs share an edge with the trigger label */
-  left: calc(-1 * var(--stroke-width));
-  min-width: max(100%, 8em);
-  padding: 4px 8px 4px 0;
-  transform: none;
-}
-
 .field-select__trigger {
   appearance: none;
   display: flex;
@@ -110,6 +97,22 @@
   border-radius: var(--radius);
   background: var(--fill);
   box-shadow: var(--section-shadow);
+}
+
+/* Portaled into .speech-app so panel isolation / overflow can't bury it. */
+.field-select__menu--portal {
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.field-select__menu--voice {
+  padding: 4px 8px 4px 0;
+}
+
+.field-select__menu--voice .field-select__option {
+  font-size: var(--font-m);
+  padding: 8px 10px 8px 0;
 }
 
 .field-select__option {

@@ -27,6 +27,9 @@ export default defineConfig({
           ) {
             return 'piper-tts'
           }
+          if (id.includes('espeak-ng')) {
+            return 'espeak-tts'
+          }
         },
       },
     },

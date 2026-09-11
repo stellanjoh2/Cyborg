@@ -491,7 +491,7 @@ html.is-safari .vu-leds::after {
 }
 
 .master-play.is-loading {
-  --master-play-accent: var(--accent);
+  --master-play-accent: var(--error);
 }
 
 .master-play:focus-visible {
@@ -565,7 +565,7 @@ html.is-safari .vu-leds::after {
 }
 
 .master-play.is-loading .master-play__spin {
-  /* 0.25× play spin speed */
+  /* 0.25× play spin speed — reads as loading, not playback */
   animation-duration: 2.88s;
 }
 

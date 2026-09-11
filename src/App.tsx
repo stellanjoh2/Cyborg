@@ -78,6 +78,7 @@ import {
 import {
   DEFAULT_PITCH_BY_ENGINE,
   readVoiceEngine,
+  usesSelectableVoice,
   type VoiceEngineId,
 } from './voiceEngines'
 import {
@@ -86,6 +87,12 @@ import {
   writePiperVoice,
   type PiperVoiceId,
 } from './piperVoices'
+import {
+  ESPEAK_VOICE_OPTIONS,
+  readEspeakVoice,
+  writeEspeakVoice,
+  type EspeakVoiceId,
+} from './espeakVoices'
 import {
   buildLxVoiceFile,
   LXVOICE_EXTENSION,
@@ -211,6 +218,7 @@ export default function App() {
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
   const [voiceEngine, setVoiceEngine] = useState<VoiceEngineId>(readVoiceEngine)
   const [piperVoice, setPiperVoice] = useState<PiperVoiceId>(readPiperVoice)
+  const [espeakVoice, setEspeakVoice] = useState<EspeakVoiceId>(readEspeakVoice)
   const [speed, setSpeed] = useState(1)
   const [pitch, setPitch] = useState(
     () => DEFAULT_PITCH_BY_ENGINE[readVoiceEngine()],
@@ -239,10 +247,13 @@ export default function App() {
     text: string
     engine: VoiceEngineId
     piperVoice: PiperVoiceId
+    espeakVoice: EspeakVoiceId
     rate: number
     pitch: number
     metallic: number
   } | null>(null)
+  /** Invalidates in-flight voice-swap loading so stale finishes don't clear a newer load. */
+  const speechLoadEpochRef = useRef(0)
   const transportToggleRef = useRef<() => void>(() => {})
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
@@ -1273,7 +1284,7 @@ export default function App() {
 
     // SAM re-bakes samples for Robot/speed/pitch; don't also retarget the
     // playing buffer's rate (that can finish the old buffer early).
-    // Piper bakes once and needs live playbackRate for realtime knobs.
+    // Piper / eSpeak bake once and need live playbackRate for realtime knobs.
     updateSamLiveParams(
       {
         speed: livePlan.rate,
@@ -1312,6 +1323,7 @@ export default function App() {
       text: text.trim(),
       engine: voiceEngine,
       piperVoice,
+      espeakVoice,
       rate: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1322,6 +1334,7 @@ export default function App() {
       baked.text !== next.text ||
       baked.engine !== next.engine ||
       baked.piperVoice !== next.piperVoice ||
+      baked.espeakVoice !== next.espeakVoice ||
       (voiceEngine === 'sam' &&
         (baked.rate !== next.rate ||
           baked.pitch !== next.pitch ||
@@ -1331,12 +1344,39 @@ export default function App() {
       return
     }
 
+    const selectableVoiceSwap =
+      usesSelectableVoice(next.engine) &&
+      (!baked ||
+        baked.engine !== next.engine ||
+        baked.piperVoice !== next.piperVoice ||
+        baked.espeakVoice !== next.espeakVoice)
+
     const handle = window.setTimeout(() => {
       bakedVoiceRef.current = next
+      if (selectableVoiceSwap) {
+        const epoch = ++speechLoadEpochRef.current
+        setIsLoadingSpeech(true)
+        void refreshSamLiveBuffer({
+          text: next.text,
+          engine: next.engine,
+          piperVoice: next.piperVoice,
+          espeakVoice: next.espeakVoice,
+          speed: next.rate,
+          pitch: next.pitch,
+          metallic: next.metallic,
+        }).finally(() => {
+          if (speechLoadEpochRef.current === epoch) {
+            setIsLoadingSpeech(false)
+          }
+        })
+        return
+      }
+
       void refreshSamLiveBuffer({
         text: next.text,
         engine: next.engine,
         piperVoice: next.piperVoice,
+        espeakVoice: next.espeakVoice,
         speed: next.rate,
         pitch: next.pitch,
         metallic: next.metallic,
@@ -1350,6 +1390,7 @@ export default function App() {
     livePlan.pitch,
     livePlan.metallic,
     piperVoice,
+    espeakVoice,
     text,
     voiceEngine,
   ])
@@ -1406,20 +1447,19 @@ export default function App() {
 
   const activePresetId = voiceId === 'custom' ? 'default' : voiceId
   const activePreset = getPresetById(activePresetId)
-  const voiceDefaults =
-    voiceEngine === 'piper'
-      ? {
-          speed: 1,
-          pitch: DEFAULT_PITCH_BY_ENGINE.piper,
-          humanRobot: 0,
-          formant: 50,
-        }
-      : {
-          speed: activePreset.speed,
-          pitch: activePreset.pitch,
-          humanRobot: activePreset.humanRobot,
-          formant: activePreset.formant,
-        }
+  const voiceDefaults = usesSelectableVoice(voiceEngine)
+    ? {
+        speed: 1,
+        pitch: DEFAULT_PITCH_BY_ENGINE[voiceEngine],
+        humanRobot: 0,
+        formant: 50,
+      }
+    : {
+        speed: activePreset.speed,
+        pitch: activePreset.pitch,
+        humanRobot: activePreset.humanRobot,
+        formant: activePreset.formant,
+      }
   const voiceDirty = !voiceMatches(
     { ...activePreset, ...voiceDefaults },
     {
@@ -1532,11 +1572,31 @@ export default function App() {
       setPiperVoice(nextVoice)
       if (isSpeaking) {
         bakedVoiceRef.current = null
+        setIsLoadingSpeech(true)
       }
       void import('./piperSpeech')
         .then(({ ensurePiperReady }) => ensurePiperReady(nextVoice))
         .catch(() => {
           // First speak will surface a clearer error if download fails.
+        })
+      return
+    }
+
+    if (voiceEngine === 'espeak') {
+      if (!ESPEAK_VOICE_OPTIONS.some((option) => option.value === next)) {
+        return
+      }
+      const nextVoice = next as EspeakVoiceId
+      writeEspeakVoice(nextVoice)
+      setEspeakVoice(nextVoice)
+      if (isSpeaking) {
+        bakedVoiceRef.current = null
+        setIsLoadingSpeech(true)
+      }
+      void import('./espeakSpeech')
+        .then(({ ensureEspeakReady }) => ensureEspeakReady(nextVoice))
+        .catch(() => {
+          // First speak will surface a clearer error if load fails.
         })
       return
     }
@@ -1636,18 +1696,17 @@ export default function App() {
     const nextVocoder = clonePresetVocoder(preset)
     const nextPost = { ...DEFAULT_POST_PROCESS_UI }
     applyVoicePreset(activePresetId)
-    if (voiceEngine === 'piper') {
-      setPitch(DEFAULT_PITCH_BY_ENGINE.piper)
+    if (usesSelectableVoice(voiceEngine)) {
+      setPitch(DEFAULT_PITCH_BY_ENGINE[voiceEngine])
     }
     setPostUi(nextPost)
     setMasterVolume(100)
     setMasterGain(0)
 
     if (isSpeaking) {
-      const resetPitch =
-        voiceEngine === 'piper'
-          ? DEFAULT_PITCH_BY_ENGINE.piper
-          : preset.pitch
+      const resetPitch = usesSelectableVoice(voiceEngine)
+        ? DEFAULT_PITCH_BY_ENGINE[voiceEngine]
+        : preset.pitch
       const plan = resolveHumanRobotBlend(
         preset.humanRobot,
         preset.speed,
@@ -1670,6 +1729,7 @@ export default function App() {
   }
 
   const handleStop = () => {
+    speechLoadEpochRef.current += 1
     stopSamSpeech()
     setIsLooping(false)
     setSamLoop(false)
@@ -1712,6 +1772,7 @@ export default function App() {
       text: trimmed,
       engine: voiceEngine,
       piperVoice,
+      espeakVoice,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1728,6 +1789,7 @@ export default function App() {
           text: trimmed,
           engine: voiceEngine,
           piperVoice,
+          espeakVoice,
           rate: livePlan.rate,
           pitch: livePlan.pitch,
           metallic: livePlan.metallic,
@@ -1777,6 +1839,7 @@ export default function App() {
       text: trimmed,
       engine: voiceEngine,
       piperVoice,
+      espeakVoice,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1930,6 +1993,9 @@ export default function App() {
             setPitch(DEFAULT_PITCH_BY_ENGINE[next])
             if (isSpeaking) {
               bakedVoiceRef.current = null
+              if (usesSelectableVoice(next)) {
+                setIsLoadingSpeech(true)
+              }
             }
           }}
         />
@@ -2321,7 +2387,13 @@ export default function App() {
           <div className="voice-preset">
             <FieldSelect
               className="field-select--voice"
-              value={voiceEngine === 'piper' ? piperVoice : voiceId}
+              value={
+                voiceEngine === 'piper'
+                  ? piperVoice
+                  : voiceEngine === 'espeak'
+                    ? espeakVoice
+                    : voiceId
+              }
               aria-label="Voice"
               onChange={handleVoiceChange}
               options={
@@ -2330,13 +2402,18 @@ export default function App() {
                       value: option.value,
                       label: option.label,
                     }))
-                  : [
-                      ...VOICE_PRESETS.map((preset) => ({
-                        value: preset.id,
-                        label: preset.label,
-                      })),
-                      { value: 'custom', label: 'Custom' },
-                    ]
+                  : voiceEngine === 'espeak'
+                    ? ESPEAK_VOICE_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))
+                    : [
+                        ...VOICE_PRESETS.map((preset) => ({
+                          value: preset.id,
+                          label: preset.label,
+                        })),
+                        { value: 'custom', label: 'Custom' },
+                      ]
               }
             />
           </div>

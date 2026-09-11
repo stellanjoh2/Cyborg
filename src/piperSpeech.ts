@@ -39,7 +39,7 @@ export async function ensurePiperReady(
   await readyPromise
 }
 
-/** Neural Piper TTS — strongest English of the three engines. */
+/** Neural Piper TTS — strongest natural English of the available engines. */
 export async function renderPiperSamples(
   text: string,
   voiceId: PiperVoiceId = DEFAULT_PIPER_VOICE,

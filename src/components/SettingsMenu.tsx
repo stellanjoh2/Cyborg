@@ -288,6 +288,13 @@ export function SettingsMenu({
           // First speak will surface a clearer error if download fails.
         })
     }
+    if (next === 'espeak') {
+      void import('../espeakSpeech')
+        .then(({ ensureEspeakReady }) => ensureEspeakReady())
+        .catch(() => {
+          // First speak will surface a clearer error if load fails.
+        })
+    }
   }
 
   const modal =

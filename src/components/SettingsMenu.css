@@ -132,7 +132,7 @@
   align-items: stretch;
   gap: 0;
   flex: 0 0 auto;
-  width: calc(var(--settings-segment-cols, 2) * 3.75rem);
+  width: calc(var(--settings-segment-cols, 2) * 4rem);
   border: var(--stroke-width) solid var(--synth-border);
   border-radius: var(--radius);
   background: var(--black);

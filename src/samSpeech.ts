@@ -22,6 +22,7 @@ import {
   DEFAULT_VOICE_ENGINE,
   type VoiceEngineId,
 } from './voiceEngines'
+import type { EspeakVoiceId } from './espeakVoices'
 import type { PiperVoiceId } from './piperVoices'
 import {
   downloadBlob,
@@ -36,6 +37,7 @@ export interface SamSynthOptions {
   metallic: number
   engine?: VoiceEngineId
   piperVoice?: PiperVoiceId
+  espeakVoice?: EspeakVoiceId
   betterEnglish?: boolean
 }
 
@@ -92,6 +94,10 @@ export async function renderSamSamples(
   if (engine === 'piper') {
     const { renderPiperSamples } = await import('./piperSpeech')
     return renderPiperSamples(options.text, options.piperVoice)
+  }
+  if (engine === 'espeak') {
+    const { renderEspeakSamples } = await import('./espeakSpeech')
+    return renderEspeakSamples(options.text, options.espeakVoice)
   }
   try {
     return await renderSamEngineSamples(options)
@@ -195,15 +201,21 @@ function piperLoadFailedMessage(): string {
   return 'Piper voice failed to load. Check your network, then try again.'
 }
 
+function synthesisFailedMessage(engine: VoiceEngineId): string {
+  if (engine === 'piper') {
+    return piperLoadFailedMessage()
+  }
+  if (engine === 'espeak') {
+    return 'eSpeak-NG failed to load. Try again, or switch to SAM in Settings.'
+  }
+  return 'Could not synthesize speech. Please use some actual words that the machine can understand.'
+}
+
 export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
   const samples = await renderSamSamples(options)
   if (!samples) {
     const engine = options.engine ?? DEFAULT_VOICE_ENGINE
-    throw new Error(
-      engine === 'piper'
-        ? piperLoadFailedMessage()
-        : 'Could not synthesize speech. Please use some actual words that the machine can understand.',
-    )
+    throw new Error(synthesisFailedMessage(engine))
   }
 
   const rendered = await renderSynthOffline(samples, {
@@ -239,11 +251,7 @@ export async function speakSam(options: SamSpeakOptions) {
     return
   }
   if (!samples) {
-    const hint =
-      engine === 'piper'
-        ? piperLoadFailedMessage()
-        : 'Could not synthesize speech. Please use some actual words that the machine can understand.'
-    options.onError?.(hint)
+    options.onError?.(synthesisFailedMessage(engine))
     return
   }
 
