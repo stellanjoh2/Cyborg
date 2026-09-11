@@ -67,7 +67,12 @@ function SegmentedOption<T extends string>({
     <div className="settings-menu__row">
       <span className="settings-menu__label">{label}</span>
       <div
-        className="settings-menu__segment"
+        className={[
+          'settings-menu__segment',
+          options.length > 2 ? 'settings-menu__segment--split' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         role="group"
         aria-label={label}
         style={

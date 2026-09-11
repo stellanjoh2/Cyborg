@@ -139,6 +139,16 @@
   overflow: hidden;
 }
 
+.settings-menu__segment--split {
+  grid-template-columns: repeat(var(--settings-segment-cols, 3), auto);
+  gap: 6px;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
 .settings-menu__choice {
   appearance: none;
   box-sizing: border-box;
@@ -158,6 +168,14 @@
 
 .settings-menu__choice + .settings-menu__choice {
   border-inline-start: var(--stroke-width) solid var(--synth-border);
+}
+
+.settings-menu__segment--split .settings-menu__choice {
+  min-width: 4.25rem;
+  padding: 8px 10px;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  background: var(--black);
 }
 
 .settings-menu__choice:hover {
