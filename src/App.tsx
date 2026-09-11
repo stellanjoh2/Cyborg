@@ -2366,7 +2366,7 @@ export default function App() {
           <textarea
             className={`field-textarea${emptyWarning ? ' is-warning' : ''}`}
             value={text}
-            onFocus={() => setInputTouched(true)}
+            onPointerDown={() => setInputTouched(true)}
             onChange={(e) => {
               setInputTouched(true)
               setText(e.target.value)

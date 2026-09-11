@@ -572,8 +572,9 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .field-textarea:focus-visible {
+  /* Inset so the ring survives text-panel overflow + 3lh clip-path. */
   outline: 2px solid var(--lime);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .field-textarea.is-warning::placeholder {
