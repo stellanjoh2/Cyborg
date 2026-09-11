@@ -1,0 +1,101 @@
+.pro-tip {
+  --pro-tip-gap: 20px;
+  position: fixed;
+  z-index: 90;
+  isolation: isolate;
+  left: max(24px, env(safe-area-inset-left, 0px));
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(380px, calc(100vw - 48px));
+  margin: 0;
+  padding: var(--pro-tip-gap);
+  border: none;
+  border-radius: calc(var(--radius-panel) / 2);
+  background: var(--fill);
+  color: var(--text);
+  font-family: var(--font-ui);
+  visibility: hidden;
+  box-shadow:
+    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
+    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
+}
+
+.pro-tip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  opacity: var(--grain-opacity);
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+}
+
+.pro-tip__head {
+  margin: 0 0 var(--pro-tip-gap);
+}
+
+.pro-tip__title {
+  margin: 0;
+  font-size: var(--font-m);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: var(--glow-outer);
+}
+
+.pro-tip__body {
+  margin: 0 0 var(--pro-tip-gap);
+  font-size: var(--font-s);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.pro-tip__dismiss {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 72px;
+  height: 32px;
+  margin: 0;
+  padding: 0 14px;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  background: var(--black);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pro-tip__dismiss:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--synth-border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--black));
+}
+
+.pro-tip__dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

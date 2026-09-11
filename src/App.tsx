@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { FpsMeter } from './components/FpsMeter'
+import { ProTip } from './components/ProTip'
 import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import {
@@ -250,6 +251,7 @@ export default function App() {
   const [splashCreditActive, setSplashCreditActive] = useState(false)
   const [splashVersionActive, setSplashVersionActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
+  const [introComplete, setIntroComplete] = useState(false)
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
   const liveMasterVolume = isMuted ? 0 : masterVolume / 100
 
@@ -336,6 +338,7 @@ export default function App() {
         if (splash) gsap.set(splash, { autoAlpha: 0 })
         splashLogoRef.current?.show()
         headerLogoRef.current?.show()
+        setIntroComplete(true)
         return
       }
 
@@ -391,6 +394,7 @@ export default function App() {
         // Keep mixes at 0 while restoring glow shorthand tokens, then ramp bloom.
         gsap.set(root, { '--glow-mix-tight': '0%', '--glow-mix-wide': '0%' })
         root.classList.remove('is-introducing')
+        setIntroComplete(true)
         glowWarmTween = gsap.to(root, {
           '--glow-mix-tight': '38%',
           '--glow-mix-wide': '21%',
@@ -1182,6 +1186,22 @@ export default function App() {
     },
   )
 
+  // HMR recovery: if splash is already gone, the intro timeline won't re-fire.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const splash = appRef.current?.querySelector('.speech-splash')
+      if (!splash) {
+        setIntroComplete(true)
+        return
+      }
+      const { opacity, visibility } = getComputedStyle(splash)
+      if (opacity === '0' || visibility === 'hidden') {
+        setIntroComplete(true)
+      }
+    }, 50)
+    return () => window.clearTimeout(id)
+  }, [])
+
   useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false
@@ -1386,24 +1406,44 @@ export default function App() {
 
   const activePresetId = voiceId === 'custom' ? 'default' : voiceId
   const activePreset = getPresetById(activePresetId)
-  const voiceDirty = !voiceMatches(activePreset, {
-    speed,
-    pitch,
-    humanRobot,
-    formant,
-  })
+  const voiceDefaults =
+    voiceEngine === 'piper'
+      ? {
+          speed: 1,
+          pitch: DEFAULT_PITCH_BY_ENGINE.piper,
+          humanRobot: 0,
+          formant: 50,
+        }
+      : {
+          speed: activePreset.speed,
+          pitch: activePreset.pitch,
+          humanRobot: activePreset.humanRobot,
+          formant: activePreset.formant,
+        }
+  const voiceDirty = !voiceMatches(
+    { ...activePreset, ...voiceDefaults },
+    {
+      speed,
+      pitch,
+      humanRobot,
+      formant,
+    },
+  )
   const vocoderDirty = !vocoderMatches(activePreset, vocoderUi)
   const carrierDirty = !carrierMatches(activePreset, vocoderUi)
   const fxDirty = !postProcessMatches(postUi)
   const masterDirty = masterVolume !== 100 || masterGain !== 0
   const templateDirty =
-    !presetMatches(activePreset, {
-      speed,
-      pitch,
-      humanRobot,
-      formant,
-      vocoder: vocoderUi,
-    }) ||
+    !presetMatches(
+      { ...activePreset, ...voiceDefaults },
+      {
+        speed,
+        pitch,
+        humanRobot,
+        formant,
+        vocoder: vocoderUi,
+      },
+    ) ||
     fxDirty ||
     masterDirty
 
@@ -1511,10 +1551,10 @@ export default function App() {
   }
 
   const handleResetVoice = () => {
-    const nextSpeed = activePreset.speed
-    const nextPitch = activePreset.pitch
-    const nextHumanRobot = activePreset.humanRobot
-    const nextFormant = activePreset.formant
+    const nextSpeed = voiceDefaults.speed
+    const nextPitch = voiceDefaults.pitch
+    const nextHumanRobot = voiceDefaults.humanRobot
+    const nextFormant = voiceDefaults.formant
     setSpeed(nextSpeed)
     setPitch(nextPitch)
     setHumanRobot(nextHumanRobot)
@@ -1596,15 +1636,22 @@ export default function App() {
     const nextVocoder = clonePresetVocoder(preset)
     const nextPost = { ...DEFAULT_POST_PROCESS_UI }
     applyVoicePreset(activePresetId)
+    if (voiceEngine === 'piper') {
+      setPitch(DEFAULT_PITCH_BY_ENGINE.piper)
+    }
     setPostUi(nextPost)
     setMasterVolume(100)
     setMasterGain(0)
 
     if (isSpeaking) {
+      const resetPitch =
+        voiceEngine === 'piper'
+          ? DEFAULT_PITCH_BY_ENGINE.piper
+          : preset.pitch
       const plan = resolveHumanRobotBlend(
         preset.humanRobot,
         preset.speed,
-        preset.pitch,
+        resetPitch,
       )
       updateSamLiveParams(
         {
@@ -2505,6 +2552,7 @@ export default function App() {
           </div>
         </div>
       ) : null}
+      <ProTip ready={introComplete} />
       </main>
       <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />

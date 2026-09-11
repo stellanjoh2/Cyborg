@@ -8,7 +8,7 @@ export const VOICE_ENGINE_OPTIONS: {
   { value: 'piper', label: 'Piper' },
 ]
 
-export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'sam'
+export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'piper'
 
 /** Per-engine pitch when you switch to that voice. */
 export const DEFAULT_PITCH_BY_ENGINE: Record<VoiceEngineId, number> = {

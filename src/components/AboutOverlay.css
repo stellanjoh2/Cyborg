@@ -49,6 +49,13 @@ html.is-about-open #root {
   transform: none;
 }
 
+.about-overlay__content {
+  /* 2 br → doubled to 4 br at legal size (em, not line-box). */
+  --credits-edge-gap: calc(4 * 36px);
+  padding-top: var(--credits-edge-gap);
+  padding-bottom: var(--credits-edge-gap);
+}
+
 .about-overlay__content p {
   margin: 0 0 1.15em;
   font-family: var(--font-ui);
@@ -65,7 +72,6 @@ html.is-about-open #root {
 
 .about-overlay__content p.about-overlay__legal {
   margin-top: 0;
-  padding-top: calc(2 * 1.35em);
   font-size: 36px;
   line-height: 1.35;
   color: var(--text);
@@ -234,6 +240,10 @@ html.is-about-open #root {
 @media (max-width: 720px) {
   .about-overlay__scroll {
     padding: 48px 20px;
+  }
+
+  .about-overlay__content {
+    --credits-edge-gap: calc(4 * 28px);
   }
 
   .about-overlay__content p {
