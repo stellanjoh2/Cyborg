@@ -25,6 +25,8 @@ function formatPlaybackClock(elapsed: number, duration: number): string {
   return `${formatClockSeconds(elapsed)}/${formatClockSeconds(duration)}`
 }
 
+const LOADING_CHARS = ['L', 'o', 'a', 'd', 'i', 'n', 'g'] as const
+
 /** Must match `.master-fader__track` / `.vu-leds` `--ridge-gap`. */
 const RIDGE_GAP_PX = 2
 /** DJM-A9 default: meter 0 ≈ −21 dBFS */
@@ -497,7 +499,13 @@ export function MasterStrip({
           <span className="master-play__spin" aria-hidden="true" />
           <span className="master-play__face" aria-hidden="true">
             {isLoading ? (
-              <span className="master-play__label">Loading</span>
+              <span className="master-play__label">
+                {LOADING_CHARS.map((ch, i) => (
+                  <span key={i} className="master-play__label-ch">
+                    {ch}
+                  </span>
+                ))}
+              </span>
             ) : (
               <span className="master-play__icon">
                 {isPlaying ? (
