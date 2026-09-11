@@ -15,3 +15,6 @@ export const ABOUT_LINKS = [
 ] as const
 
 export const ABOUT_LINKS_TEXT = ABOUT_LINKS.map((link) => link.text).join(' · ')
+
+export const ABOUT_LEGAL_TEXT =
+  "Voice engines use open tools and models. SAM is a JavaScript port of Software Automatic Mouth (Don't Ask Software / SoftVoice, Inc., 1982). Piper uses Rhasspy's MIT-licensed voices (here: Amy) via vits-web. Pronunciation help comes from the CMU Pronouncing Dictionary. Third-party licenses apply; LX01 doesn't claim ownership of those voices or engines."

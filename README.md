@@ -1,32 +1,15 @@
-# React + TypeScript + Vite
+# LX01
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Browser speech synthesizer and vocoder from Larynx Industries.
 
-Currently, two official plugins are available:
+**Live:** [stellanjoh2.github.io/Cyborg](https://stellanjoh2.github.io/Cyborg/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Credits & licenses
 
-## React Compiler
+LX01 includes third-party speech tools. Their licenses still apply.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **SAM** — Software Automatic Mouth, originally by Don’t Ask Software (now SoftVoice, Inc.). This app uses the open [`sam-js`](https://github.com/discordier/sam) port. SoftVoice remains the historical copyright holder of the original commercial product.
+- **Piper** — Neural TTS via [`@diffusionstudio/vits-web`](https://github.com/diffusionstudio/vits-web) (MIT). Voice model: Rhasspy Piper **en_US-amy-low** (MIT as published by [Rhasspy](https://github.com/rhasspy/piper)).
+- **CMU Pronouncing Dictionary** — used for text-to-phoneme help (ISC / CMU terms).
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+LX01 is an independent project and is not affiliated with SoftVoice, Rhasspy, or the other authors above.

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  ABOUT_LEGAL_TEXT,
   ABOUT_LINKS,
   ABOUT_LINKS_TEXT,
   ABOUT_TEXT,
@@ -18,12 +19,14 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
   const [linksActive, setLinksActive] = useState(false)
+  const [legalActive, setLegalActive] = useState(false)
   const [okActive, setOkActive] = useState(false)
 
   useEffect(() => {
     if (open) {
       setMounted(true)
       setLinksActive(false)
+      setLegalActive(false)
       setOkActive(false)
       const id = window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => setEntered(true))
@@ -32,6 +35,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
     }
     setEntered(false)
     setLinksActive(false)
+    setLegalActive(false)
     setOkActive(false)
   }, [open])
 
@@ -95,8 +99,18 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             playTypeSound
             hold
             caret={false}
-            onComplete={() => setOkActive(true)}
+            onComplete={() => setLegalActive(true)}
             links={[...ABOUT_LINKS]}
+          />
+          <TypewriterReveal
+            as="p"
+            className="about-overlay__legal"
+            text={ABOUT_LEGAL_TEXT}
+            active={entered && legalActive}
+            playTypeSound
+            hold
+            caret={false}
+            onComplete={() => setOkActive(true)}
           />
           <button
             type="button"

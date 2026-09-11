@@ -304,7 +304,7 @@ export function SettingsMenu({
             </div>
             <div className="settings-menu__body">
               <SegmentedOption
-                label="Engine"
+                label="Voice Engine"
                 value={engine}
                 options={VOICE_ENGINE_OPTIONS}
                 onChange={setEngine}

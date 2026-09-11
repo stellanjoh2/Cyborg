@@ -55,7 +55,7 @@
   isolation: isolate;
   box-sizing: border-box;
   width: max-content;
-  min-width: 320px;
+  min-width: 360px;
   padding: var(--settings-gap);
   border: none;
   border-radius: calc(var(--radius-panel) / 2);
