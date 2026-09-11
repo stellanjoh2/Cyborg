@@ -18,15 +18,15 @@ type AboutOverlayProps = {
 export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
+  const [bioActive, setBioActive] = useState(false)
   const [linksActive, setLinksActive] = useState(false)
-  const [legalActive, setLegalActive] = useState(false)
   const [okActive, setOkActive] = useState(false)
 
   useEffect(() => {
     if (open) {
       setMounted(true)
+      setBioActive(false)
       setLinksActive(false)
-      setLegalActive(false)
       setOkActive(false)
       const id = window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => setEntered(true))
@@ -34,8 +34,8 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
       return () => window.cancelAnimationFrame(id)
     }
     setEntered(false)
+    setBioActive(false)
     setLinksActive(false)
-    setLegalActive(false)
     setOkActive(false)
   }, [open])
 
@@ -80,15 +80,28 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
         className="about-overlay__scroll"
         role="dialog"
         aria-modal="true"
-        aria-label="About Stellan Johansson"
+        aria-label="Credits"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="about-overlay__content">
           <TypewriterReveal
             as="p"
-            text={ABOUT_TEXT}
+            className="about-overlay__legal"
+            text={ABOUT_LEGAL_TEXT}
             active={entered}
             playTypeSound
+            hold
+            caret={false}
+            onComplete={() => setBioActive(true)}
+          />
+          <TypewriterReveal
+            as="p"
+            className="about-overlay__bio"
+            text={ABOUT_TEXT}
+            active={entered && bioActive}
+            playTypeSound
+            hold
+            caret={false}
             onComplete={() => setLinksActive(true)}
           />
           <TypewriterReveal
@@ -99,18 +112,8 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             playTypeSound
             hold
             caret={false}
-            onComplete={() => setLegalActive(true)}
-            links={[...ABOUT_LINKS]}
-          />
-          <TypewriterReveal
-            as="p"
-            className="about-overlay__legal"
-            text={ABOUT_LEGAL_TEXT}
-            active={entered && legalActive}
-            playTypeSound
-            hold
-            caret={false}
             onComplete={() => setOkActive(true)}
+            links={[...ABOUT_LINKS]}
           />
           <button
             type="button"

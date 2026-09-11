@@ -80,6 +80,12 @@ import {
   type VoiceEngineId,
 } from './voiceEngines'
 import {
+  PIPER_VOICE_OPTIONS,
+  readPiperVoice,
+  writePiperVoice,
+  type PiperVoiceId,
+} from './piperVoices'
+import {
   buildLxVoiceFile,
   LXVOICE_EXTENSION,
   parseLxVoiceFile,
@@ -203,6 +209,7 @@ export default function App() {
   const [text, setText] = useState(DEFAULT_TEXT)
   const [voiceId, setVoiceId] = useState<VoiceId>('default')
   const [voiceEngine, setVoiceEngine] = useState<VoiceEngineId>(readVoiceEngine)
+  const [piperVoice, setPiperVoice] = useState<PiperVoiceId>(readPiperVoice)
   const [speed, setSpeed] = useState(1)
   const [pitch, setPitch] = useState(
     () => DEFAULT_PITCH_BY_ENGINE[readVoiceEngine()],
@@ -230,6 +237,7 @@ export default function App() {
   const bakedVoiceRef = useRef<{
     text: string
     engine: VoiceEngineId
+    piperVoice: PiperVoiceId
     rate: number
     pitch: number
     metallic: number
@@ -1283,6 +1291,7 @@ export default function App() {
     const next = {
       text: text.trim(),
       engine: voiceEngine,
+      piperVoice,
       rate: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1292,6 +1301,7 @@ export default function App() {
       !baked ||
       baked.text !== next.text ||
       baked.engine !== next.engine ||
+      baked.piperVoice !== next.piperVoice ||
       (voiceEngine === 'sam' &&
         (baked.rate !== next.rate ||
           baked.pitch !== next.pitch ||
@@ -1306,6 +1316,7 @@ export default function App() {
       void refreshSamLiveBuffer({
         text: next.text,
         engine: next.engine,
+        piperVoice: next.piperVoice,
         speed: next.rate,
         pitch: next.pitch,
         metallic: next.metallic,
@@ -1318,6 +1329,7 @@ export default function App() {
     livePlan.rate,
     livePlan.pitch,
     livePlan.metallic,
+    piperVoice,
     text,
     voiceEngine,
   ])
@@ -1470,7 +1482,26 @@ export default function App() {
       })
   }
 
-  const handleVoiceChange = (nextVoiceId: VoiceId) => {
+  const handleVoiceChange = (next: string) => {
+    if (voiceEngine === 'piper') {
+      if (!PIPER_VOICE_OPTIONS.some((option) => option.value === next)) {
+        return
+      }
+      const nextVoice = next as PiperVoiceId
+      writePiperVoice(nextVoice)
+      setPiperVoice(nextVoice)
+      if (isSpeaking) {
+        bakedVoiceRef.current = null
+      }
+      void import('./piperSpeech')
+        .then(({ ensurePiperReady }) => ensurePiperReady(nextVoice))
+        .catch(() => {
+          // First speak will surface a clearer error if download fails.
+        })
+      return
+    }
+
+    const nextVoiceId = next as VoiceId
     if (nextVoiceId === 'custom') {
       setVoiceId('custom')
       return
@@ -1633,6 +1664,7 @@ export default function App() {
     void speakSam({
       text: trimmed,
       engine: voiceEngine,
+      piperVoice,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1648,6 +1680,7 @@ export default function App() {
         bakedVoiceRef.current = {
           text: trimmed,
           engine: voiceEngine,
+          piperVoice,
           rate: livePlan.rate,
           pitch: livePlan.pitch,
           metallic: livePlan.metallic,
@@ -1696,6 +1729,7 @@ export default function App() {
     void exportSamWav({
       text: trimmed,
       engine: voiceEngine,
+      piperVoice,
       speed: livePlan.rate,
       pitch: livePlan.pitch,
       metallic: livePlan.metallic,
@@ -1826,9 +1860,9 @@ export default function App() {
           className="secondary"
           type="button"
           onClick={() => setAboutOpen(true)}
-          title="About"
+          title="Credits"
         >
-          <span className="speech-top__btn-label">INFO</span>
+          <span className="speech-top__btn-label">CREDITS</span>
         </button>
         <button
           className="secondary"
@@ -1847,6 +1881,9 @@ export default function App() {
           onEngineChange={(next) => {
             setVoiceEngine(next)
             setPitch(DEFAULT_PITCH_BY_ENGINE[next])
+            if (isSpeaking) {
+              bakedVoiceRef.current = null
+            }
           }}
         />
       </div>
@@ -2237,16 +2274,23 @@ export default function App() {
           <div className="voice-preset">
             <FieldSelect
               className="field-select--voice"
-              value={voiceId}
+              value={voiceEngine === 'piper' ? piperVoice : voiceId}
               aria-label="Voice"
-              onChange={(next) => handleVoiceChange(next as VoiceId)}
-              options={[
-                ...VOICE_PRESETS.map((preset) => ({
-                  value: preset.id,
-                  label: preset.label,
-                })),
-                { value: 'custom', label: 'Custom' },
-              ]}
+              onChange={handleVoiceChange}
+              options={
+                voiceEngine === 'piper'
+                  ? PIPER_VOICE_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    }))
+                  : [
+                      ...VOICE_PRESETS.map((preset) => ({
+                        value: preset.id,
+                        label: preset.label,
+                      })),
+                      { value: 'custom', label: 'Custom' },
+                    ]
+              }
             />
           </div>
           <button

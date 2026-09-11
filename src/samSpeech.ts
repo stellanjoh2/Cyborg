@@ -22,6 +22,7 @@ import {
   DEFAULT_VOICE_ENGINE,
   type VoiceEngineId,
 } from './voiceEngines'
+import type { PiperVoiceId } from './piperVoices'
 import {
   downloadBlob,
   encodeAudioBufferToWav,
@@ -34,6 +35,7 @@ export interface SamSynthOptions {
   pitch: number
   metallic: number
   engine?: VoiceEngineId
+  piperVoice?: PiperVoiceId
   betterEnglish?: boolean
 }
 
@@ -89,7 +91,7 @@ export async function renderSamSamples(
   const engine = options.engine ?? DEFAULT_VOICE_ENGINE
   if (engine === 'piper') {
     const { renderPiperSamples } = await import('./piperSpeech')
-    return renderPiperSamples(options.text)
+    return renderPiperSamples(options.text, options.piperVoice)
   }
   try {
     return await renderSamEngineSamples(options)

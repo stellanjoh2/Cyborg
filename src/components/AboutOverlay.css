@@ -52,27 +52,32 @@ html.is-about-open #root {
 .about-overlay__content p {
   margin: 0 0 1.15em;
   font-family: var(--font-ui);
-  font-size: 36px;
-  line-height: 1.35;
+  font-size: calc(36px * 2 / 3);
+  line-height: 1.4;
   font-weight: 400;
   text-transform: none;
-  color: var(--text);
+  color: var(--muted);
 }
 
 .about-overlay__content p:last-child {
   margin-bottom: 0;
 }
 
-.about-overlay__content p.about-overlay__links {
-  margin-top: 0.5em;
-  font-size: calc(36px * 2 / 3);
+.about-overlay__content p.about-overlay__legal {
+  margin-top: 0;
+  padding-top: calc(2 * 1.35em);
+  font-size: 36px;
+  line-height: 1.35;
+  color: var(--text);
 }
 
-.about-overlay__content p.about-overlay__legal {
-  margin-top: 108px;
-  font-size: calc(48px * 0.42);
-  line-height: 1.45;
-  color: var(--muted);
+.about-overlay__content p.about-overlay__bio {
+  margin-top: 48px;
+}
+
+.about-overlay__content p.about-overlay__links {
+  margin-top: 0.5em;
+  font-size: calc(36px * 0.5);
 }
 
 /* Match top-nav ridge secondary buttons */
@@ -232,6 +237,14 @@ html.is-about-open #root {
   }
 
   .about-overlay__content p {
-    font-size: 36px;
+    font-size: calc(28px * 2 / 3);
+  }
+
+  .about-overlay__content p.about-overlay__links {
+    font-size: calc(28px * 0.5);
+  }
+
+  .about-overlay__content p.about-overlay__legal {
+    font-size: 28px;
   }
 }

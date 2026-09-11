@@ -16,5 +16,6 @@ export const ABOUT_LINKS = [
 
 export const ABOUT_LINKS_TEXT = ABOUT_LINKS.map((link) => link.text).join(' · ')
 
+/** Plain-language voice credits — what visitors should take away. */
 export const ABOUT_LEGAL_TEXT =
-  "Voice engines use open tools and models. SAM is a JavaScript port of Software Automatic Mouth (Don't Ask Software / SoftVoice, Inc., 1982). Piper uses Rhasspy's MIT-licensed voices (here: Amy) via vits-web. Pronunciation help comes from the CMU Pronouncing Dictionary. Third-party licenses apply; LX01 doesn't claim ownership of those voices or engines."
+  "LX01 does not own these voices. They belong to other people and projects — please treat them that way.\n\nSAM is a reverse-engineered remake of Software Automatic Mouth (Don't Ask Software / SoftVoice, Inc., 1982). SoftVoice never licensed this port for free reuse. Use it for personal fun; don't sell it or claim it as yours.\n\nPiper voices (Amy, Danny, Lessac, Ryan, HFC Male) are free to use as published by Rhasspy, via vits-web. Keep their credits. Some training data adds extra rules (including non-commercial) — LX01 itself is non-commercial.\n\nPronunciation help uses the Carnegie Mellon Pronouncing Dictionary. Free to use; please credit Carnegie Mellon.\n\nIf you reuse any of this elsewhere, check those third-party terms. LX01 is not affiliated with SoftVoice, Rhasspy, or Carnegie Mellon."
