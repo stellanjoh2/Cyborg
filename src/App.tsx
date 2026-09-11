@@ -103,7 +103,7 @@ import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
 
-const DEFAULT_TEXT = `You will be required to do wrong no matter where you go. It is the basic condition of life, to be required to violate your own identity. At some time, every creature which lives must do so. It is the ultimate shadow, the defeat of creation; this is the curse at work, the curse that feeds on all life. Everywhere in the universe.`
+const DEFAULT_TEXT = `Watching John with the machine, it was suddenly so clear. The terminator would never stop. It would never leave him, and it would never hurt him, never shout at him, or get drunk and hit him, or say it was too busy to spend time with him. It would always be there. And it would die to protect him.`
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01 is created by Stellan Johansson.'
