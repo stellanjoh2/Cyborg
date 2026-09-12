@@ -16,6 +16,7 @@ import {
   readGrainEnabled,
   readGlowEnabled,
 } from '../ui/visualFx'
+import { applyUiLook, readUiLook, type UiLook } from '../ui/uiLook'
 import {
   getUiSoundsEnabled,
   playUiSound,
@@ -126,6 +127,7 @@ export function SettingsMenu({
   const [mounted, setMounted] = useState(false)
   const [grain, setGrain] = useState(readGrainEnabled)
   const [glow, setGlow] = useState(readGlowEnabled)
+  const [uiLook, setUiLook] = useState(readUiLook)
   const [uiSounds, setUiSounds] = useState(getUiSoundsEnabled)
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null)
 
@@ -284,6 +286,12 @@ export function SettingsMenu({
     playUiSound('ok')
   }
 
+  const setLook = (look: UiLook) => {
+    setUiLook(look)
+    applyUiLook(look)
+    playUiSound('ok')
+  }
+
   const setSounds = (enabled: boolean) => {
     setUiSoundsEnabled(enabled)
     setUiSounds(enabled)
@@ -352,6 +360,15 @@ export function SettingsMenu({
                   { value: 'on', label: 'On' },
                 ]}
                 onChange={(value) => setGlowEnabled(value === 'on')}
+              />
+              <SegmentedOption
+                label="UI Look"
+                value={uiLook}
+                options={[
+                  { value: 'soft', label: 'Soft' },
+                  { value: 'hard', label: 'Hard' },
+                ]}
+                onChange={setLook}
               />
               <SegmentedOption
                 label="UI Sounds"

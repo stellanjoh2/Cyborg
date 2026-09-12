@@ -154,8 +154,8 @@
   --floating-elevation:
     0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
     0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent);
-  --floating-shadow:
-    var(--floating-elevation),
+  /* Raised emboss alone — overlay on opaque chrome (e.g. .eq-window::after). */
+  --floating-emboss:
     inset 0 var(--bevel-offset) var(--bevel-radius)
       color-mix(
         in srgb,
@@ -168,6 +168,9 @@
         var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
         transparent
       );
+  --floating-shadow:
+    var(--floating-elevation),
+    var(--floating-emboss);
   /* Full-bleed top bar: bottom emboss only (no top highlight). Elevation stays on .speech-top. */
   --nav-bar-emboss: inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
     color-mix(

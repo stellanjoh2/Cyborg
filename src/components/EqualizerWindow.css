@@ -20,7 +20,8 @@
   visibility: hidden;
   color: var(--text);
   background: var(--fill);
-  box-shadow: var(--floating-shadow);
+  /* Elevation only — inset emboss sits on ::after so opaque title chrome can't cover it. */
+  box-shadow: var(--floating-elevation);
   transform-origin: 50% 0;
 }
 
@@ -36,6 +37,17 @@
   background-size: var(--grain-size) var(--grain-size);
   background-repeat: repeat;
   mix-blend-mode: soft-light;
+}
+
+/* Raised bevel above titlebar/body so outer edges match recessed wells. */
+.eq-window::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: var(--floating-emboss);
 }
 
 .eq-window__head {
@@ -349,7 +361,7 @@
 
 .eq-grid-line {
   stroke: color-mix(in srgb, var(--stroke) 9%, transparent);
-  stroke-width: 1;
+  stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
 

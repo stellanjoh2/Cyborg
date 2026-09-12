@@ -308,12 +308,14 @@ export function ThemePicker() {
           }
         }}
       >
-        <ThemeBall
-          primary={theme.palette.lime}
-          secondary={theme.palette.fill}
-          live
-          className="theme-picker__sphere"
-        />
+        <span className="theme-picker__glow">
+          <ThemeBall
+            primary={theme.palette.lime}
+            secondary={theme.palette.fill}
+            live
+            className="theme-picker__sphere"
+          />
+        </span>
       </button>
       {modal}
     </div>

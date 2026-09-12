@@ -13,10 +13,12 @@ import {
 import './index.css'
 import App from './App.tsx'
 import { applyVisualFx } from './ui/visualFx'
+import { applyUiLook, readUiLook } from './ui/uiLook'
 import { initUiSounds } from './ui/sounds'
 
 applyColorTheme(getThemeById(readStoredThemeId()))
 applyVisualFx()
+applyUiLook(readUiLook())
 initUiSounds()
 
 const mobile = isMobileDevice()

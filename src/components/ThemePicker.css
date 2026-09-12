@@ -46,9 +46,16 @@
   transition: transform 0.18s ease;
 }
 
-/* Glow on the trigger — overflow:hidden on .theme-ball clips drop-shadow in Safari. */
-.theme-picker__trigger:hover,
-.theme-picker.is-open .theme-picker__trigger {
+/* Glow on an inner wrapper — filter on the trigger would tint the tooltip too;
+   overflow:hidden on .theme-ball clips drop-shadow in Safari. */
+.theme-picker__glow {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.theme-picker__trigger:hover .theme-picker__glow,
+.theme-picker.is-open .theme-picker__glow {
   filter: var(--glow-filter);
 }
 
