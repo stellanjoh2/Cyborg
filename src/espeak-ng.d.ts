@@ -11,6 +11,8 @@ declare module 'espeak-ng' {
 
   export interface ESpeakNgOptions {
     arguments?: string[]
+    locateFile?: (path: string, prefix?: string) => string
+    noInitialRun?: boolean
     preRun?: Array<(module: ESpeakNgModule) => void>
   }
 

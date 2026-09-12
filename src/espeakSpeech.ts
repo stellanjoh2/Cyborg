@@ -12,12 +12,14 @@ let readyPromise: Promise<void> | null = null
 
 type EspeakFactory = typeof import('espeak-ng').default
 
+function runtimeBase() {
+  return new URL('vendor/voice-runtime/', document.baseURI)
+}
+
 async function loadEspeak(): Promise<{ default: EspeakFactory }> {
-  const url = new URL(
-    'vendor/voice-runtime/espeak-ng.js',
-    document.baseURI,
-  ).href
-  return import(/* @vite-ignore */ url) as Promise<{ default: EspeakFactory }>
+  return import(/* @vite-ignore */ new URL('espeak-ng.js', runtimeBase()).href) as Promise<{
+    default: EspeakFactory
+  }>
 }
 
 async function synthesizeToWav(
@@ -25,7 +27,9 @@ async function synthesizeToWav(
   voiceId: EspeakVoiceId,
 ): Promise<Uint8Array> {
   const { default: ESpeakNg } = await loadEspeak()
+  const base = runtimeBase()
   const module = await ESpeakNg({
+    locateFile: (path) => new URL(path, base).href,
     preRun: [
       (instance) => {
         instance.FS.writeFile(INPUT_PATH, text)

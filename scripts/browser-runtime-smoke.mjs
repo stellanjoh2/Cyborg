@@ -86,7 +86,15 @@ try {
       let directLogs = ''
       try {
         const espeakFactory = (await import(new URL('espeak-ng.js', base))).default
+        const locateFile = (file) => new URL(file, base).href
+        const probe = await espeakFactory({ noInitialRun: true, locateFile })
+        const phondata = '/usr/local/share/espeak-ng-data/phondata'
+        const exists = probe.FS.analyzePath(phondata).exists
+        const bytes = exists ? probe.FS.readFile(phondata) : new Uint8Array()
+        const head = Array.from(bytes.subarray(0, 8))
+        directLogs += 'phondata exists=' + exists + ' size=' + bytes.length + ' head=' + JSON.stringify(head) + '\\n'
         const direct = await espeakFactory({
+          locateFile,
           print: (line) => { directLogs += line + '\\n' },
           printErr: (line) => { directLogs += line + '\\n' },
           preRun: [(module) => module.FS.writeFile('/smoke.txt', 'Hello world')],
