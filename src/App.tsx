@@ -59,7 +59,6 @@ import {
 } from './samSpeech'
 import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
 import { readGrainEnabled } from './ui/visualFx'
-import { preloadPronunciationDictionary } from './cmuPronunciation'
 import {
   splitSpokenParts,
   spokenWordWeights,
@@ -233,7 +232,6 @@ export default function App() {
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
-  const [aboutMounted, setAboutMounted] = useState(false)
   const [aboutTextActive, setAboutTextActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errorOkReady, setErrorOkReady] = useState(false)
@@ -1231,7 +1229,6 @@ export default function App() {
           gsap.set([voice, master, fx], { clearProps: 'all' })
           gsap.set(legal, { clearProps: 'all' })
           setAboutTextActive(false)
-          setAboutMounted(false)
         }
         return
       }
@@ -1332,7 +1329,6 @@ export default function App() {
         tl.call(
           () => {
             gsap.set([voice, master, fx, legal], { clearProps: 'all' })
-            setAboutMounted(false)
           },
           undefined,
           0.32 + panelDuration,
@@ -1423,9 +1419,7 @@ export default function App() {
       setPostUi((current) => ({ ...current, [key]: value }))
     }
 
-  useEffect(() => {
-    preloadPronunciationDictionary()
-  }, [])
+  useEffect(() => () => stopSamSpeech(), [])
 
   useEffect(() => {
     if (!isSpeaking) {
@@ -1979,7 +1973,6 @@ export default function App() {
       return
     }
     if (isSpeaking || isLoadingSpeech) handleStop()
-    setAboutMounted(true)
     setAboutOpen(true)
   }
 
@@ -2751,13 +2744,11 @@ export default function App() {
         </div>
       </section>
       </div>
-      {aboutMounted ? (
-        <AboutOverlay
-          open={aboutOpen}
-          textActive={aboutTextActive}
-          onClose={() => setAboutOpen(false)}
-        />
-      ) : null}
+      <AboutOverlay
+        open={aboutOpen}
+        textActive={aboutTextActive}
+        onClose={() => setAboutOpen(false)}
+      />
       </div>
 
       {error ? (

@@ -18,6 +18,7 @@ const NOISE_ENVELOPE_POINTS = 512
 const FX_ENGAGE = 0.01
 const REVERB_IR_DEBOUNCE_MS = 80
 const REVERB_IR_CACHE_MAX = 24
+const LIVE_IDLE_TAIL_MAX_SECONDS = 30
 
 const reverbImpulseCache = new Map<string, AudioBuffer>()
 
@@ -234,6 +235,7 @@ let playbackGeneration = 0
 let playbackPaused = false
 let onEndCallback: (() => void) | null = null
 let graphReady: Promise<SynthGraph> | null = null
+let idleSuspendTimer = 0
 let currentParams: LiveSynthParams = {
   speed: 1,
   pitch: 0.7,
@@ -1612,6 +1614,40 @@ function stopSourceOnly() {
   }
 }
 
+function clearIdleSuspendTimer() {
+  if (idleSuspendTimer) {
+    window.clearTimeout(idleSuspendTimer)
+    idleSuspendTimer = 0
+  }
+}
+
+function suspendLiveGraph(delaySeconds = 0) {
+  clearIdleSuspendTimer()
+
+  const suspend = () => {
+    idleSuspendTimer = 0
+    if (!graph || activeSource) {
+      return
+    }
+    const liveContext = graph.context as AudioContext
+    if (liveContext.state === 'running') {
+      void liveContext.suspend().catch(() => {
+        // The context may be closing while the page unloads.
+      })
+    }
+  }
+
+  if (delaySeconds <= 0) {
+    suspend()
+    return
+  }
+
+  idleSuspendTimer = window.setTimeout(
+    suspend,
+    Math.min(delaySeconds, LIVE_IDLE_TAIL_MAX_SECONDS) * 1000,
+  )
+}
+
 function handleSourceEnded(event: Event) {
   // Ignore ended events from sources we already replaced or cancelled.
   if (event.target !== activeSource) {
@@ -1630,6 +1666,7 @@ function handleSourceEnded(event: Event) {
   }
 
   onEndCallback?.()
+  suspendLiveGraph(computeExportTailSeconds(currentParams.postProcess))
 }
 
 function startSource(bufferOffsetSeconds = 0) {
@@ -1638,6 +1675,7 @@ function startSource(bufferOffsetSeconds = 0) {
   }
 
   const nodes = graph
+  clearIdleSuspendTimer()
   stopSourceOnly()
 
   const liveContext = nodes.context as AudioContext
@@ -1841,10 +1879,7 @@ export function stopSynthPlayback(options?: { clearLoop?: boolean }) {
   if (graph) {
     // Unity feedback recirculates forever; clear the delay line on stop.
     flushDelayNode(graph)
-    const liveContext = graph.context as AudioContext
-    if (liveContext.state === 'suspended') {
-      void liveContext.resume()
-    }
+    suspendLiveGraph()
   }
 }
 
@@ -1882,6 +1917,7 @@ export function startSynthPlayback(
     try {
       const nodes = await ensureGraph()
       if (cancelled || generation !== playbackGeneration) {
+        suspendLiveGraph()
         return
       }
       setAudioBufferFromSamples(samples, nodes)
