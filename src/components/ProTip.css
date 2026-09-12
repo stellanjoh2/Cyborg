@@ -65,7 +65,7 @@
   height: 32px;
   margin: 0;
   padding: 0 14px;
-  border: var(--stroke-width) solid var(--synth-border);
+  border: 2px solid var(--synth-border);
   border-radius: var(--radius);
   background: var(--black);
   color: var(--muted);

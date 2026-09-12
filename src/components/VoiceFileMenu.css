@@ -107,7 +107,7 @@
   appearance: none;
   box-sizing: border-box;
   padding: 11px 10px 9px;
-  border: var(--stroke-width) solid var(--synth-border);
+  border: 2px solid var(--synth-border);
   border-radius: var(--radius);
   color: var(--muted);
   background: var(--black);

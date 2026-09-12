@@ -2159,7 +2159,6 @@ export default function App() {
           >
             <SlidersIcon weight="bold" />
           </button>
-          <ThemePicker />
           <button
             className={`speech-top__legal-trigger${aboutOpen ? ' is-active' : ''}`}
             type="button"
@@ -2188,6 +2187,7 @@ export default function App() {
               }
             }}
           />
+          <ThemePicker />
         </div>
         <button
           className="secondary speech-top__export"
