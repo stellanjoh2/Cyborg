@@ -233,6 +233,8 @@ export default function App() {
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [aboutMounted, setAboutMounted] = useState(false)
+  const [aboutTextActive, setAboutTextActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errorOkReady, setErrorOkReady] = useState(false)
   const [emptyWarning, setEmptyWarning] = useState(false)
@@ -255,6 +257,7 @@ export default function App() {
   /** Invalidates in-flight voice-swap loading so stale finishes don't clear a newer load. */
   const speechLoadEpochRef = useRef(0)
   const transportToggleRef = useRef<() => void>(() => {})
+  const previousAboutOpenRef = useRef(false)
   const [masterVolume, setMasterVolume] = useState(100)
   const [masterGain, setMasterGain] = useState(0)
   /** Intro-only volume meter drive; null hands control back to normal state. */
@@ -1197,6 +1200,153 @@ export default function App() {
     },
   )
 
+  useGSAP(
+    () => {
+      if (!introComplete || previousAboutOpenRef.current === aboutOpen) return
+      previousAboutOpenRef.current = aboutOpen
+
+      const root = appRef.current
+      const voice = root?.querySelector<HTMLElement>('.speech-col--voice')
+      const master = root?.querySelector<HTMLElement>('.speech-col--master')
+      const fx = root?.querySelector<HTMLElement>('.speech-col--fx')
+      const legal = root?.querySelector<HTMLElement>('.about-overlay')
+      if (!root || !voice || !master || !fx || !legal) return
+
+      const stageScale = Math.max(
+        0.001,
+        Number.parseFloat(
+          getComputedStyle(root).getPropertyValue('--stage-scale'),
+        ) || 1,
+      )
+      const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+
+      if (reduceMotion) {
+        if (aboutOpen) {
+          gsap.set([voice, master, fx], { autoAlpha: 0 })
+          gsap.set(legal, { autoAlpha: 1 })
+          setAboutTextActive(true)
+        } else {
+          gsap.set([voice, master, fx], { clearProps: 'all' })
+          gsap.set(legal, { clearProps: 'all' })
+          setAboutTextActive(false)
+          setAboutMounted(false)
+        }
+        return
+      }
+
+      const panelDuration = 0.78
+      const tl = gsap.timeline()
+
+      if (aboutOpen) {
+        setAboutTextActive(false)
+        gsap.set(legal, { autoAlpha: 0 })
+        tl.to(
+          voice,
+          {
+            x: -(voice.getBoundingClientRect().right + 24) / stageScale,
+            autoAlpha: 0,
+            duration: panelDuration,
+            ease: 'power3.in',
+          },
+          0,
+        )
+        tl.to(
+          master,
+          {
+            y:
+              (window.innerHeight -
+                master.getBoundingClientRect().top +
+                24) /
+              stageScale,
+            autoAlpha: 0,
+            duration: panelDuration,
+            ease: 'power3.in',
+          },
+          0.1,
+        )
+        tl.to(
+          fx,
+          {
+            x:
+              (window.innerWidth - fx.getBoundingClientRect().left + 24) /
+              stageScale,
+            autoAlpha: 0,
+            duration: panelDuration,
+            ease: 'power3.in',
+          },
+          0.2,
+        )
+        tl.to(
+          legal,
+          {
+            autoAlpha: 1,
+            duration: 0.28,
+            ease: 'power2.out',
+          },
+          0.42,
+        )
+        tl.call(() => setAboutTextActive(true), undefined, 0.42)
+      } else {
+        tl.to(
+          legal,
+          {
+            autoAlpha: 0,
+            duration: 0.22,
+            ease: 'power2.out',
+          },
+          0,
+        )
+        tl.call(() => setAboutTextActive(false), undefined, 0.22)
+        tl.to(
+          voice,
+          {
+            x: 0,
+            autoAlpha: 1,
+            duration: panelDuration,
+            ease: 'power3.out',
+          },
+          0.12,
+        )
+        tl.to(
+          master,
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: panelDuration,
+            ease: 'power3.out',
+          },
+          0.22,
+        )
+        tl.to(
+          fx,
+          {
+            x: 0,
+            autoAlpha: 1,
+            duration: panelDuration,
+            ease: 'power3.out',
+          },
+          0.32,
+        )
+        tl.call(
+          () => {
+            gsap.set([voice, master, fx, legal], { clearProps: 'all' })
+            setAboutMounted(false)
+          },
+          undefined,
+          0.32 + panelDuration,
+        )
+      }
+
+      return () => tl.kill()
+    },
+    {
+      dependencies: [aboutOpen, introComplete],
+      scope: appRef,
+    },
+  )
+
   // HMR recovery: if splash is already gone, the intro timeline won't re-fire.
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -1823,6 +1973,16 @@ export default function App() {
     else handlePlayback()
   }
 
+  const handleLegalToggle = () => {
+    if (aboutOpen) {
+      setAboutOpen(false)
+      return
+    }
+    if (isSpeaking || isLoadingSpeech) handleStop()
+    setAboutMounted(true)
+    setAboutOpen(true)
+  }
+
   const handleExportWav = () => {
     setError(null)
 
@@ -1967,12 +2127,16 @@ export default function App() {
           <span className="speech-top__btn-label">RESET</span>
         </button>
         <button
-          className="secondary"
+          className={`secondary${aboutOpen ? ' is-active' : ''}`}
           type="button"
-          onClick={() => setAboutOpen(true)}
-          title="Legal"
+          onClick={handleLegalToggle}
+          title={aboutOpen ? 'Close legal' : 'Legal'}
+          aria-expanded={aboutOpen}
+          aria-controls="legal-view"
         >
-          <span className="speech-top__btn-label">LEGAL</span>
+          <span className="speech-top__btn-label">
+            {aboutOpen ? 'CLOSE' : 'LEGAL'}
+          </span>
         </button>
         <button
           className="secondary"
@@ -2587,6 +2751,13 @@ export default function App() {
         </div>
       </section>
       </div>
+      {aboutMounted ? (
+        <AboutOverlay
+          open={aboutOpen}
+          textActive={aboutTextActive}
+          onClose={() => setAboutOpen(false)}
+        />
+      ) : null}
       </div>
 
       {error ? (
@@ -2631,7 +2802,6 @@ export default function App() {
       ) : null}
       <ProTip ready={introComplete} />
       </main>
-      <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DevMode />
       <FpsMeter />
     </>

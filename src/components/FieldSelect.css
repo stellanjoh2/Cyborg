@@ -108,12 +108,12 @@
 }
 
 .field-select__menu--voice {
-  padding: 4px 8px 4px 0;
+  padding: 4px;
 }
 
 .field-select__menu--voice .field-select__option {
   font-size: var(--font-m);
-  padding: 8px 10px 8px 0;
+  padding: 8px 10px;
 }
 
 .field-select__option {

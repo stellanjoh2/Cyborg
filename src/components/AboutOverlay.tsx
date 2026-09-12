@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import {
   ABOUT_LEGAL_EMPHASIS,
   ABOUT_LEGAL_LINKS,
@@ -14,42 +13,26 @@ import './AboutOverlay.css'
 
 type AboutOverlayProps = {
   open: boolean
+  textActive: boolean
   onClose: () => void
 }
 
-export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
-  const [mounted, setMounted] = useState(open)
-  const [entered, setEntered] = useState(false)
+export function AboutOverlay({
+  open,
+  textActive,
+  onClose,
+}: AboutOverlayProps) {
   const [bioActive, setBioActive] = useState(false)
   const [linksActive, setLinksActive] = useState(false)
-  const [okActive, setOkActive] = useState(false)
 
   useEffect(() => {
-    if (open) {
-      setMounted(true)
-      setBioActive(false)
-      setLinksActive(false)
-      setOkActive(false)
-      const id = window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => setEntered(true))
-      })
-      return () => window.cancelAnimationFrame(id)
-    }
-    setEntered(false)
+    if (textActive) return
     setBioActive(false)
     setLinksActive(false)
-    setOkActive(false)
-  }, [open])
-
-  // ScaleViewport's transform: scale() puts the UI on its own compositor layer;
-  // backdrop-filter on a body portal often samples empty chrome instead. Blur #root.
-  useEffect(() => {
-    document.documentElement.classList.toggle('is-about-open', entered)
-    return () => document.documentElement.classList.remove('is-about-open')
-  }, [entered])
+  }, [textActive])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -59,38 +42,25 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [mounted, onClose])
+  }, [open, onClose])
 
-  if (!mounted) return null
-
-  return createPortal(
+  return (
     <div
-      className={['about-overlay', entered ? 'is-open' : '']
+      id="legal-view"
+      className={['about-overlay', open ? 'is-open' : '']
         .filter(Boolean)
         .join(' ')}
-      role="presentation"
-      onClick={() => {
-        playUiSound('close')
-        onClose()
-      }}
-      onTransitionEnd={(event) => {
-        if (event.target !== event.currentTarget) return
-        if (!open && event.propertyName === 'background-color') setMounted(false)
-      }}
+      role="region"
+      aria-label="Legal"
+      aria-hidden={!open}
     >
-      <div
-        className="about-overlay__scroll"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Legal"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="about-overlay__scroll">
         <div className="about-overlay__content">
           <TypewriterReveal
             as="p"
             className="about-overlay__legal"
             text={ABOUT_LEGAL_TEXT}
-            active={entered}
+            active={textActive}
             playTypeSound
             hold
             caret={false}
@@ -102,7 +72,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             as="p"
             className="about-overlay__bio"
             text={ABOUT_TEXT}
-            active={entered && bioActive}
+            active={textActive && bioActive}
             playTypeSound
             hold
             caret={false}
@@ -112,39 +82,14 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             as="p"
             className="about-overlay__links"
             text={ABOUT_LINKS_TEXT}
-            active={entered && linksActive}
+            active={textActive && linksActive}
             playTypeSound
             hold
             caret={false}
-            onComplete={() => setOkActive(true)}
             links={[...ABOUT_LINKS]}
           />
-          <button
-            type="button"
-            className={[
-              'secondary',
-              'about-overlay__ok',
-              okActive ? 'is-in' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            data-ui-sound="close"
-            aria-hidden={!okActive}
-            tabIndex={okActive ? 0 : -1}
-            onClick={onClose}
-          >
-            <TypewriterReveal
-              as="span"
-              text="OK"
-              active={entered && okActive}
-              playTypeSound
-              hold
-              caret={false}
-            />
-          </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   )
 }
