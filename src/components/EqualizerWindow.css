@@ -112,7 +112,7 @@
 .eq-window__actions {
   display: flex;
   align-items: center;
-  gap: var(--eq-grid-gap);
+  gap: 12px;
 }
 
 .eq-window__action {
