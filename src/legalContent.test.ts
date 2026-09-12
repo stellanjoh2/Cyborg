@@ -4,13 +4,35 @@ import {
   ABOUT_LEGAL_TEXT,
 } from './aboutContent'
 import { COLOR_THEMES } from './colorThemes'
+import { buildLxVoiceFile, parseLxVoiceFile } from './lxVoiceFile'
+import { PIPER_VOICE_OPTIONS } from './piperVoices'
+import { DEFAULT_VOCODER_UI } from './vocoderParams'
 import { VOICE_ENGINE_OPTIONS } from './voiceEngines'
 
 describe('legal presentation', () => {
   it('uses LARYNX as the public label without changing the engine id', () => {
+    expect(VOICE_ENGINE_OPTIONS).toHaveLength(4)
     expect(
       VOICE_ENGINE_OPTIONS.find((engine) => engine.value === 'lx'),
     ).toEqual({ value: 'lx', label: 'LARYNX' })
+  })
+
+  it('keeps all fifteen reviewed Piper voices', () => {
+    expect(PIPER_VOICE_OPTIONS).toHaveLength(15)
+  })
+
+  it('round-trips the unchanged .lxvoice format', () => {
+    const voice = buildLxVoiceFile(
+      {
+        speed: 0.6,
+        pitch: 0.5,
+        humanRobot: 0.4,
+        formant: 0.7,
+        vocoder: DEFAULT_VOCODER_UI,
+      },
+      'Compatibility',
+    )
+    expect(parseLxVoiceFile(JSON.stringify(voice))).toEqual(voice)
   })
 
   it('keeps every emphasized phrase in the legal copy', () => {

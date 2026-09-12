@@ -22,6 +22,21 @@ test "$(git -C "$WORK_DIR/espeak-ng" rev-parse HEAD)" = "$SOURCE_COMMIT"
 
 cd "$WORK_DIR/espeak-ng"
 ./autogen.sh
+./configure \
+  --without-async \
+  --without-klatt \
+  --without-mbrola \
+  --without-pcaudiolib \
+  --without-sonic \
+  --without-speechplayer
+make -j2
+cp -a espeak-ng-data "$WORK_DIR/compiled-espeak-ng-data"
+
+# Return to the pinned source tree before the WebAssembly compilation. The
+# native build above exists only to generate the data files consumed at runtime.
+git clean -fdx
+git reset --hard "$SOURCE_COMMIT"
+./autogen.sh
 emconfigure ./configure \
   --without-async \
   --without-klatt \
@@ -43,7 +58,7 @@ emcc -O3 \
   -s EXPORT_ES6=1 \
   -s FORCE_FILESYSTEM=1 \
   -s MODULARIZE=1 \
-  --preload-file espeak-ng-data@/usr/local/share/espeak-ng-data \
+  --preload-file "$WORK_DIR/compiled-espeak-ng-data"@/usr/local/share/espeak-ng-data \
   -o "$OUT_DIR/espeak-ng.js"
 
 (

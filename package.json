@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "licenses": "node scripts/generate-third-party-licenses.mjs",
     "postinstall": "node third_party/voice-runtime/patch-vits-web.mjs",
+    "smoke:browser": "node scripts/browser-runtime-smoke.mjs",
     "test": "vitest run",
     "preview": "vite preview"
   },
