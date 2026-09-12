@@ -25,7 +25,7 @@ export const COLOR_THEMES: ColorTheme[] = [
   {
     // Default — warm peach accent on charcoal (VU cyan is meters-only)
     id: 'lx01',
-    label: 'LX01™',
+    label: 'LX01',
     palette: { ...DEFAULT_PALETTE },
   },
   {
