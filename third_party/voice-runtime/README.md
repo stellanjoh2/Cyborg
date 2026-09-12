@@ -1,6 +1,6 @@
 # Voice runtime corresponding source
 
-LX01 builds both eSpeak-NG WebAssembly runtimes from the immutable revisions in
+LX01™ builds both eSpeak-NG WebAssembly runtimes from the immutable revisions in
 `source-manifest.json`. The scripts in this directory are the preferred build
 form for the deployed binaries. They reject unpinned revisions and write
 SHA-256 checksums next to the outputs.

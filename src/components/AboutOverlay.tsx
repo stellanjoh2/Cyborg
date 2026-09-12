@@ -82,7 +82,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
         className="about-overlay__scroll"
         role="dialog"
         aria-modal="true"
-        aria-label="Credits"
+        aria-label="Legal"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="about-overlay__content">

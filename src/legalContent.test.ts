@@ -17,6 +17,13 @@ describe('legal presentation', () => {
     ).toEqual({ value: 'lx', label: 'LARYNX' })
   })
 
+  it('distinguishes the application from its sound engine', () => {
+    const [application, soundEngine] = ABOUT_LEGAL_TEXT.split('\n\n')
+    expect(application).toContain('LX01™ (The Application)')
+    expect(soundEngine).toContain('LARYNX (The Sound Engine)')
+    expect(ABOUT_LEGAL_TEXT).not.toMatch(/LX01(?!™)/)
+  })
+
   it('keeps all fifteen reviewed Piper voices', () => {
     expect(PIPER_VOICE_OPTIONS).toHaveLength(15)
   })

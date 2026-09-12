@@ -20,7 +20,7 @@ export function MobileUnavailable() {
     <main className="mobile-unavailable">
       <div className="mobile-unavailable__content">
         <p className="mobile-unavailable__note">
-          LX01 is not available on mobile devices.
+          LX01™ is not available on mobile devices.
         </p>
       </div>
     </main>

@@ -1,18 +1,18 @@
 # Third-Party Notices
 
-This document records the third-party voice components used by LX01 and the
+This document records the third-party voice components used by LX01™ and the
 terms identified from their published package metadata and model cards. It is
 informational, not legal advice. It was last checked on September 12, 2026.
-LX01-owned source is covered by the [PolyForm Noncommercial License
+LX01™-owned source is covered by the [PolyForm Noncommercial License
 1.0.0](LICENSE). Copyright and license texts for the installed production
 dependency tree are collected in
 [Third-Party Software Licenses](THIRD_PARTY_LICENSES.md).
 
 ## eSpeak-NG JavaScript/WASM
 
-LX01 serves two eSpeak-NG-based JavaScript/WASM runtimes under
+LX01™ serves two eSpeak-NG-based JavaScript/WASM runtimes under
 GPL-3.0-or-later. This is a present distribution obligation, not merely an
-obligation for someone who later redistributes LX01.
+obligation for someone who later redistributes LX01™.
 
 The direct speech engine is built from:
 
@@ -48,7 +48,7 @@ is included locally.
 
 ## SAM / sam-js
 
-LX01 includes `sam-js` npm package version 0.3.1. It is a reverse-engineered
+LX01™ includes `sam-js` npm package version 0.3.1. It is a reverse-engineered
 JavaScript port of Software Automatic Mouth, originally published by Don't Ask
 Software and now attributed by the port's maintainer to SoftVoice, Inc.
 
@@ -59,14 +59,14 @@ Software and now attributed by the port's maintainer to SoftVoice, Inc.
 The package declares `SEE LICENSE IN README.md`. Its README says the maintainer
 cannot place the port under a specific open-source license because rights in
 the original commercial software remain with SoftVoice, and advises use at
-the user's own risk. LX01 cannot grant rights in that underlying material.
+the user's own risk. LX01™ cannot grant rights in that underlying material.
 The maintainer reports unsuccessful attempts to contact SoftVoice, and no
 practical permission route is currently identified. SAM is included as-is;
 treat it as personal, non-commercial use.
 
 ## Piper models and vits-web
 
-LX01 uses `@diffusionstudio/vits-web` version 1.0.3, which declares the MIT
+LX01™ uses `@diffusionstudio/vits-web` version 1.0.3, which declares the MIT
 License. At runtime it downloads models from Diffusion Studio's Piper voice
 mirror, which identifies itself as a fork of Rhasspy's Piper voices.
 
@@ -133,7 +133,7 @@ Speech Group in the School of Computer Science at Carnegie Mellon University.
 Its use for research or commercial purposes is unrestricted. Carnegie Mellon
 requests acknowledgment when the dictionary is used or redistributed.
 
-LX01 accesses CMUdict through the `cmu-pronouncing-dictionary` npm package.
+LX01™ accesses CMUdict through the `cmu-pronouncing-dictionary` npm package.
 
 #### cmu-pronouncing-dictionary — ISC License
 

@@ -106,7 +106,7 @@ gsap.registerPlugin(useGSAP)
 const DEFAULT_TEXT = `August 29, 1997 came and went. Nothing much happened. Michael Jackson turned 40. There was no Judgment Day. People went to work as they always do. Laughed, complained, watched TV, made love. I wanted to run to through the street yelling to grab them all and say, "Every day from this day on is a gift. Use it well.`
 
 const SPLASH_CREDIT =
-  'Larynx™ Industries — LX01 is created by Stellan Johansson.'
+  'Larynx™ Industries — LX01™ is created by Stellan Johansson.'
 const SPLASH_VERSION = 'v0.1.0'
 const SPLASH_YEAR = '© 2026'
 /** Splash build/teardown pace (~15% faster than prior 1/0.9). */
@@ -1925,7 +1925,7 @@ export default function App() {
             <span className="speech-top__mark-glyph" />
           </span>
           <span className="speech-top__sep" aria-hidden="true" />
-          <h1 className="speech-title" aria-label="LX01">
+          <h1 className="speech-title" aria-label="LX01™">
             <Logotype ref={headerLogoRef} loopOnHover />
           </h1>
         </div>
@@ -1970,9 +1970,9 @@ export default function App() {
           className="secondary"
           type="button"
           onClick={() => setAboutOpen(true)}
-          title="Credits"
+          title="Legal"
         >
-          <span className="speech-top__btn-label">CREDITS</span>
+          <span className="speech-top__btn-label">LEGAL</span>
         </button>
         <button
           className="secondary"
