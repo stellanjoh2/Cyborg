@@ -49,7 +49,8 @@ function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
       from = index + link.text.length
     }
   }
-  hits.sort((a, b) => a.start - b.start)
+  // Prefer longer matches when they share a start (e.g. full name vs short).
+  hits.sort((a, b) => a.start - b.start || b.end - a.end)
 
   const nodes: React.ReactNode[] = []
   let cursor = 0

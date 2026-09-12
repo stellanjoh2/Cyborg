@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  ABOUT_LEGAL_LINKS,
   ABOUT_LEGAL_TEXT,
   ABOUT_LINKS,
   ABOUT_LINKS_TEXT,
@@ -93,6 +94,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             hold
             caret={false}
             onComplete={() => setBioActive(true)}
+            links={[...ABOUT_LEGAL_LINKS]}
           />
           <TypewriterReveal
             as="p"
