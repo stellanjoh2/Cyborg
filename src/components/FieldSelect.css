@@ -97,7 +97,7 @@
   border: var(--stroke-width) solid var(--synth-border);
   border-radius: var(--radius);
   background: var(--fill);
-  box-shadow: var(--section-shadow);
+  box-shadow: var(--floating-shadow);
 }
 
 /* Portaled into .speech-app so panel isolation / overflow can't bury it. */

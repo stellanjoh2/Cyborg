@@ -7,6 +7,11 @@ import {
   buildVocoderBank,
   type VocoderBankGraph,
 } from './vocoderBank'
+import {
+  DEFAULT_EQUALIZER,
+  mergeEqualizer,
+  type EqualizerState,
+} from './equalizer'
 
 export type { VocoderParams } from './vocoderParams'
 
@@ -87,6 +92,7 @@ export interface LiveSynthParams {
   metallic: number
   vocoder: VocoderParams
   postProcess: PostProcessParams
+  equalizer: EqualizerState
   masterVolume: number
   masterGainDb: number
 }
@@ -217,6 +223,7 @@ interface SynthGraph {
   distortionOut: GainNode
   distortionShaper: WaveShaperNode
   distortionTone: BiquadFilterNode
+  equalizerFilters: BiquadFilterNode[]
   masterGain: GainNode
   analyser: AnalyserNode
 }
@@ -241,6 +248,7 @@ let currentParams: LiveSynthParams = {
   pitch: 0.7,
   metallic: 0,
   postProcess: mergePostProcess(DEFAULT_POST_PROCESS),
+  equalizer: mergeEqualizer(DEFAULT_EQUALIZER),
   vocoder: { ...DEFAULT_VOCODER_PARAMS, bands: DEFAULT_VOCODER_PARAMS.bands.map((b) => ({ ...b })) },
   masterVolume: DEFAULT_MASTER_VOLUME,
   masterGainDb: DEFAULT_MASTER_GAIN_DB,
@@ -747,6 +755,27 @@ function setAudioParam(
   }
   param.setValueAtTime(param.value, now)
   param.setTargetAtTime(value, now, rampSeconds)
+}
+
+function applyEqualizerToGraph(
+  nodes: SynthGraph,
+  equalizer: EqualizerState,
+  rampSeconds = 0.03,
+) {
+  const now = nodes.context.currentTime
+  nodes.equalizerFilters.forEach((filter, index) => {
+    const band = equalizer.bands[index] ?? DEFAULT_EQUALIZER.bands[index]
+    if (!band) return
+    filter.type = band.type
+    setAudioParam(filter.frequency, band.frequency, now, rampSeconds)
+    setAudioParam(filter.Q, band.q, now, rampSeconds)
+    setAudioParam(
+      filter.gain,
+      equalizer.enabled ? band.gain : 0,
+      now,
+      rampSeconds,
+    )
+  })
 }
 
 function applyPostProcessToGraph(
@@ -1360,13 +1389,27 @@ function buildSynthGraph(
   compressorNode.connect(compressorMakeup)
   compressorMakeup.connect(compressorWet)
   compressorWet.connect(compressorOut)
+
+  const equalizerFilters = DEFAULT_EQUALIZER.bands.map((band) => {
+    const filter = context.createBiquadFilter()
+    filter.type = band.type
+    filter.frequency.value = band.frequency
+    filter.gain.value = band.gain
+    filter.Q.value = band.q
+    return filter
+  })
   const masterGain = context.createGain()
   masterGain.gain.value = DEFAULT_MASTER_VOLUME
   const analyser = context.createAnalyser()
   analyser.fftSize = 2048
   analyser.smoothingTimeConstant = 0
 
-  compressorOut.connect(masterGain)
+  let equalizerInput: AudioNode = compressorOut
+  for (const filter of equalizerFilters) {
+    equalizerInput.connect(filter)
+    equalizerInput = filter
+  }
+  equalizerInput.connect(masterGain)
   masterGain.connect(destination)
   masterGain.connect(analyser)
 
@@ -1474,6 +1517,7 @@ function buildSynthGraph(
     distortionOut,
     distortionShaper,
     distortionTone,
+    equalizerFilters,
     masterGain,
     analyser,
   }
@@ -1492,6 +1536,7 @@ async function ensureGraph(): Promise<SynthGraph> {
       applyIntensityToGraph(nodes, 0, 0)
       applyVocoderParams(nodes.vocoder, DEFAULT_VOCODER_PARAMS, 1, 0)
       applyPostProcessToGraph(nodes, DEFAULT_POST_PROCESS, 0)
+      applyEqualizerToGraph(nodes, DEFAULT_EQUALIZER, 0)
       applyMasterOut(
         nodes,
         currentParams.masterVolume,
@@ -1530,6 +1575,7 @@ function scheduleOfflineGraph(
   applyIntensityToGraph(nodes, params.metallic, 0)
   applyVocoderParams(nodes.vocoder, params.vocoder, params.pitch, 0)
   applyPostProcessToGraph(nodes, params.postProcess, 0)
+  applyEqualizerToGraph(nodes, params.equalizer, 0)
   applyMasterOut(nodes, params.masterVolume, params.masterGainDb, 0)
 
   const playbackRate = mapPlaybackRate(params.speed, params.pitch)
@@ -1562,6 +1608,7 @@ export async function renderSynthOffline(
   const merged: LiveSynthParams = {
     ...params,
     postProcess: mergePostProcess(DEFAULT_POST_PROCESS, params.postProcess),
+    equalizer: mergeEqualizer(DEFAULT_EQUALIZER, params.equalizer),
     masterVolume: params.masterVolume ?? DEFAULT_MASTER_VOLUME,
     masterGainDb: params.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
   }
@@ -1801,6 +1848,7 @@ export function updateLiveSynthParams(
       currentParams.postProcess,
       params.postProcess,
     ),
+    equalizer: mergeEqualizer(currentParams.equalizer, params.equalizer),
     vocoder: {
       ...currentParams.vocoder,
       ...params.vocoder,
@@ -1829,6 +1877,7 @@ export function updateLiveSynthParams(
     rampSeconds,
   )
   applyPostProcessToGraph(graph, currentParams.postProcess, rampSeconds)
+  applyEqualizerToGraph(graph, currentParams.equalizer, rampSeconds)
   applyMasterOut(
     graph,
     currentParams.masterVolume,
@@ -1898,6 +1947,7 @@ export function startSynthPlayback(
   currentParams = {
     ...params,
     postProcess: mergePostProcess(DEFAULT_POST_PROCESS, params.postProcess),
+    equalizer: mergeEqualizer(DEFAULT_EQUALIZER, params.equalizer),
     vocoder: {
       ...DEFAULT_VOCODER_PARAMS,
       ...params.vocoder,
@@ -1929,6 +1979,7 @@ export function startSynthPlayback(
         0,
       )
       applyPostProcessToGraph(nodes, currentParams.postProcess, 0)
+      applyEqualizerToGraph(nodes, currentParams.equalizer, 0)
       applyMasterOut(
         nodes,
         currentParams.masterVolume,

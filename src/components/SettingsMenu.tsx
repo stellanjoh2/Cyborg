@@ -8,8 +8,8 @@ import {
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { GearIcon } from '@phosphor-icons/react'
 import { FieldSelect } from './FieldSelect'
-import { SettingsIcon } from './icons'
 import {
   applyGrainEnabled,
   applyGlowEnabled,
@@ -382,7 +382,7 @@ export function SettingsMenu({
         aria-label="Settings"
         aria-haspopup="dialog"
         aria-expanded={open}
-        title="Settings"
+        data-tooltip="Settings"
         onClick={() => {
           if (open) {
             playUiSound('close')
@@ -397,7 +397,7 @@ export function SettingsMenu({
           }
         }}
       >
-        <SettingsIcon />
+        <GearIcon weight="bold" />
       </button>
       {modal}
     </div>

@@ -107,6 +107,19 @@ html.glow-off .knob__arc-bloom {
   overflow: visible;
 }
 
+.knob::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: calc(var(--grain-opacity) * var(--panel-grain, 1));
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+}
+
 .knob__flash,
 .knob__ink {
   position: absolute;

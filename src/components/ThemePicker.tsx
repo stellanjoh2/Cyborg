@@ -293,7 +293,7 @@ export function ThemePicker() {
         aria-label="Color themes"
         aria-haspopup="dialog"
         aria-expanded={open}
-        title="Color themes"
+        data-tooltip="Color themes"
         onClick={() => {
           if (open) {
             playUiSound('close')

@@ -27,20 +27,29 @@
 
 .settings-menu__trigger svg {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   transition: transform 0.18s ease;
 }
 
-.settings-menu__trigger:hover,
-.settings-menu.is-open .settings-menu__trigger {
+.settings-menu__trigger:hover {
   color: var(--accent);
 }
 
-.settings-menu__trigger:hover svg,
-.settings-menu.is-open .settings-menu__trigger svg {
+.settings-menu.is-open .settings-menu__trigger {
+  color: var(--on-chrome);
+  background: var(--accent);
+  box-shadow: var(--glow-outer);
+}
+
+.settings-menu__trigger:hover svg {
   transform: scale(1.06);
   filter: var(--glow-filter);
+}
+
+.settings-menu.is-open .settings-menu__trigger svg {
+  transform: scale(1.06);
+  filter: none;
 }
 
 .settings-menu__trigger:focus-visible {
@@ -58,24 +67,9 @@
   min-width: 360px;
   padding: var(--settings-gap);
   border: none;
-  border-radius: calc(var(--radius-panel) / 2);
+  border-radius: var(--radius-floating);
   background: var(--fill);
-  /* Match theme-picker modal: section elevation +25% blur / −25% opacity ×2 + bevels. */
-  box-shadow:
-    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
-    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
-    inset 0 var(--bevel-offset) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
-        transparent
-      ),
-    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
-        transparent
-      );
+  box-shadow: var(--floating-shadow);
   overflow: visible;
   visibility: hidden;
 }

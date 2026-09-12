@@ -46,6 +46,13 @@ application. A distributor should obtain qualified legal review of that scope.
 The complete [GPL-3.0 license text](third_party/licenses/GPL-3.0-or-later.txt)
 is included locally.
 
+## Interface font
+
+LX01™ uses **Ac437 NEC MultiSpeed** from
+[The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/)
+by VileR, copyright © 2016–2020 VileR. The font pack is licensed under the
+[Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/).
+
 ## SAM / sam-js
 
 LX01™ includes `sam-js` npm package version 0.3.1. It is a reverse-engineered

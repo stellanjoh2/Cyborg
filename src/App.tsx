@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import {
+  ArrowCounterClockwiseIcon,
+  InfoIcon,
+  SlidersIcon,
+} from '@phosphor-icons/react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
+import { EqualizerWindow } from './components/EqualizerWindow'
 import { FpsMeter } from './components/FpsMeter'
 import { ProTip } from './components/ProTip'
 import { FieldSelect } from './components/FieldSelect'
@@ -17,6 +23,7 @@ import { introBoot } from './introBoot'
 import { Oscilloscope } from './components/Oscilloscope'
 import { SettingsMenu } from './components/SettingsMenu'
 import { ThemePicker } from './components/ThemePicker'
+import { VoiceFileMenu } from './components/VoiceFileMenu'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
 import { TypewriterReveal } from './components/TypewriterReveal'
 import {
@@ -39,6 +46,12 @@ import {
   type PostProcessUiState,
 } from './postProcess'
 import { resolveHumanRobotBlend } from './resolveHumanRobot'
+import {
+  cloneEqualizer,
+  DEFAULT_EQUALIZER,
+  equalizerMatchesDefault,
+  type EqualizerState,
+} from './equalizer'
 import {
   DEFAULT_VOCODER_UI,
   formatCarrierCutoff,
@@ -225,6 +238,10 @@ export default function App() {
   const [humanRobot, setHumanRobot] = useState(0)
   const [formant, setFormant] = useState(50)
   const [postUi, setPostUi] = useState<PostProcessUiState>(DEFAULT_POST_PROCESS_UI)
+  const [equalizer, setEqualizer] = useState<EqualizerState>(() =>
+    cloneEqualizer(),
+  )
+  const [equalizerOpen, setEqualizerOpen] = useState(false)
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
   const [isLooping, setIsLooping] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -801,9 +818,9 @@ export default function App() {
       const navEls = gsap.utils.toArray<HTMLElement>(
         [
           '.speech-top__brand',
-          '.speech-top__voice-files > *',
           '.speech-scope',
-          '.speech-top__right > *',
+          '.speech-top__utils > *',
+          '.speech-top__export',
         ].join(', '),
       )
       const navStagger = 0.07
@@ -1451,6 +1468,13 @@ export default function App() {
   }, [isSpeaking, postProcess])
 
   useEffect(() => {
+    if (!isSpeaking) {
+      return
+    }
+    updateSamLiveParams({ equalizer })
+  }, [equalizer, isSpeaking])
+
+  useEffect(() => {
     updateSamLiveParams({
       masterVolume: liveMasterVolume,
       masterGainDb,
@@ -1616,6 +1640,7 @@ export default function App() {
   const vocoderDirty = !vocoderMatches(activePreset, vocoderUi)
   const carrierDirty = !carrierMatches(activePreset, vocoderUi)
   const fxDirty = !postProcessMatches(postUi)
+  const equalizerDirty = !equalizerMatchesDefault(equalizer)
   const masterDirty = masterVolume !== 100 || masterGain !== 0
   const templateDirty =
     !presetMatches(
@@ -1629,6 +1654,7 @@ export default function App() {
       },
     ) ||
     fxDirty ||
+    equalizerDirty ||
     masterDirty
 
   const applyVoicePreset = (nextVoiceId: Exclude<VoiceId, 'custom'>) => {
@@ -1826,6 +1852,14 @@ export default function App() {
     }
   }
 
+  const handleResetEqualizer = () => {
+    const next = cloneEqualizer(DEFAULT_EQUALIZER)
+    setEqualizer(next)
+    if (isSpeaking) {
+      updateSamLiveParams({ equalizer: next }, { immediate: true })
+    }
+  }
+
   const handleResetMaster = () => {
     setMasterVolume(100)
     setMasterGain(0)
@@ -1839,11 +1873,13 @@ export default function App() {
     const preset = getPresetById(activePresetId)
     const nextVocoder = clonePresetVocoder(preset)
     const nextPost = { ...DEFAULT_POST_PROCESS_UI }
+    const nextEqualizer = cloneEqualizer(DEFAULT_EQUALIZER)
     applyVoicePreset(activePresetId)
     if (usesSelectableVoice(voiceEngine)) {
       setPitch(DEFAULT_PITCH_BY_ENGINE[voiceEngine])
     }
     setPostUi(nextPost)
+    setEqualizer(nextEqualizer)
     setMasterVolume(100)
     setMasterGain(0)
 
@@ -1863,6 +1899,7 @@ export default function App() {
           metallic: plan.metallic,
           vocoder: mapUiToVocoder(nextVocoder, preset.formant),
           postProcess: mapUiToPostProcess(nextPost),
+          equalizer: nextEqualizer,
           masterVolume: 1,
           masterGainDb: 0,
         },
@@ -1922,6 +1959,7 @@ export default function App() {
       metallic: livePlan.metallic,
       vocoder,
       postProcess,
+      equalizer,
       masterVolume: liveMasterVolume,
       masterGainDb,
       loop: isLooping,
@@ -1998,6 +2036,7 @@ export default function App() {
       metallic: livePlan.metallic,
       vocoder,
       postProcess,
+      equalizer,
       masterVolume: masterVolume / 100,
       masterGainDb,
     })
@@ -2082,57 +2121,70 @@ export default function App() {
             <Logotype ref={headerLogoRef} loopOnHover />
           </h1>
         </div>
-        <div className="speech-top__voice-files actions">
-          <input
-            ref={lxVoiceInputRef}
-            type="file"
-            accept={LXVOICE_EXTENSION}
-            hidden
-            onChange={handleLoadLxVoiceFile}
-          />
-          <button
-            className="secondary"
-            type="button"
-            onClick={handleLoadLxVoiceClick}
-            title={`Load voice preset (${LXVOICE_EXTENSION})`}
-          >
-            <span className="speech-top__btn-label">LOAD</span>
-          </button>
-          <button
-            className="secondary"
-            type="button"
-            onClick={handleSaveLxVoice}
-            title={`Save voice preset (${LXVOICE_EXTENSION})`}
-          >
-            <span className="speech-top__btn-label">SAVE</span>
-          </button>
-        </div>
       </div>
-      <Oscilloscope />
-      <div className="speech-top__right actions">
+      <input
+        ref={lxVoiceInputRef}
+        type="file"
+        accept={LXVOICE_EXTENSION}
+        hidden
+        onChange={handleLoadLxVoiceFile}
+      />
+      <Oscilloscope isPlaying={isSpeaking} />
+      <div className="speech-top__right">
+        <div className="speech-top__utils">
+          <button
+            className="speech-top__reset"
+            type="button"
+            onClick={handleResetTemplate}
+            disabled={!templateDirty}
+            data-tooltip="Reset all"
+            aria-label="Reset all sections to the selected template"
+          >
+            <ArrowCounterClockwiseIcon weight="bold" />
+          </button>
+          <button
+            className={`speech-top__eq${equalizerOpen ? ' is-active' : ''}`}
+            type="button"
+            onClick={() => setEqualizerOpen((current) => !current)}
+            data-tooltip="Equalizer"
+            aria-label={equalizerOpen ? 'Close equalizer' : 'Open equalizer'}
+            aria-expanded={equalizerOpen}
+            aria-controls="master-equalizer"
+          >
+            <SlidersIcon weight="bold" />
+          </button>
+          <ThemePicker />
+          <button
+            className={`speech-top__legal-trigger${aboutOpen ? ' is-active' : ''}`}
+            type="button"
+            onClick={handleLegalToggle}
+            data-tooltip="Legal"
+            aria-label={aboutOpen ? 'Close legal' : 'Legal information'}
+            aria-expanded={aboutOpen}
+            aria-controls="legal-view"
+          >
+            <InfoIcon weight="bold" />
+          </button>
+          <VoiceFileMenu
+            onLoad={handleLoadLxVoiceClick}
+            onSave={handleSaveLxVoice}
+          />
+          <SettingsMenu
+            engine={voiceEngine}
+            onEngineChange={(next) => {
+              setVoiceEngine(next)
+              setPitch(DEFAULT_PITCH_BY_ENGINE[next])
+              if (isSpeaking) {
+                bakedVoiceRef.current = null
+                if (usesSelectableVoice(next)) {
+                  setIsLoadingSpeech(true)
+                }
+              }
+            }}
+          />
+        </div>
         <button
-          className="secondary"
-          type="button"
-          onClick={handleResetTemplate}
-          disabled={!templateDirty}
-          title="Reset all sections to the selected template"
-        >
-          <span className="speech-top__btn-label">RESET</span>
-        </button>
-        <button
-          className={`secondary${aboutOpen ? ' is-active' : ''}`}
-          type="button"
-          onClick={handleLegalToggle}
-          title={aboutOpen ? 'Close legal' : 'Legal'}
-          aria-expanded={aboutOpen}
-          aria-controls="legal-view"
-        >
-          <span className="speech-top__btn-label">
-            {aboutOpen ? 'CLOSE' : 'LEGAL'}
-          </span>
-        </button>
-        <button
-          className="secondary"
+          className="secondary speech-top__export"
           type="button"
           onClick={handleExportWav}
           disabled={isExporting || !text.trim()}
@@ -2142,22 +2194,16 @@ export default function App() {
             {isExporting ? 'EXPORTING...' : 'EXPORT'}
           </span>
         </button>
-        <ThemePicker />
-        <SettingsMenu
-          engine={voiceEngine}
-          onEngineChange={(next) => {
-            setVoiceEngine(next)
-            setPitch(DEFAULT_PITCH_BY_ENGINE[next])
-            if (isSpeaking) {
-              bakedVoiceRef.current = null
-              if (usesSelectableVoice(next)) {
-                setIsLoadingSpeech(true)
-              }
-            }
-          }}
-        />
       </div>
     </header>
+
+      <EqualizerWindow
+        open={equalizerOpen}
+        value={equalizer}
+        onChange={setEqualizer}
+        onClose={() => setEqualizerOpen(false)}
+        onReset={handleResetEqualizer}
+      />
 
       <div className="speech-board">
       <div className="speech-col speech-col--master">

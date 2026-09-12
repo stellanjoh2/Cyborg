@@ -11,26 +11,12 @@
   margin: 0;
   padding: var(--pro-tip-gap);
   border: none;
-  border-radius: calc(var(--radius-panel) / 2);
+  border-radius: var(--radius-floating);
   background: var(--fill);
   color: var(--text);
   font-family: var(--font-ui);
   visibility: hidden;
-  box-shadow:
-    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
-    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
-    inset 0 var(--bevel-offset) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
-        transparent
-      ),
-    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
-        transparent
-      );
+  box-shadow: var(--floating-shadow);
 }
 
 .pro-tip::before {

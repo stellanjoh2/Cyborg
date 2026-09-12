@@ -268,6 +268,8 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .speech-top {
+  /* 2560px design space: 1090px centered scope. */
+  --scope-inset: 735px;
   position: relative;
   z-index: 2;
   isolation: isolate;
@@ -362,12 +364,185 @@ html.is-splash-void .scale-nav-bleed {
   justify-self: end;
 }
 
+/* Center utility icons between scope end and EXPORT. */
+.speech-top__utils {
+  position: absolute;
+  z-index: 2;
+  top: var(--section-gap);
+  left: calc(100% - var(--scope-inset));
+  /* EXPORT is 132px; sit flush against its left edge. */
+  right: calc(var(--app-pad) + 132px);
+  height: var(--nav-control-h);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--section-gap);
+  min-width: 0;
+  pointer-events: none;
+}
+
+.speech-top__utils > * {
+  pointer-events: auto;
+}
+
 .speech-top .actions {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: var(--section-gap);
   min-width: 0;
+}
+
+.speech-top__reset,
+.speech-top__eq,
+.speech-top__legal-trigger {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--nav-control-h);
+  height: var(--nav-control-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted-solid) 25%, transparent);
+  color: var(--muted-solid);
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.speech-top__export {
+  position: relative;
+  z-index: 2;
+}
+
+.speech-top__reset svg,
+.speech-top__eq svg,
+.speech-top__legal-trigger svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  transition: transform 0.18s ease;
+}
+
+.speech-top__reset:hover:not(:disabled),
+.speech-top__eq:hover,
+.speech-top__legal-trigger:hover {
+  color: var(--accent);
+}
+
+.speech-top__eq.is-active,
+.speech-top__legal-trigger.is-active {
+  color: var(--on-chrome);
+  background: var(--accent);
+  box-shadow: var(--glow-outer);
+}
+
+.speech-top__reset:hover:not(:disabled) svg,
+.speech-top__eq:hover svg,
+.speech-top__legal-trigger:hover svg {
+  transform: scale(1.06);
+  filter: var(--glow-filter);
+}
+
+.speech-top__eq.is-active svg,
+.speech-top__legal-trigger.is-active svg {
+  transform: scale(1.06);
+  filter: none;
+}
+
+.speech-top__reset:disabled {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted-solid) 14%, transparent);
+  cursor: not-allowed;
+}
+
+.speech-top__reset:focus-visible,
+.speech-top__eq:focus-visible,
+.speech-top__legal-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+:is(
+  .speech-top__reset,
+  .speech-top__eq,
+  .speech-top__legal-trigger,
+  .theme-picker__trigger,
+  .voice-file-menu__trigger,
+  .settings-menu__trigger,
+  .eq-window__reset,
+  .eq-window__close
+)[data-tooltip] {
+  position: relative;
+}
+
+:is(
+  .speech-top__reset,
+  .speech-top__eq,
+  .speech-top__legal-trigger,
+  .theme-picker__trigger,
+  .voice-file-menu__trigger,
+  .settings-menu__trigger,
+  .eq-window__reset,
+  .eq-window__close
+)[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 300;
+  top: calc(100% + 10px);
+  left: 50%;
+  padding: 7px 9px 6px;
+  border: 1px solid var(--synth-border);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--black);
+  box-shadow: var(--floating-shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+}
+
+:is(
+  .speech-top__reset,
+  .speech-top__eq,
+  .speech-top__legal-trigger,
+  .theme-picker__trigger,
+  .voice-file-menu__trigger,
+  .settings-menu__trigger,
+  .eq-window__reset,
+  .eq-window__close
+)[data-tooltip]:is(:hover, :focus-visible)::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+:is(
+  .speech-top__eq,
+  .speech-top__legal-trigger,
+  .theme-picker__trigger,
+  .voice-file-menu__trigger,
+  .settings-menu__trigger
+)[aria-expanded='true']::after {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Top-nav: techy ridge/bracket buttons (adapted from uiverse Navarog21/terrible-walrus-15) */
@@ -377,7 +552,7 @@ html.is-splash-void .scale-nav-bleed {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 160px;
+  width: 132px;
   height: var(--nav-control-h);
   box-sizing: border-box;
   overflow: visible;

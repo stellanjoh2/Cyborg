@@ -8,6 +8,11 @@ Browser speech synthesizer and vocoder from Larynx Industries.
 
 LX01™ (The Application) includes one project-authored voice engine and three third-party engines.
 
+The interface uses **Ac437 NEC MultiSpeed** from
+[The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/)
+by VileR (© 2016–2020), licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
 **LARYNX (The Sound Engine)** is LX01™'s original, offline formant voice engine. Its ARPAbet phoneme source, excitation, resonators, timing, and robotic prosody are generated locally by this project without a downloaded voice model. It uses the Carnegie Mellon Pronouncing Dictionary for English pronunciation.
 
 Audio generated with the **LARYNX engine** may be used, edited, distributed, and monetized without attribution. This is separate from **LX01™-owned application source**, which is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).

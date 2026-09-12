@@ -2,8 +2,6 @@
   position: relative;
   flex: 0 0 auto;
   z-index: 5;
-  /* With --section-gap, totals --nav-theme-gap after EXPORT. */
-  margin-inline-start: calc(var(--nav-theme-gap) - var(--section-gap));
 }
 
 /* Lift trigger above neighboring nav controls while open. */
@@ -72,24 +70,9 @@
   width: max-content;
   padding: var(--theme-gap);
   border: none;
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-floating);
   background: var(--fill);
-  /* Drop is section elevation +25% blur / −25% opacity (applied twice); bevels match --section-shadow. */
-  box-shadow:
-    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
-    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent),
-    inset 0 var(--bevel-offset) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
-        transparent
-      ),
-    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
-      color-mix(
-        in srgb,
-        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
-        transparent
-      );
+  box-shadow: var(--floating-shadow);
   overflow: visible;
   /* GSAP owns visibility on open (avoids first-paint hitch). */
   visibility: hidden;

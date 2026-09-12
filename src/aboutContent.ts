@@ -26,9 +26,12 @@ export const ABOUT_LEGAL_TEXT = [
   'eSpeak-NG is distributed in LX01™ under GPL-3.0-or-later. Distribution is already subject to the GPL; it is not a future obligation triggered only by redistributors. The direct speech runtime is built from exact eSpeak-NG 1.52-dev code and data commits with Emscripten 3.1.47. Piper uses a separate, same-origin phonemizer built from exact piper-phonemize and eSpeak-NG code and data commits with that same pinned toolchain. Build scripts, the source manifest, license texts and SHA-256 files are published with the project. Both compiled runtimes are subject to the GPL. Technical isolation does not by itself settle the GPL scope of a combined browser application, so that scope must be reviewed for your distribution. See Third-Party Notices and Third-Party Software Licenses for details.',
   'Last reviewed: September 12, 2026. This summary is informational and is not legal advice. If you are shipping a commercial product—especially one using SAM, Piper voices, or an eSpeak-NG build—have qualified counsel review the applicable terms.',
   'If you reuse anything beyond LARYNX-generated audio, check the applicable third-party terms. LX01™ is not affiliated with SoftVoice, Rhasspy, the eSpeak NG project, or Carnegie Mellon.',
+  "The interface uses Ac437 NEC MultiSpeed from The Ultimate Oldschool PC Font Pack by VileR (© 2016–2020). The font pack is licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).",
+  "The master EQ curve editor is inspired by Andrew Fisher's original EQ interface on CodePen.",
 ].join('\n\n')
 
 export const ABOUT_LEGAL_EMPHASIS = [
+  { text: 'CC BY-SA 4.0' },
   { text: 'royalty-free' },
   { text: 'personal or commercial work' },
   { text: 'non-commercial use' },
@@ -49,6 +52,22 @@ export const ABOUT_LEGAL_EMPHASIS = [
 
 /** Wikipedia (and similar) for engines / systems named in ABOUT_LEGAL_TEXT. */
 export const ABOUT_LEGAL_LINKS = [
+  {
+    text: 'Andrew Fisher',
+    href: 'https://codepen.io/Andrew-Fisher-the-decoder',
+  },
+  {
+    text: 'original EQ interface',
+    href: 'https://codepen.io/Andrew-Fisher-the-decoder/pen/qEZywZb',
+  },
+  {
+    text: 'The Ultimate Oldschool PC Font Pack',
+    href: 'https://int10h.org/oldschool-pc-fonts/',
+  },
+  {
+    text: 'Creative Commons Attribution-ShareAlike 4.0 International',
+    href: 'https://creativecommons.org/licenses/by-sa/4.0/',
+  },
   {
     text: 'Software Automatic Mouth',
     href: 'https://en.wikipedia.org/wiki/Software_Automatic_Mouth',

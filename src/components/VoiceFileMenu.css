@@ -1,0 +1,131 @@
+.voice-file-menu {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
+}
+
+.voice-file-menu.is-open {
+  z-index: 40;
+}
+
+.voice-file-menu__trigger {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--nav-control-h);
+  height: var(--nav-control-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted-solid);
+  background: color-mix(in srgb, var(--muted-solid) 25%, transparent);
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.voice-file-menu__trigger svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  transition: transform 0.18s ease;
+}
+
+.voice-file-menu__trigger:hover {
+  color: var(--accent);
+}
+
+.voice-file-menu.is-open .voice-file-menu__trigger {
+  color: var(--on-chrome);
+  background: var(--accent);
+  box-shadow: var(--glow-outer);
+}
+
+.voice-file-menu__trigger:hover svg {
+  transform: scale(1.06);
+  filter: var(--glow-filter);
+}
+
+.voice-file-menu.is-open .voice-file-menu__trigger svg {
+  transform: scale(1.06);
+  filter: none;
+}
+
+.voice-file-menu__trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.voice-file-menu__modal {
+  position: absolute;
+  z-index: 100;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 280px;
+  padding: 28px;
+  border: 0;
+  border-radius: var(--radius-floating);
+  visibility: hidden;
+  background: var(--fill);
+  box-shadow: var(--floating-shadow);
+}
+
+.voice-file-menu__modal::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+}
+
+.voice-file-menu__title {
+  margin: 0 0 24px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--font-m);
+  line-height: 1;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.voice-file-menu__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.voice-file-menu__action {
+  appearance: none;
+  box-sizing: border-box;
+  padding: 11px 10px 9px;
+  border: var(--stroke-width) solid var(--synth-border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.voice-file-menu__action:hover {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  color: var(--accent);
+  text-shadow: var(--glow-outer);
+  background: color-mix(in srgb, var(--accent) 10%, var(--black));
+}
+
+.voice-file-menu__action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,6 +1,11 @@
 import SamJs from 'sam-js'
 import { classicTextToPhonemes } from './samClassicReciter'
 import {
+  DEFAULT_EQUALIZER,
+  mergeEqualizer,
+  type EqualizerState,
+} from './equalizer'
+import {
   cancelMetallicPlayback,
   DEFAULT_MASTER_GAIN_DB,
   DEFAULT_MASTER_VOLUME,
@@ -149,6 +154,7 @@ export async function refreshSamLiveBuffer(options: SamSynthOptions) {
 export interface SamSpeakOptions extends SamSynthOptions {
   vocoder?: VocoderParams
   postProcess?: PostProcessParams
+  equalizer?: EqualizerState
   masterVolume?: number
   masterGainDb?: number
   loop?: boolean
@@ -231,6 +237,7 @@ export async function exportSamWav(options: SamSpeakOptions): Promise<void> {
     metallic: options.metallic,
     vocoder: normalizeVocoder(options.vocoder),
     postProcess: normalizePostProcess(options.postProcess),
+    equalizer: mergeEqualizer(DEFAULT_EQUALIZER, options.equalizer),
     masterVolume: options.masterVolume ?? DEFAULT_MASTER_VOLUME,
     masterGainDb: options.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
   })
@@ -270,6 +277,7 @@ export async function speakSam(options: SamSpeakOptions) {
       metallic: options.metallic,
       vocoder: normalizeVocoder(options.vocoder),
       postProcess: normalizePostProcess(options.postProcess),
+      equalizer: mergeEqualizer(DEFAULT_EQUALIZER, options.equalizer),
       masterVolume: options.masterVolume ?? DEFAULT_MASTER_VOLUME,
       masterGainDb: options.masterGainDb ?? DEFAULT_MASTER_GAIN_DB,
     },

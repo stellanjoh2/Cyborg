@@ -43,7 +43,7 @@ function hexLuma(color: string): number {
  * CRT-style time-domain scope driven by the master synth analyser.
  * Adapted from classic Web Audio canvas scopes (e.g. Sound Lab style pens).
  */
-export function Oscilloscope() {
+export function Oscilloscope({ isPlaying }: { isPlaying: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export function Oscilloscope() {
         return
       }
 
-      const peak = readMasterPeak()
+      const peak = isPlaying ? readMasterPeak() : 0
       const phosphor = beamColor(peak)
       const lightPlate = hexLuma(bg) > 0.42
       const gridAlpha = lightPlate ? 0.28 : 0.14
@@ -147,7 +147,7 @@ export function Oscilloscope() {
       ctx.globalAlpha = 1
       drawGrid(w, h, phosphor, gridAlpha)
 
-      const analyser = getMasterAnalyser()
+      const analyser = isPlaying ? getMasterAnalyser() : null
       if (analyser) {
         if (!data || data.length !== analyser.fftSize) {
           data = new Uint8Array(analyser.fftSize)
@@ -194,7 +194,7 @@ export function Oscilloscope() {
 
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [])
+  }, [isPlaying])
 
   return (
     <div className="speech-scope" aria-hidden="true" title="Output scope">

@@ -1,23 +1,14 @@
 .speech-scope {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: var(--section-gap);
   z-index: 1;
   isolation: isolate;
   box-sizing: border-box;
-  /* Clear logo + LOAD/SAVE on the left; RESET…settings on the right. */
-  left: calc(
-    var(--app-pad) + var(--nav-brand-w) + var(--nav-theme-gap) + 2 * 160px +
-      var(--section-gap) + var(--nav-theme-gap)
-  );
-  right: calc(
-    var(--nav-theme-gap) + 3 * 160px + 2 * var(--section-gap) +
-      var(--nav-theme-gap) + var(--nav-control-h) + var(--section-gap) +
-      var(--nav-control-h) + var(--app-pad)
-  );
+  /* Equal fixed-design insets keep the scope centered at 1090px. */
+  left: var(--scope-inset);
+  right: var(--scope-inset);
   width: auto;
   height: var(--nav-control-h);
-  margin-block: auto;
   padding: 3px;
   border-radius: 999px;
   overflow: hidden;

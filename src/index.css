@@ -100,6 +100,8 @@
   --legal: #ff5938;
   --black: #121212;
   --fill: #191919;
+  /* Floating window title plates — 3% brighter than --fill. */
+  --window-chrome: color-mix(in srgb, var(--fill) 97%, white);
   --stroke: #ffffff;
   --theme-primary: #ffbc70;
   --theme-secondary: #191919;
@@ -110,6 +112,8 @@
   --stroke-width: 1px;
   --radius: 6px;
   --radius-panel: 48px;
+  /* Popovers / floating windows (settings, EQ, theme picker, …). */
+  --radius-floating: calc(var(--radius-panel) / 2);
   --bevel-highlight-color: #ffffff;
   --bevel-shadow-color: #000000;
   --bevel-radius: 3px;
@@ -134,6 +138,24 @@
   /* Elevation + top/bottom bevel only (no emboss glow, no L/R) — cheaper idle paint. */
   --section-shadow:
     var(--section-elevation),
+    inset 0 var(--bevel-offset) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-highlight-color) calc(var(--bevel-top-opacity) * 100%),
+        transparent
+      ),
+    inset 0 calc(var(--bevel-offset) * -1) var(--bevel-radius)
+      color-mix(
+        in srgb,
+        var(--bevel-shadow-color) calc(var(--bevel-bottom-opacity) * 100%),
+        transparent
+      );
+  /* Popovers / modals: section elevation +25% blur / −25% opacity ×2. Kept on theme-minimal. */
+  --floating-elevation:
+    0 1px 3.75px color-mix(in srgb, #000 30.9375%, transparent),
+    0 6px 33.75px color-mix(in srgb, #000 22.5%, transparent);
+  --floating-shadow:
+    var(--floating-elevation),
     inset 0 var(--bevel-offset) var(--bevel-radius)
       color-mix(
         in srgb,
@@ -259,7 +281,7 @@ html.is-safari {
   --grain-opacity: 0;
 }
 
-/* Gort / Baymax / TARS — flat shell, no elevation or glow drop-shadows. */
+/* R2-D2 / Gort / Baymax / TARS — flat shell; --floating-shadow stays for popovers. */
 html.theme-minimal {
   --section-shadow: none;
   --section-recess-shadow: none;
