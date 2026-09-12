@@ -76,11 +76,20 @@ try {
     })
 
   await command('Runtime.enable')
+  await command('Page.enable')
+  await command('Page.navigate', { url: targetUrl })
+  await waitFor(async () => {
+    const evaluation = await command('Runtime.evaluate', {
+      expression: 'location.href',
+      returnByValue: true,
+    })
+    return evaluation.result?.value?.startsWith(targetUrl)
+  })
   const evaluation = await command('Runtime.evaluate', {
     awaitPromise: true,
     returnByValue: true,
     expression: `(async () => {
-      const base = new URL('vendor/voice-runtime/', document.baseURI)
+      const base = new URL('vendor/voice-runtime/', location.href)
       let directBytes = 0
       let directError = ''
       let directLogs = ''
