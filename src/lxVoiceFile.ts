@@ -46,7 +46,7 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function parseNumberMap<T extends Record<string, number>>(
+function parseNumberMap<T extends { [K in keyof T]: number }>(
   raw: unknown,
   defaults: T,
   label: string,
