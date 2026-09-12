@@ -150,7 +150,9 @@ export function ProTip({ ready }: { ready: boolean }) {
         </h2>
       </div>
       <p id="pro-tip-body" className="pro-tip__body">
-        You can change voice engine in the Settings
+        You can change voice engine in
+        <br />
+        the Settings
       </p>
       <button type="button" className="pro-tip__dismiss" onClick={dismiss}>
         OK
