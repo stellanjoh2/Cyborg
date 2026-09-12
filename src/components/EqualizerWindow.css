@@ -317,12 +317,13 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-rows: 400px auto auto;
+  grid-template-rows: auto auto auto;
   padding: 24px 24px 48px;
   gap: var(--eq-grid-gap);
 }
 
 .eq-graph {
+  aspect-ratio: 1260 / 500;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--eq-inset-stroke);
@@ -372,7 +373,7 @@
 .eq-response-line {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 3;
+  stroke-width: 2;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
   filter: var(--glow-filter);

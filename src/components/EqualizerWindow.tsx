@@ -29,9 +29,9 @@ import './EqualizerWindow.css'
 gsap.registerPlugin(useGSAP)
 
 const WIDTH = 1260
-const HEIGHT = 400
-const PLOT = { left: 48, right: 48, top: 24, bottom: 48 }
-const RESPONSE_RANGE_DB = 18
+const HEIGHT = 500
+const PLOT = { left: 48, right: 48, top: 48, bottom: 48 }
+const RESPONSE_RANGE_DB = 12
 const FREQUENCY_TICKS = [20, 50, 100, 200, 500, 1_000, 2_000, 5_000, 10_000, 20_000]
 const GAIN_TICKS = [12, 6, 0, -6, -12]
 
@@ -455,7 +455,8 @@ export function EqualizerWindow({
                 <text
                   className="eq-axis-label"
                   x={plotX(frequency)}
-                  y={HEIGHT - 16}
+                  y={HEIGHT - PLOT.bottom / 2}
+                  dominantBaseline="central"
                   textAnchor={
                     frequency === EQ_MIN_FREQUENCY
                       ? 'start'
