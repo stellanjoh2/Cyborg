@@ -66,8 +66,11 @@ jobs:
           fi
           cp third_party/voice-runtime/source-manifest.json \
             public/vendor/voice-runtime/
-          sha256sum --check public/vendor/voice-runtime/espeak-ng.sha256
-          sha256sum --check public/vendor/voice-runtime/piper_phonemize.sha256
+          (
+            cd public/vendor/voice-runtime
+            sha256sum --check espeak-ng.sha256
+            sha256sum --check piper_phonemize.sha256
+          )
 
       - name: Commit reproducible runtime outputs
         run: |
