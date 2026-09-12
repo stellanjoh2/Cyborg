@@ -7,6 +7,9 @@ import {
 } from './piperVoices'
 
 const readyPromises = new Map<PiperVoiceId, Promise<void>>()
+let renderedCache:
+  | { voiceId: PiperVoiceId; text: string; samples: Float32Array }
+  | undefined
 
 async function loadPiper() {
   return import('@diffusionstudio/vits-web')
@@ -44,6 +47,10 @@ export async function renderPiperSamples(
   text: string,
   voiceId: PiperVoiceId = DEFAULT_PIPER_VOICE,
 ): Promise<Float32Array | null> {
+  if (renderedCache?.voiceId === voiceId && renderedCache.text === text) {
+    return renderedCache.samples
+  }
+
   try {
     // Wait out any in-flight prefetch so we don't race OPFS writes.
     const readyPromise = readyPromises.get(voiceId)
@@ -61,7 +68,10 @@ export async function renderPiperSamples(
       readyPromises.set(voiceId, Promise.resolve())
     }
 
-    return decodeWavBlobToSpeechSamples(wav)
+    const samples = await decodeWavBlobToSpeechSamples(wav)
+    if (!samples) return null
+    renderedCache = { voiceId, text, samples }
+    return samples
   } catch {
     return null
   }
