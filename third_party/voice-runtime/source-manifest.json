@@ -1,9 +1,10 @@
 {
   "schemaVersion": 1,
   "directEspeak": {
-    "source": "https://github.com/espeak-ng/espeak-ng.git",
-    "commit": "4870adfa25b1a32b4361592f1be8a40337c58d6c",
-    "version": "1.52.0",
+    "source": "https://github.com/rhasspy/espeak-ng.git",
+    "commit": "0f65aa301e0d6bae5e172cc74197d32a6182200f",
+    "dataCommit": "8593723f10cfd9befd50de447f14bf0a9d2a14a4",
+    "version": "1.52-dev",
     "license": "GPL-3.0-or-later"
   },
   "piperPhonemize": {

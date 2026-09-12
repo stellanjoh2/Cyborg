@@ -16,8 +16,10 @@ obligation for someone who later redistributes LX01.
 
 The direct speech engine is built from:
 
-- eSpeak-NG 1.52.0 source commit
-  [`4870adfa25b1a32b4361592f1be8a40337c58d6c`](https://github.com/espeak-ng/espeak-ng/tree/4870adfa25b1a32b4361592f1be8a40337c58d6c)
+- eSpeak-NG 1.52-dev source commit
+  [`0f65aa301e0d6bae5e172cc74197d32a6182200f`](https://github.com/rhasspy/espeak-ng/tree/0f65aa301e0d6bae5e172cc74197d32a6182200f)
+- eSpeak-NG data commit
+  [`8593723f10cfd9befd50de447f14bf0a9d2a14a4`](https://github.com/rhasspy/espeak-ng/tree/8593723f10cfd9befd50de447f14bf0a9d2a14a4)
 - Emscripten 3.1.47 SDK commit
   [`37b85e9eaee5be090569d018cca77a15cacc11b7`](https://github.com/emscripten-core/emsdk/tree/37b85e9eaee5be090569d018cca77a15cacc11b7)
 

@@ -6,7 +6,7 @@ form for the deployed binaries. They reject unpinned revisions and write
 SHA-256 checksums next to the outputs.
 
 - `build-espeak.sh` builds the direct eSpeak speech engine from eSpeak-NG
-  1.52.0.
+  1.52-dev code and its exactly pinned data revision.
 - `build-piper-phonemizer.sh` builds Piper's eSpeak-NG-based phonemizer.
 - `.github/workflows/build-voice-runtime.yml` installs the exactly pinned
   Emscripten SDK and runs both scripts.
