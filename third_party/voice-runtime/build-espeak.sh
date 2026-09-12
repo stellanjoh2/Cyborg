@@ -3,11 +3,12 @@ set -euo pipefail
 
 readonly SOURCE_URL='https://github.com/espeak-ng/espeak-ng.git'
 readonly SOURCE_COMMIT='4870adfa25b1a32b4361592f1be8a40337c58d6c'
-readonly OUT_DIR="${1:?usage: build-espeak.sh OUT_DIR}"
+readonly OUT_DIR_INPUT="${1:?usage: build-espeak.sh OUT_DIR}"
 readonly WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR_INPUT"
+readonly OUT_DIR="$(cd "$OUT_DIR_INPUT" && pwd)"
 # Emscripten 3.1.47's wide-character declarations conflict with eSpeak-NG's
 # compatibility macros. This is the same documented patch used by the Piper
 # phonemizer build.

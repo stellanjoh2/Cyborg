@@ -5,12 +5,13 @@ readonly PIPER_URL='https://github.com/wide-video/piper-phonemize.git'
 readonly PIPER_COMMIT='cfff8e52ebaea37c7e953ae2d06b174acb827ac4'
 readonly DATA_URL='https://github.com/rhasspy/espeak-ng.git'
 readonly DATA_COMMIT='8593723f10cfd9befd50de447f14bf0a9d2a14a4'
-readonly OUT_DIR="${1:?usage: build-piper-phonemizer.sh OUT_DIR}"
+readonly OUT_DIR_INPUT="${1:?usage: build-piper-phonemizer.sh OUT_DIR}"
 readonly WORK_DIR="$(mktemp -d)"
 readonly TOOLCHAIN_FILE="${EMSDK:?activate Emscripten first}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR_INPUT"
+readonly OUT_DIR="$(cd "$OUT_DIR_INPUT" && pwd)"
 git clone --filter=blob:none "$DATA_URL" "$WORK_DIR/espeak-data"
 git -C "$WORK_DIR/espeak-data" checkout --detach "$DATA_COMMIT"
 test "$(git -C "$WORK_DIR/espeak-data" rev-parse HEAD)" = "$DATA_COMMIT"
