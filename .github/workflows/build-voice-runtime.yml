@@ -48,13 +48,22 @@ jobs:
 
       - name: Build pinned same-origin runtimes
         run: |
+          set -o pipefail
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           rm -rf public/vendor/voice-runtime
           mkdir -p public/vendor/voice-runtime
-          bash third_party/voice-runtime/build-espeak.sh \
-            public/vendor/voice-runtime
-          bash third_party/voice-runtime/build-piper-phonemizer.sh \
-            public/vendor/voice-runtime
+          if ! bash third_party/voice-runtime/build-espeak.sh \
+            public/vendor/voice-runtime 2>&1 | tee "$RUNNER_TEMP/espeak.log"; then
+            message="$(tail -c 3000 "$RUNNER_TEMP/espeak.log" | sed ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::error title=Direct eSpeak build failed::$message"
+            exit 1
+          fi
+          if ! bash third_party/voice-runtime/build-piper-phonemizer.sh \
+            public/vendor/voice-runtime 2>&1 | tee "$RUNNER_TEMP/piper.log"; then
+            message="$(tail -c 3000 "$RUNNER_TEMP/piper.log" | sed ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::error title=Piper phonemizer build failed::$message"
+            exit 1
+          fi
           cp third_party/voice-runtime/source-manifest.json \
             public/vendor/voice-runtime/
           sha256sum --check public/vendor/voice-runtime/espeak-ng.sha256
