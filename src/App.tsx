@@ -1673,6 +1673,8 @@ export default function App() {
     humanRobot: number
     formant: number
     vocoder: VocoderUiState
+    postProcess: PostProcessUiState
+    equalizer: EqualizerState
   }) => {
     const match = VOICE_PRESETS.find((preset) =>
       presetMatches(preset, {
@@ -1689,6 +1691,8 @@ export default function App() {
     setHumanRobot(loaded.humanRobot)
     setFormant(loaded.formant)
     setVocoderUi({ ...DEFAULT_VOCODER_UI, ...loaded.vocoder })
+    setPostUi({ ...DEFAULT_POST_PROCESS_UI, ...loaded.postProcess })
+    setEqualizer(cloneEqualizer(loaded.equalizer))
   }
 
   const handleSaveLxVoice = () => {
@@ -1702,6 +1706,8 @@ export default function App() {
           humanRobot,
           formant,
           vocoder: vocoderUi,
+          postProcess: postUi,
+          equalizer,
         },
         name,
       ),

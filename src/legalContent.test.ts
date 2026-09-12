@@ -4,8 +4,10 @@ import {
   ABOUT_LEGAL_TEXT,
 } from './aboutContent'
 import { COLOR_THEMES } from './colorThemes'
+import { cloneEqualizer, DEFAULT_EQUALIZER } from './equalizer'
 import { buildLxVoiceFile, parseLxVoiceFile } from './lxVoiceFile'
 import { PIPER_VOICE_OPTIONS } from './piperVoices'
+import { DEFAULT_POST_PROCESS_UI } from './postProcess'
 import { DEFAULT_VOCODER_UI } from './vocoderParams'
 import { VOICE_ENGINE_OPTIONS } from './voiceEngines'
 
@@ -28,7 +30,9 @@ describe('legal presentation', () => {
     expect(PIPER_VOICE_OPTIONS).toHaveLength(15)
   })
 
-  it('round-trips the unchanged .lxvoice format', () => {
+  it('round-trips the .lxvoice scene format', () => {
+    const equalizer = cloneEqualizer()
+    equalizer.bands[2]!.gain = 4
     const voice = buildLxVoiceFile(
       {
         speed: 0.6,
@@ -36,10 +40,39 @@ describe('legal presentation', () => {
         humanRobot: 0.4,
         formant: 0.7,
         vocoder: DEFAULT_VOCODER_UI,
+        postProcess: { ...DEFAULT_POST_PROCESS_UI, reverbAmount: 35 },
+        equalizer,
       },
       'Compatibility',
     )
     expect(parseLxVoiceFile(JSON.stringify(voice))).toEqual(voice)
+  })
+
+  it('defaults missing EQ and FX when loading older .lxvoice files', () => {
+    const legacy = {
+      format: 'lxvoice',
+      version: 1,
+      name: 'Legacy',
+      speed: 0.6,
+      pitch: 0.5,
+      humanRobot: 0.4,
+      formant: 0.7,
+      vocoder: DEFAULT_VOCODER_UI,
+    }
+    expect(parseLxVoiceFile(JSON.stringify(legacy))).toEqual(
+      buildLxVoiceFile(
+        {
+          speed: 0.6,
+          pitch: 0.5,
+          humanRobot: 0.4,
+          formant: 0.7,
+          vocoder: DEFAULT_VOCODER_UI,
+          postProcess: DEFAULT_POST_PROCESS_UI,
+          equalizer: DEFAULT_EQUALIZER,
+        },
+        'Legacy',
+      ),
+    )
   })
 
   it('keeps every emphasized phrase in the legal copy', () => {

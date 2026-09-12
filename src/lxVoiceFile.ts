@@ -1,3 +1,15 @@
+import {
+  cloneEqualizer,
+  DEFAULT_EQUALIZER,
+  mergeEqualizer,
+  type EqualizerBand,
+  type EqualizerBandType,
+  type EqualizerState,
+} from './equalizer'
+import {
+  DEFAULT_POST_PROCESS_UI,
+  type PostProcessUiState,
+} from './postProcess'
 import { downloadBlob } from './wavEncode'
 import {
   DEFAULT_VOCODER_UI,
@@ -14,6 +26,8 @@ export type LxVoicePreset = {
   humanRobot: number
   formant: number
   vocoder: VocoderUiState
+  postProcess: PostProcessUiState
+  equalizer: EqualizerState
 }
 
 export type LxVoiceFile = {
@@ -22,27 +36,128 @@ export type LxVoiceFile = {
   name?: string
 } & LxVoicePreset
 
+const BAND_TYPES = new Set<EqualizerBandType>([
+  'lowshelf',
+  'peaking',
+  'highshelf',
+])
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function parseVocoder(raw: unknown): VocoderUiState {
+function parseNumberMap<T extends Record<string, number>>(
+  raw: unknown,
+  defaults: T,
+  label: string,
+  options?: { optional?: boolean; requireAllKeys?: boolean },
+): T {
+  if (raw == null) {
+    if (options?.optional) {
+      return { ...defaults }
+    }
+    throw new Error(`Invalid .lxvoice file: missing ${label} settings.`)
+  }
   if (!raw || typeof raw !== 'object') {
-    throw new Error('Invalid .lxvoice file: missing vocoder settings.')
+    throw new Error(`Invalid .lxvoice file: missing ${label} settings.`)
   }
 
-  const vocoder = raw as Record<string, unknown>
-  const next = { ...DEFAULT_VOCODER_UI }
+  const source = raw as Record<string, unknown>
+  const next = { ...defaults }
 
-  for (const key of Object.keys(DEFAULT_VOCODER_UI) as (keyof VocoderUiState)[]) {
-    const value = vocoder[key]
-    if (!isFiniteNumber(value)) {
-      throw new Error(`Invalid .lxvoice file: bad vocoder.${key}.`)
+  for (const key of Object.keys(defaults) as (keyof T)[]) {
+    const value = source[key as string]
+    if (value === undefined) {
+      if (options?.requireAllKeys) {
+        throw new Error(`Invalid .lxvoice file: bad ${label}.${String(key)}.`)
+      }
+      continue
     }
-    next[key] = value
+    if (!isFiniteNumber(value)) {
+      throw new Error(`Invalid .lxvoice file: bad ${label}.${String(key)}.`)
+    }
+    next[key] = value as T[keyof T]
   }
 
   return next
+}
+
+function parseVocoder(raw: unknown): VocoderUiState {
+  return parseNumberMap(raw, DEFAULT_VOCODER_UI, 'vocoder', {
+    requireAllKeys: true,
+  })
+}
+
+function parsePostProcess(raw: unknown): PostProcessUiState {
+  return parseNumberMap(raw, DEFAULT_POST_PROCESS_UI, 'postProcess', {
+    optional: true,
+  })
+}
+
+function parseEqualizerBand(
+  raw: unknown,
+  fallback: EqualizerBand,
+  index: number,
+): EqualizerBand {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`Invalid .lxvoice file: bad equalizer.bands[${index}].`)
+  }
+
+  const band = raw as Record<string, unknown>
+  const type = band.type ?? fallback.type
+  if (typeof type !== 'string' || !BAND_TYPES.has(type as EqualizerBandType)) {
+    throw new Error(`Invalid .lxvoice file: bad equalizer.bands[${index}].type.`)
+  }
+  if (
+    (band.frequency !== undefined && !isFiniteNumber(band.frequency)) ||
+    (band.gain !== undefined && !isFiniteNumber(band.gain)) ||
+    (band.q !== undefined && !isFiniteNumber(band.q))
+  ) {
+    throw new Error(`Invalid .lxvoice file: bad equalizer.bands[${index}].`)
+  }
+
+  return {
+    ...fallback,
+    type: type as EqualizerBandType,
+    frequency: isFiniteNumber(band.frequency) ? band.frequency : fallback.frequency,
+    gain: isFiniteNumber(band.gain) ? band.gain : fallback.gain,
+    q: isFiniteNumber(band.q) ? band.q : fallback.q,
+  }
+}
+
+function parseEqualizer(raw: unknown): EqualizerState {
+  if (raw == null) {
+    return cloneEqualizer()
+  }
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Invalid .lxvoice file: missing equalizer settings.')
+  }
+
+  const source = raw as Record<string, unknown>
+  if (source.enabled !== undefined && typeof source.enabled !== 'boolean') {
+    throw new Error('Invalid .lxvoice file: bad equalizer.enabled.')
+  }
+
+  const bandsRaw = source.bands
+  if (bandsRaw === undefined) {
+    return mergeEqualizer(DEFAULT_EQUALIZER, {
+      enabled:
+        typeof source.enabled === 'boolean' ? source.enabled : undefined,
+    })
+  }
+  if (!Array.isArray(bandsRaw) || bandsRaw.length !== DEFAULT_EQUALIZER.bands.length) {
+    throw new Error('Invalid .lxvoice file: bad equalizer.bands.')
+  }
+
+  return {
+    enabled:
+      typeof source.enabled === 'boolean'
+        ? source.enabled
+        : DEFAULT_EQUALIZER.enabled,
+    bands: DEFAULT_EQUALIZER.bands.map((fallback, index) =>
+      parseEqualizerBand(bandsRaw[index], fallback, index),
+    ),
+  }
 }
 
 export function buildLxVoiceFile(
@@ -58,6 +173,8 @@ export function buildLxVoiceFile(
     humanRobot: preset.humanRobot,
     formant: preset.formant,
     vocoder: { ...DEFAULT_VOCODER_UI, ...preset.vocoder },
+    postProcess: { ...DEFAULT_POST_PROCESS_UI, ...preset.postProcess },
+    equalizer: cloneEqualizer(preset.equalizer),
   }
 }
 
@@ -101,6 +218,8 @@ export function parseLxVoiceFile(text: string): LxVoiceFile {
       humanRobot: file.humanRobot,
       formant: file.formant,
       vocoder: parseVocoder(file.vocoder),
+      postProcess: parsePostProcess(file.postProcess),
+      equalizer: parseEqualizer(file.equalizer),
     },
     name,
   )
