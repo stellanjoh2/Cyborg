@@ -28,7 +28,10 @@ emconfigure ./configure \
   --without-pcaudiolib \
   --without-sonic \
   --without-speechplayer
-emmake make -j2
+# Build the program target only. The full `all` target attempts to execute the
+# just-built WebAssembly binary to regenerate data, which is not executable by
+# the Linux host. The pinned source already contains the data we preload below.
+emmake make -j2 src/espeak-ng
 
 emcc -O3 \
   src/espeak_ng-espeak-ng.o \
