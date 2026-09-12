@@ -8,6 +8,7 @@ import {
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { FieldSelect } from './FieldSelect'
 import { SettingsIcon } from './icons'
 import {
   applyGrainEnabled,
@@ -21,6 +22,7 @@ import {
   setUiSoundsEnabled,
 } from '../ui/sounds'
 import {
+  isVoiceEngineId,
   writeVoiceEngine,
   VOICE_ENGINE_OPTIONS,
   type VoiceEngineId,
@@ -150,6 +152,12 @@ export function SettingsMenu({
       if (!(event.target instanceof Node)) return
       const root = rootRef.current
       const modal = modalRef.current
+      if (
+        event.target instanceof Element &&
+        event.target.closest('.field-select__menu')
+      ) {
+        return
+      }
       if (root?.contains(event.target) || modal?.contains(event.target)) return
       playUiSound('close')
       setOpen(false)
@@ -315,12 +323,18 @@ export function SettingsMenu({
               <h2 className="settings-menu__title">Settings</h2>
             </div>
             <div className="settings-menu__body">
-              <SegmentedOption
-                label="Voice Engine"
-                value={engine}
-                options={VOICE_ENGINE_OPTIONS}
-                onChange={setEngine}
-              />
+              <div className="settings-menu__row">
+                <span className="settings-menu__label">Voice Engine</span>
+                <FieldSelect
+                  className="field-select--voice"
+                  value={engine}
+                  options={VOICE_ENGINE_OPTIONS}
+                  aria-label="Voice Engine"
+                  onChange={(next) => {
+                    if (isVoiceEngineId(next)) setEngine(next)
+                  }}
+                />
+              </div>
               <SegmentedOption
                 label="Grain"
                 value={grain ? 'on' : 'off'}

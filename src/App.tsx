@@ -59,7 +59,7 @@ import {
 } from './samSpeech'
 import { getSynthPlaybackProgress, MASTER_GAIN_MAX_DB } from './speechSynthEngine'
 import { readGrainEnabled } from './ui/visualFx'
-import { preloadPronunciationDictionary } from './samPronunciation'
+import { preloadPronunciationDictionary } from './cmuPronunciation'
 import {
   splitSpokenParts,
   spokenWordWeights,
@@ -1282,8 +1282,8 @@ export default function App() {
       return
     }
 
-    // SAM re-bakes samples for Robot/speed/pitch; don't also retarget the
-    // playing buffer's rate (that can finish the old buffer early).
+    // SAM and LX re-bake samples for Robot/speed/pitch; don't also retarget
+    // the playing buffer's rate (that can finish the old buffer early).
     // Piper / eSpeak bake once and need live playbackRate for realtime knobs.
     updateSamLiveParams(
       {
@@ -1292,7 +1292,7 @@ export default function App() {
         metallic: livePlan.metallic,
         vocoder,
       },
-      { applySourceRate: voiceEngine !== 'sam' },
+      { applySourceRate: voiceEngine !== 'sam' && voiceEngine !== 'lx' },
     )
   }, [isSpeaking, livePlan, vocoder, voiceEngine])
 
@@ -1335,7 +1335,7 @@ export default function App() {
       baked.engine !== next.engine ||
       baked.piperVoice !== next.piperVoice ||
       baked.espeakVoice !== next.espeakVoice ||
-      (voiceEngine === 'sam' &&
+      ((voiceEngine === 'sam' || voiceEngine === 'lx') &&
         (baked.rate !== next.rate ||
           baked.pitch !== next.pitch ||
           baked.metallic !== next.metallic))

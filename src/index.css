@@ -62,6 +62,11 @@
   inherits: true;
   initial-value: #ff5938;
 }
+@property --legal {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ff5938;
+}
 @property --theme-primary {
   syntax: '<color>';
   inherits: true;
@@ -92,6 +97,7 @@
   --purple: #3b00ff;
   --blue: var(--vu);
   --error: #ff5938;
+  --legal: #ff5938;
   --black: #121212;
   --fill: #191919;
   --stroke: #ffffff;
@@ -318,6 +324,7 @@ html.theme-blend {
     --vu-yellow 0.25s ease,
     --purple 0.25s ease,
     --error 0.25s ease,
+    --legal 0.25s ease,
     --theme-primary 0.25s ease,
     --theme-secondary 0.25s ease;
 }
@@ -339,6 +346,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
+  overscroll-behavior: none;
 }
 
 #root {

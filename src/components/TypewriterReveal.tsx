@@ -9,6 +9,10 @@ export type TypewriterLink = {
   href: string
 }
 
+export type TypewriterEmphasis = {
+  text: string
+}
+
 type TypewriterRevealProps = {
   as?: IntrinsicTag
   text: string
@@ -24,6 +28,7 @@ type TypewriterRevealProps = {
   hold?: boolean
   className?: string
   links?: TypewriterLink[]
+  emphasis?: TypewriterEmphasis[]
   onComplete?: () => void
 } & Omit<React.HTMLAttributes<HTMLElement>, 'children'>
 
@@ -36,20 +41,51 @@ function isWordStart(text: string, index: number) {
   return index === 0 || /\s/.test(text[index - 1])
 }
 
-function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
-  if (!links?.length) return value
+type MarkupHit =
+  | { kind: 'link'; start: number; end: number; href: string }
+  | { kind: 'emphasis'; start: number; end: number }
 
-  const hits: { start: number; end: number; href: string }[] = []
-  for (const link of links) {
-    let from = 0
-    while (from < value.length) {
-      const index = value.indexOf(link.text, from)
-      if (index === -1) break
-      hits.push({ start: index, end: index + link.text.length, href: link.href })
-      from = index + link.text.length
+function findOccurrences(value: string, text: string) {
+  const occurrences: { start: number; end: number }[] = []
+  if (!text) return occurrences
+  let from = 0
+  while (from < value.length) {
+    const index = value.indexOf(text, from)
+    if (index === -1) break
+    occurrences.push({ start: index, end: index + text.length })
+    from = index + text.length
+  }
+  return occurrences
+}
+
+function overlaps(a: MarkupHit, b: MarkupHit) {
+  return a.start < b.end && b.start < a.end
+}
+
+function renderWithMarkup(
+  value: string,
+  links: TypewriterLink[] | undefined,
+  emphasis: TypewriterEmphasis[] | undefined,
+) {
+  if (!links?.length && !emphasis?.length) return value
+
+  const linkHits: MarkupHit[] = []
+  for (const link of links ?? []) {
+    for (const occurrence of findOccurrences(value, link.text)) {
+      linkHits.push({ kind: 'link', ...occurrence, href: link.href })
     }
   }
-  // Prefer longer matches when they share a start (e.g. full name vs short).
+  linkHits.sort((a, b) => a.start - b.start || b.end - a.end)
+
+  const hits = [...linkHits]
+  for (const item of emphasis ?? []) {
+    for (const occurrence of findOccurrences(value, item.text)) {
+      const hit: MarkupHit = { kind: 'emphasis', ...occurrence }
+      if (!linkHits.some((linkHit) => overlaps(hit, linkHit))) {
+        hits.push(hit)
+      }
+    }
+  }
   hits.sort((a, b) => a.start - b.start || b.end - a.end)
 
   const nodes: React.ReactNode[] = []
@@ -57,11 +93,19 @@ function renderWithLinks(value: string, links: TypewriterLink[] | undefined) {
   hits.forEach((hit, key) => {
     if (hit.start < cursor) return
     if (hit.start > cursor) nodes.push(value.slice(cursor, hit.start))
-    nodes.push(
-      <a key={key} href={hit.href} target="_blank" rel="noopener noreferrer">
-        {value.slice(hit.start, hit.end)}
-      </a>,
-    )
+    if (hit.kind === 'link') {
+      nodes.push(
+        <a key={key} href={hit.href} target="_blank" rel="noopener noreferrer">
+          {value.slice(hit.start, hit.end)}
+        </a>,
+      )
+    } else {
+      nodes.push(
+        <span key={key} className="typewriter-reveal__emphasis">
+          {value.slice(hit.start, hit.end)}
+        </span>,
+      )
+    }
     cursor = hit.end
   })
   if (cursor < value.length) nodes.push(value.slice(cursor))
@@ -126,6 +170,7 @@ export function TypewriterReveal({
   hold = false,
   className,
   links,
+  emphasis,
   onComplete,
   style,
   ...restProps
@@ -311,7 +356,7 @@ export function TypewriterReveal({
       {...restProps}
     >
       <span className="typewriter-reveal__live">
-        {renderWithLinks(typed, links)}
+        {renderWithMarkup(typed, links, emphasis)}
         {showCaret ? (
           <span className="typewriter-reveal__caret" aria-hidden />
         ) : null}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  ABOUT_LEGAL_EMPHASIS,
   ABOUT_LEGAL_LINKS,
   ABOUT_LEGAL_TEXT,
   ABOUT_LINKS,
@@ -95,6 +96,7 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
             caret={false}
             onComplete={() => setBioActive(true)}
             links={[...ABOUT_LEGAL_LINKS]}
+            emphasis={[...ABOUT_LEGAL_EMPHASIS]}
           />
           <TypewriterReveal
             as="p"

@@ -1,6 +1,12 @@
 import { DEFAULT_VOCODER_UI, type VocoderUiState } from './vocoderParams'
 
-export type VoiceId = 'default' | 'robot' | 'fast' | 'deep' | 'custom'
+export type VoiceId =
+  | 'default'
+  | 'robot'
+  | 'dystopian'
+  | 'fast'
+  | 'deep'
+  | 'custom'
 
 export interface VoicePreset {
   id: Exclude<VoiceId, 'custom'>
@@ -40,6 +46,25 @@ export const VOICE_PRESETS: VoicePreset[] = [
       carrierMix: 58,
       carrierCutoff: 72,
       carrierResonance: 48,
+    },
+  },
+  {
+    id: 'dystopian',
+    label: 'Dystopian',
+    speed: 0.82,
+    pitch: 0.95,
+    humanRobot: 12,
+    formant: 64,
+    vocoder: {
+      ...DEFAULT_VOCODER_UI,
+      cutoff: 82,
+      resonance: 62,
+      efSense: 96,
+      unvoice: 0,
+      carrierAmount: 72,
+      carrierMix: 30,
+      carrierCutoff: 94,
+      carrierResonance: 38,
     },
   },
   {

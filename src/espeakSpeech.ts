@@ -10,8 +10,14 @@ const OUTPUT_PATH = '/lx01-out.wav'
 
 let readyPromise: Promise<void> | null = null
 
-async function loadEspeak() {
-  return import('espeak-ng')
+type EspeakFactory = typeof import('espeak-ng').default
+
+async function loadEspeak(): Promise<{ default: EspeakFactory }> {
+  const url = new URL(
+    'vendor/voice-runtime/espeak-ng.js',
+    document.baseURI,
+  ).href
+  return import(/* @vite-ignore */ url) as Promise<{ default: EspeakFactory }>
 }
 
 async function synthesizeToWav(

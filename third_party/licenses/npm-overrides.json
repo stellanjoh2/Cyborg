@@ -1,0 +1,9 @@
+{
+  "@diffusionstudio/vits-web": "vits-web-MIT.txt",
+  "@gsap/react": "GSAP-Standard-License-2025-05-30.txt",
+  "gsap": "GSAP-Standard-License-2025-05-30.txt",
+  "guid-typescript": "guid-typescript-ISC.txt",
+  "onnxruntime-common": "onnxruntime-MIT.txt",
+  "onnxruntime-web": "onnxruntime-MIT.txt",
+  "sam-js": "sam-js-rights-notice.txt"
+}

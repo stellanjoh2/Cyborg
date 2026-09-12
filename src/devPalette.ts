@@ -9,6 +9,7 @@ export const PALETTE_KEYS = [
   'vu-yellow',
   'purple',
   'error',
+  'legal',
 ] as const
 
 export type PaletteKey = (typeof PALETTE_KEYS)[number]
@@ -25,6 +26,7 @@ export const DEFAULT_PALETTE: Palette = {
   'vu-yellow': '#ffe666',
   purple: '#3B00FF',
   error: '#ff5938',
+  legal: '#ff5938',
 }
 
 export const PALETTE_LABELS: Record<PaletteKey, string> = {
@@ -38,6 +40,7 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
   'vu-yellow': 'vu meter yellow',
   purple: 'accent secondary',
   error: 'error',
+  legal: 'legal emphasis',
 }
 
 export const DEFAULT_STROKE_OPACITY = 0.1

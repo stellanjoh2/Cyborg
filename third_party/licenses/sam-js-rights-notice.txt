@@ -1,0 +1,17 @@
+SAM / sam-js rights notice
+
+The following is reproduced from the License section of the sam-js 0.3.1
+README:
+
+The software is a reverse-engineered version of a commercial software
+published more than 30 years ago. The current copyright holder is
+SoftVoice, Inc. (www.text2speech.com)
+
+Any attempt to contact the company failed. The website was last updated in
+the year 2009. The status of the original software can therefore best
+described as Abandonware.
+
+As long this is the case I cannot put my code under any specific open source
+software license. Use it at your own risk.
+
+Source: https://github.com/discordier/sam/tree/0.3.1

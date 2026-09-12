@@ -99,6 +99,10 @@ export async function renderSamSamples(
     const { renderEspeakSamples } = await import('./espeakSpeech')
     return renderEspeakSamples(options.text, options.espeakVoice)
   }
+  if (engine === 'lx') {
+    const { renderLxSamples } = await import('./lxSpeech')
+    return renderLxSamples(options)
+  }
   try {
     return await renderSamEngineSamples(options)
   } catch {
@@ -207,6 +211,9 @@ function synthesisFailedMessage(engine: VoiceEngineId): string {
   }
   if (engine === 'espeak') {
     return 'eSpeak-NG failed to load. Try again, or switch to SAM in Settings.'
+  }
+  if (engine === 'lx') {
+    return 'LARYNX could not synthesize that text. Please use some actual words that the machine can understand.'
   }
   return 'Could not synthesize speech. Please use some actual words that the machine can understand.'
 }

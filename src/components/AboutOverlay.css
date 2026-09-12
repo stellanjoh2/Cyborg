@@ -77,6 +77,10 @@ html.is-about-open #root {
   color: var(--text);
 }
 
+.about-overlay__legal .typewriter-reveal__emphasis {
+  color: var(--legal);
+}
+
 .about-overlay__content p.about-overlay__bio {
   margin-top: 48px;
 }
@@ -188,6 +192,10 @@ html.is-about-open #root {
   transition:
     color 0.25s ease,
     text-shadow 0.25s ease;
+}
+
+.about-overlay__content .about-overlay__legal a {
+  color: var(--legal);
 }
 
 .about-overlay__content a:hover {

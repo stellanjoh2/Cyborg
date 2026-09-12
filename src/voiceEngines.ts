@@ -1,4 +1,4 @@
-export type VoiceEngineId = 'sam' | 'piper' | 'espeak'
+export type VoiceEngineId = 'sam' | 'piper' | 'espeak' | 'lx'
 
 export const VOICE_ENGINE_OPTIONS: {
   value: VoiceEngineId
@@ -7,6 +7,7 @@ export const VOICE_ENGINE_OPTIONS: {
   { value: 'sam', label: 'SAM' },
   { value: 'piper', label: 'Piper' },
   { value: 'espeak', label: 'eSpeak' },
+  { value: 'lx', label: 'LARYNX' },
 ]
 
 export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'piper'
@@ -16,6 +17,7 @@ export const DEFAULT_PITCH_BY_ENGINE: Record<VoiceEngineId, number> = {
   sam: 0.7,
   piper: 0.5,
   espeak: 0.55,
+  lx: 0.5,
 }
 
 /** Engines that pick a voice model/id instead of SAM presets. */

@@ -36,14 +36,15 @@
 
 .field-select--voice .field-select__trigger::after {
   content: '';
+  align-self: flex-start;
   flex: 0 0 auto;
   width: 0;
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 6px solid currentColor;
-  /* Match the 2px label nudge */
-  transform: translateY(1px);
+  margin-top: 2px;
+  transform: translateY(-2px);
 }
 
 .field-select__trigger {

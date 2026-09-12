@@ -43,6 +43,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#EEEE77',
       purple: '#0000AA',
       error: '#880000',
+      legal: '#D32F2F',
     },
   },
   {
@@ -60,6 +61,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FAEA27',
       purple: '#002DFF',
       error: '#FF3E00',
+      legal: '#FF3E00',
     },
   },
   {
@@ -77,6 +79,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#F8B800',
       purple: '#0000FC',
       error: '#F83800',
+      legal: '#F83800',
     },
   },
   {
@@ -94,6 +97,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FFEE00',
       purple: '#880033',
       error: '#EE0000',
+      legal: '#EE0000',
     },
   },
   {
@@ -111,6 +115,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FFE14A',
       purple: '#A88830',
       error: '#C44A3A',
+      legal: '#C44A3A',
     },
   },
   {
@@ -128,6 +133,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FFB000',
       purple: '#4A1010',
       error: '#E01010',
+      legal: '#E01010',
     },
   },
   {
@@ -145,6 +151,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FF9A00',
       purple: '#306230',
       error: '#0F380F',
+      legal: '#FF3B30',
     },
   },
   {
@@ -162,6 +169,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FFE14A',
       purple: '#3A424A',
       error: '#E02020',
+      legal: '#E02020',
     },
   },
   {
@@ -179,6 +187,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#F0E6A8',
       purple: '#C4A035',
       error: '#C44A3A',
+      legal: '#C44A3A',
     },
   },
   {
@@ -196,6 +205,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FF9C52',
       purple: '#524AFF',
       error: '#FF3908',
+      legal: '#FF3908',
     },
   },
   {
@@ -213,6 +223,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#F5D060',
       purple: '#F878F8',
       error: '#F87858',
+      legal: '#F87858',
     },
   },
   {
@@ -230,6 +241,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#DFFF00',
       purple: '#6B006B',
       error: '#FF1493',
+      legal: '#FF334D',
     },
   },
   {
@@ -247,6 +259,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#F5F5F0',
       purple: '#9933FF',
       error: '#9933FF',
+      legal: '#FF3B30',
     },
   },
   // Flat / minimal — no elevation/glow shadows; grayscale trio last.
@@ -266,6 +279,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#E89420',
       purple: '#C4B8A4',
       error: '#D04040',
+      legal: '#D04040',
     },
   },
   {
@@ -284,6 +298,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#C8C8C8',
       purple: '#404040',
       error: '#ff5938',
+      legal: '#ff5938',
     },
   },
   {
@@ -302,6 +317,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#FF9A00',
       purple: '#404040',
       error: '#ff5938',
+      legal: '#D32F2F',
     },
   },
   {
@@ -320,6 +336,7 @@ export const COLOR_THEMES: ColorTheme[] = [
       'vu-yellow': '#F5F5F0',
       purple: '#686868',
       error: '#ff5938',
+      legal: '#ff5938',
     },
   },
 ]
