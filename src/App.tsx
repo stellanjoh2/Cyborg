@@ -4,11 +4,16 @@ import { useGSAP } from '@gsap/react'
 import {
   ArrowCounterClockwiseIcon,
   InfoIcon,
+  JoystickIcon,
   SlidersIcon,
 } from '@phosphor-icons/react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { EqualizerWindow } from './components/EqualizerWindow'
+import {
+  MorphPadWindow,
+  type MorphModeId,
+} from './components/MorphPadWindow'
 import { FpsMeter } from './components/FpsMeter'
 import { ProTip } from './components/ProTip'
 import { FieldSelect } from './components/FieldSelect'
@@ -242,6 +247,8 @@ export default function App() {
     cloneEqualizer(),
   )
   const [equalizerOpen, setEqualizerOpen] = useState(false)
+  const [morphOpen, setMorphOpen] = useState(false)
+  const [morphMode, setMorphMode] = useState<MorphModeId>('voice')
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
   const [isLooping, setIsLooping] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -1866,6 +1873,128 @@ export default function App() {
     }
   }
 
+  const morphAxes = useMemo(() => {
+    if (morphMode === 'vocoder') {
+      return {
+        x: {
+          label: 'Cutoff',
+          value: vocoderUi.cutoff,
+          min: 0,
+          max: 126,
+          step: 1,
+          display: formatSigned63(vocoderUi.cutoff),
+        },
+        y: {
+          label: 'Resonance',
+          value: vocoderUi.resonance,
+          min: 0,
+          max: 127,
+          step: 1,
+          display: String(Math.round(vocoderUi.resonance)),
+        },
+      }
+    }
+    if (morphMode === 'carrier') {
+      return {
+        x: {
+          label: 'Tone',
+          value: vocoderUi.carrierCutoff,
+          min: 0,
+          max: 100,
+          step: 1,
+          display: formatCarrierCutoff(vocoderUi.carrierCutoff),
+        },
+        y: {
+          label: 'Reso',
+          value: vocoderUi.carrierResonance,
+          min: 0,
+          max: 100,
+          step: 1,
+          display: formatCarrierResonance(vocoderUi.carrierResonance),
+        },
+      }
+    }
+    return {
+      x: {
+        label: 'Robot',
+        value: humanRobot,
+        min: 0,
+        max: 100,
+        step: 1,
+        display: String(Math.round(humanRobot)),
+      },
+      y: {
+        label: 'Formant',
+        value: formant,
+        min: 0,
+        max: 100,
+        step: 1,
+        display: String(Math.round(formant)),
+      },
+    }
+  }, [formant, humanRobot, morphMode, vocoderUi])
+
+  const morphCanReset = useMemo(() => {
+    if (morphMode === 'vocoder') {
+      return (
+        vocoderUi.cutoff !== activePreset.vocoder.cutoff ||
+        vocoderUi.resonance !== activePreset.vocoder.resonance
+      )
+    }
+    if (morphMode === 'carrier') {
+      return (
+        vocoderUi.carrierCutoff !== activePreset.vocoder.carrierCutoff ||
+        vocoderUi.carrierResonance !== activePreset.vocoder.carrierResonance
+      )
+    }
+    return (
+      humanRobot !== activePreset.humanRobot ||
+      formant !== activePreset.formant
+    )
+  }, [activePreset, formant, humanRobot, morphMode, vocoderUi])
+
+  const handleMorphChange = (nextX: number, nextY: number) => {
+    if (morphMode === 'vocoder') {
+      setVocoderUi((current) => ({
+        ...current,
+        cutoff: nextX,
+        resonance: nextY,
+      }))
+      return
+    }
+    if (morphMode === 'carrier') {
+      setVocoderUi((current) => ({
+        ...current,
+        carrierCutoff: nextX,
+        carrierResonance: nextY,
+      }))
+      return
+    }
+    setHumanRobot(nextX)
+    setFormant(nextY)
+  }
+
+  const handleResetMorph = () => {
+    if (morphMode === 'vocoder') {
+      setVocoderUi((current) => ({
+        ...current,
+        cutoff: activePreset.vocoder.cutoff,
+        resonance: activePreset.vocoder.resonance,
+      }))
+      return
+    }
+    if (morphMode === 'carrier') {
+      setVocoderUi((current) => ({
+        ...current,
+        carrierCutoff: activePreset.vocoder.carrierCutoff,
+        carrierResonance: activePreset.vocoder.carrierResonance,
+      }))
+      return
+    }
+    setHumanRobot(activePreset.humanRobot)
+    setFormant(activePreset.formant)
+  }
+
   const handleResetMaster = () => {
     setMasterVolume(100)
     setMasterGain(0)
@@ -2160,6 +2289,17 @@ export default function App() {
             <SlidersIcon weight="bold" />
           </button>
           <button
+            className={`speech-top__morph${morphOpen ? ' is-active' : ''}`}
+            type="button"
+            onClick={() => setMorphOpen((current) => !current)}
+            data-tooltip="Morph"
+            aria-label={morphOpen ? 'Close morph pad' : 'Open morph pad'}
+            aria-expanded={morphOpen}
+            aria-controls="morph-pad"
+          >
+            <JoystickIcon weight="bold" />
+          </button>
+          <button
             className={`speech-top__legal-trigger${aboutOpen ? ' is-active' : ''}`}
             type="button"
             onClick={handleLegalToggle}
@@ -2209,6 +2349,17 @@ export default function App() {
         onChange={setEqualizer}
         onClose={() => setEqualizerOpen(false)}
         onReset={handleResetEqualizer}
+      />
+      <MorphPadWindow
+        open={morphOpen}
+        mode={morphMode}
+        onModeChange={setMorphMode}
+        x={morphAxes.x}
+        y={morphAxes.y}
+        onChange={handleMorphChange}
+        onClose={() => setMorphOpen(false)}
+        onReset={handleResetMorph}
+        canReset={morphCanReset}
       />
 
       <div className="speech-board">

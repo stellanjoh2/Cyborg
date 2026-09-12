@@ -396,6 +396,7 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-top__reset,
 .speech-top__eq,
+.speech-top__morph,
 .speech-top__legal-trigger {
   display: grid;
   place-items: center;
@@ -423,6 +424,7 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-top__reset svg,
 .speech-top__eq svg,
+.speech-top__morph svg,
 .speech-top__legal-trigger svg {
   display: block;
   width: 28px;
@@ -432,11 +434,13 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-top__reset:hover:not(:disabled),
 .speech-top__eq:hover,
+.speech-top__morph:hover,
 .speech-top__legal-trigger:hover {
   color: var(--accent);
 }
 
 .speech-top__eq.is-active,
+.speech-top__morph.is-active,
 .speech-top__legal-trigger.is-active {
   color: var(--on-chrome);
   background: var(--accent);
@@ -445,12 +449,14 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-top__reset:hover:not(:disabled) svg,
 .speech-top__eq:hover svg,
+.speech-top__morph:hover svg,
 .speech-top__legal-trigger:hover svg {
   transform: scale(1.06);
   filter: var(--glow-filter);
 }
 
 .speech-top__eq.is-active svg,
+.speech-top__morph.is-active svg,
 .speech-top__legal-trigger.is-active svg {
   transform: scale(1.06);
   filter: none;
@@ -464,6 +470,7 @@ html.is-splash-void .scale-nav-bleed {
 
 .speech-top__reset:focus-visible,
 .speech-top__eq:focus-visible,
+.speech-top__morph:focus-visible,
 .speech-top__legal-trigger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -472,6 +479,7 @@ html.is-splash-void .scale-nav-bleed {
 :is(
   .speech-top__reset,
   .speech-top__eq,
+  .speech-top__morph,
   .speech-top__legal-trigger,
   .theme-picker__trigger,
   .voice-file-menu__trigger,
@@ -485,6 +493,7 @@ html.is-splash-void .scale-nav-bleed {
 :is(
   .speech-top__reset,
   .speech-top__eq,
+  .speech-top__morph,
   .speech-top__legal-trigger,
   .theme-picker__trigger,
   .voice-file-menu__trigger,
@@ -522,6 +531,7 @@ html.is-splash-void .scale-nav-bleed {
 :is(
   .speech-top__reset,
   .speech-top__eq,
+  .speech-top__morph,
   .speech-top__legal-trigger,
   .theme-picker__trigger,
   .voice-file-menu__trigger,
@@ -536,6 +546,7 @@ html.is-splash-void .scale-nav-bleed {
 
 :is(
   .speech-top__eq,
+  .speech-top__morph,
   .speech-top__legal-trigger,
   .theme-picker__trigger,
   .voice-file-menu__trigger,

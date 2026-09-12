@@ -90,7 +90,7 @@ html.glow-off .knob__arc-bloom {
 }
 
 .knob {
-  --knob-stroke: 4px;
+  --knob-stroke: 2px;
   --knob-track-r: 46%;
   /* Cancel size-scaled dial pad so flex gap is label/value ↔ ring edge. */
   margin-block: calc(

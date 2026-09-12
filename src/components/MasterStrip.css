@@ -469,7 +469,7 @@ html.is-safari .vu-leds::after {
 }
 
 .master-play {
-  --master-play-stroke: 4px;
+  --master-play-stroke: 2px;
   --master-play-accent: var(--lime);
   appearance: none;
   position: relative;

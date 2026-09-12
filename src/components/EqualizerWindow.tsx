@@ -322,6 +322,7 @@ export function EqualizerWindow({
     panel.style.top = '0'
     panel.style.translate = `${left}px ${top}px`
     panel.style.willChange = 'translate'
+    event.currentTarget.parentElement?.classList.add('is-dragging')
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -364,6 +365,7 @@ export function EqualizerWindow({
     pendingPositionRef.current = null
     windowDragRef.current = null
     if (panel) panel.style.willChange = ''
+    event.currentTarget.parentElement?.classList.remove('is-dragging')
   }
 
   const selectBand = (index: number) => {

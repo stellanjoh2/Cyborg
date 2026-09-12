@@ -51,6 +51,12 @@
   gap: 24px;
   padding: 12px 24px;
   background: var(--eq-chrome);
+  transition: background-color 0.18s ease;
+}
+
+.eq-window__head:hover,
+.eq-window__head.is-dragging {
+  --eq-chrome: color-mix(in srgb, var(--window-chrome) 97%, white);
 }
 
 .eq-window__head::before {
@@ -624,6 +630,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .eq-window__head,
   .eq-window__reset,
   .eq-window__close,
   .eq-window__reset svg,
