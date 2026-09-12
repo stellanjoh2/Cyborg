@@ -34,7 +34,7 @@ emconfigure ./configure \
 emmake make -j2 src/espeak-ng
 
 emcc -O3 \
-  src/espeak_ng-espeak-ng.o \
+  src/espeak-ng.o \
   src/.libs/libespeak-ng.a \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s ENVIRONMENT=web \
