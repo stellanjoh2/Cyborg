@@ -133,12 +133,16 @@ export function EqualizerWindow({
   onChange,
   onClose,
   onReset,
+  zIndex,
+  onActivate,
 }: {
   open: boolean
   value: EqualizerState
   onChange: (value: EqualizerState) => void
   onClose: () => void
   onReset: () => void
+  zIndex?: number
+  onActivate?: () => void
 }) {
   const windowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -378,10 +382,12 @@ export function EqualizerWindow({
       id="master-equalizer"
       ref={windowRef}
       className={`eq-window${value.enabled ? '' : ' is-bypassed'}`}
+      style={zIndex != null ? { zIndex } : undefined}
       role="dialog"
       aria-modal="false"
       aria-label="Master equalizer"
       aria-hidden={!open}
+      onPointerDownCapture={onActivate}
     >
       <header className="eq-window__head">
         <div

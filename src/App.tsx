@@ -248,6 +248,8 @@ export default function App() {
   )
   const [equalizerOpen, setEqualizerOpen] = useState(false)
   const [morphOpen, setMorphOpen] = useState(false)
+  const [frontFloating, setFrontFloating] = useState<'eq' | 'morph'>('morph')
+  const floatingZ = { base: 140, front: 141 } as const
   const [morphMode, setMorphMode] = useState<MorphModeId>('voice')
   const [vocoderUi, setVocoderUi] = useState<VocoderUiState>(DEFAULT_VOCODER_UI)
   const [isLooping, setIsLooping] = useState(false)
@@ -2280,7 +2282,10 @@ export default function App() {
           <button
             className={`speech-top__eq${equalizerOpen ? ' is-active' : ''}`}
             type="button"
-            onClick={() => setEqualizerOpen((current) => !current)}
+            onClick={() => {
+              if (!equalizerOpen) setFrontFloating('eq')
+              setEqualizerOpen((current) => !current)
+            }}
             data-tooltip="Equalizer"
             aria-label={equalizerOpen ? 'Close equalizer' : 'Open equalizer'}
             aria-expanded={equalizerOpen}
@@ -2291,7 +2296,10 @@ export default function App() {
           <button
             className={`speech-top__morph${morphOpen ? ' is-active' : ''}`}
             type="button"
-            onClick={() => setMorphOpen((current) => !current)}
+            onClick={() => {
+              if (!morphOpen) setFrontFloating('morph')
+              setMorphOpen((current) => !current)
+            }}
             data-tooltip="Morph"
             aria-label={morphOpen ? 'Close morph pad' : 'Open morph pad'}
             aria-expanded={morphOpen}
@@ -2349,6 +2357,8 @@ export default function App() {
         onChange={setEqualizer}
         onClose={() => setEqualizerOpen(false)}
         onReset={handleResetEqualizer}
+        zIndex={frontFloating === 'eq' ? floatingZ.front : floatingZ.base}
+        onActivate={() => setFrontFloating('eq')}
       />
       <MorphPadWindow
         open={morphOpen}
@@ -2360,6 +2370,8 @@ export default function App() {
         onClose={() => setMorphOpen(false)}
         onReset={handleResetMorph}
         canReset={morphCanReset}
+        zIndex={frontFloating === 'morph' ? floatingZ.front : floatingZ.base}
+        onActivate={() => setFrontFloating('morph')}
       />
 
       <div className="speech-board">

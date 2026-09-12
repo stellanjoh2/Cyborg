@@ -96,6 +96,8 @@ export function MorphPadWindow({
   onClose,
   onReset,
   canReset,
+  zIndex,
+  onActivate,
 }: {
   open: boolean
   mode: MorphModeId
@@ -106,6 +108,8 @@ export function MorphPadWindow({
   onClose: () => void
   onReset: () => void
   canReset: boolean
+  zIndex?: number
+  onActivate?: () => void
 }) {
   const windowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -386,10 +390,12 @@ export function MorphPadWindow({
       id="morph-pad"
       ref={windowRef}
       className="eq-window morph-window"
+      style={zIndex != null ? { zIndex } : undefined}
       role="dialog"
       aria-modal="false"
       aria-label="Morph pad"
       aria-hidden={!open}
+      onPointerDownCapture={onActivate}
     >
       <header className="eq-window__head">
         <div
