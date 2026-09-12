@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "directEspeak": {
+    "source": "https://github.com/espeak-ng/espeak-ng.git",
+    "commit": "4870adfa25b1a32b4361592f1be8a40337c58d6c",
+    "version": "1.52.0",
+    "license": "GPL-3.0-or-later"
+  },
+  "piperPhonemize": {
+    "source": "https://github.com/wide-video/piper-phonemize.git",
+    "commit": "cfff8e52ebaea37c7e953ae2d06b174acb827ac4",
+    "license": "MIT",
+    "linkedEspeakSource": "https://github.com/rhasspy/espeak-ng.git",
+    "linkedEspeakCommit": "0f65aa301e0d6bae5e172cc74197d32a6182200f",
+    "embeddedEspeakDataCommit": "8593723f10cfd9befd50de447f14bf0a9d2a14a4"
+  },
+  "toolchain": {
+    "source": "https://github.com/emscripten-core/emsdk.git",
+    "commit": "37b85e9eaee5be090569d018cca77a15cacc11b7",
+    "version": "3.1.47"
+  }
+}

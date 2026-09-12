@@ -1,0 +1,3698 @@
+name Vietnamese (Northern)
+language vi
+
+words 1 2
+pitch 95 175
+
+
+tone 100 225 800 100 2000 50 5400 75 8000 200
+name Vietnamese (Central)
+language vi-vn-x-central
+phonemes vi-hue
+dictrules 1
+
+words 1
+pitch 82 118   //80 118
+ voicing 90  //18
+ flutter  20
+name Vietnamese (Southern)
+language vi-vn-x-south
+phonemes vi-sgn
+dictrules 2
+
+words 1
+pitch 82 118   //80 118
+ voicing 90  //18
+ flutter  20
+name Esperanto
+language eo
+
+apostrophe 2
+name Interlingua
+language ia
+name Ido
+language io
+phonemes eo
+status testing
+ 
+name Lojban
+language jbo
+
+speed 80   // speed adjustment, percentage
+name Lingua Franca Nova
+language lfn
+
+phonemes base2
+l_unpronouncable 0
+numbers 2 3
+
+stressLength  150 140 180 180 0 0 200 200
+name Klingon
+language piqd
+status testing
+stressRule 3
+
+name Pyash
+language py
+maintainer Logan Streondj <logan@liberit.ca>
+status testing
+
+speed 80   // speed adjustment, percentage
+stressRule 0
+name Lang Belta
+language qdb
+
+numbers 4 3
+
+replace 1 t ?
+name Quenya
+language qya
+stressRule 2
+// rule=penultimate, with qya_rules for light penultimate syllables to move primary stress to the preceding (antepenultimate) syllable
+name Sindarin
+language sjn
+stressRule 2
+// rule=penultimate, with sjn_rules for light penultimate syllables to move primary stress to the preceding (antepenultimate) syllable
+name xextan-test
+language xex
+
+phonemes pt-br
+phonemes pt
+
+pitch 80 130
+
+dictrules 1
+tunes s7 c7 q7 e7
+name Nahuatl (Classical)
+language nci
+
+intonation 3
+stressRule 2
+stressLength  190  190  200  200  0  0  220  240
+name Lithuanian
+language lt
+name Latgalian
+language ltg
+maintainer Valdis Vitolins <valdis.vitolins@odo.lv>
+status testing
+phonemes lv
+dictionary lv
+dictrules 2   // Setting for Latgalian pronunciation
+words 0 2
+pitch 64 118
+tone 60 150 204 100 400 255 700 10 3000 255
+stressAmp 12 10 8 8 0 0 15 16
+stressLength 160 140 200 140 0 0 240 160
+name Latvian
+language lv
+maintainer Valdis Vitolins <valdis.vitolins@odo.lv>
+status mature
+words 0 2
+pitch 67 123
+tone 60 150 204 100 400 255 700 10 3000 255
+stressAmp 11 8 11 9 0 0 14 12
+stressLength 160 120 200 130 0 0 230 180
+name Swahili
+language sw
+
+status testing
+name Setswana
+language tn
+
+status testing
+name Georgian
+language ka
+lowercaseSentence	// A period followed by a lowercase letter is considered a sentence (mkhedruli)
+name Welsh
+language cy
+
+intonation 4
+name Gaelic (Irish)
+language ga
+
+dictrules 1  // fix for eclipsis
+name Gaelic (Scottish)
+language gd
+
+status testing
+name Oromo
+language om
+
+status testing
+name Kannada
+language kn
+
+intonation 2
+//consonants 80
+name Malayalam
+language ml
+
+intonation 2
+//consonants 80
+name Tamil
+language ta
+
+intonation 2
+consonants 80
+name Telugu
+language te
+
+status testing
+
+intonation 2
+//consonants 80
+name Greenlandic
+language kl
+
+name Basque
+language eu
+
+status testing
+stressRule 15
+name Danish
+language da
+
+tunes s2 c2 q2 e2
+name Faroese
+language fo
+maintainer iSolveIT ApS (Andras Eliassen) <andras@isolveit.net>
+status testing
+name Icelandic
+language is
+name Norwegian Bokmål
+language nb
+language no
+phonemes no
+dictionary no
+
+intonation 4
+name Swedish
+language sv
+name Afrikaans
+language af
+
+maintainer Christo de Klerk <christodeklerk@gmail.com>
+status mature
+
+roughness 0
+pitch 63 120
+name German
+language de
+tunes s4 c1 q4 e1
+name English (Great Britain)
+language en-gb  2
+language en 2
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+tunes s1 c1 q1 e1
+name English (Caribbean)
+language en-029
+language en 10
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+phonemes en-wi
+dictrules 8
+stressLength 175 175  175 175  220 220  250 290
+
+replace 00 D d
+replace 00 T t[
+replace 00 U@ o@
+replace 03 @ a#
+replace 03 3 a#
+replace 03 N n
+
+formant 1  98  100 100
+formant 2  98  100 100
+name English (Scotland)
+language en-gb-scotland
+language en 4
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+phonemes en-sc
+dictrules 2 5 6 7
+stressLength  180 130 200 200 0 0 250 270
+
+replace 03 @ V
+replace 03 I i
+replace 03 I2 i
+replace 01 aI aI2
+replace 02 a a/
+replace 02 u: U
+name English (Lancaster)
+language en-gb-x-gbclan
+language en-gb  3
+language en 5
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+phonemes en-n
+
+stressLength 160 150  180 180  220 220  290 290
+
+replace 03 N n
+replace 03 i  I2
+name English (West Midlands)
+language en-gb-x-gbcwmd
+language en-gb 9
+language en 9
+
+phonemes en-wm
+
+replace 00 h NULL
+replace 00 o@ O@
+dictrules 6
+intonation 4
+stressAdd 0 0 0 0 0 0 0 20
+name English (Received Pronunciation)
+language en-gb-x-rp
+language en-gb  4
+language en 5
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+phonemes en-rp
+
+replace 00  o@  O@
+replace 03 I i
+replace 03 I2 i
+replace 03 @ a#
+replace 03 3 a#
+name English (Shavian alphabet)
+language en-shaw
+maintainer Luna Rose <luna@anarchy.center>
+status testing
+phonemes en
+name English (America)
+language en-us 2
+language en 3
+
+maintainer Reece H. Dunn <msclrhd@gmail.com>
+status mature
+
+phonemes en-us
+dictrules 3 6
+
+stressLength 140 120 190 170 0 0 255 300
+stressAmp  17 16  19 19  19 19  21 19
+
+replace 03 I  i
+replace 03 I2 i
+name English (America, New York City)
+language en-us-nyc
+
+maintainer Richard Calvi <richard.calvi@gmail.com>
+status testing
+
+phonemes en-us-nyc
+dictrules 3 6
+
+stressLength 140 120 190 170 0 0 255 300
+stressAmp  17 16  19 19  19 19  21 19
+
+replace 03 I  i
+replace 03 I2 i
+name Luxembourgish
+language lb
+name Dutch
+language nl
+name Greek
+language el
+name Greek (Ancient)
+language grc
+
+stressLength 170 170  190 190  0 0  230 240
+dictrules 1
+words 3
+name Assamese
+language as
+
+status testing
+name Bengali
+language bn
+name Bishnupriya Manipuri
+language bpy
+name Gujarati
+language gu
+
+status testing
+name Hindi
+language hi
+name Konkani
+language kok
+name Marathi
+language mr
+
+status testing
+name Nepali
+language ne
+
+dictrules 1
+name Oriya
+language or
+
+status testing
+name Punjabi
+language pa
+name Sindhi
+language sd
+maintainer Ejaz Shah <eashah67@gmail.com>
+name Sinhala
+language si
+
+status testing
+
+intonation 2
+name Urdu
+language ur
+maintainer Ejaz Shah <eashah67@gmail.com>
+status testing
+
+stressRule 6
+
+name Armenian (East Armenia)
+language hy
+language hy-arevela
+name Armenian (West Armenia)
+language hyw
+language hy-arevmda
+language hy  8
+
+dictionary hy
+dictrules 1
+
+phonemes hy
+
+// change consonants for West Armenian pronunciation
+replace 00 b  p#
+replace 00 d  t#
+replace 00 dz ts#
+replace 00 dZ tS#
+replace 00 g  k#
+
+replace 00 p  b
+replace 00 t  d
+replace 00 ts dz
+replace 00 tS dZ
+replace 00 k  g
+
+replace 00 R2 R  // ??
+name Albanian
+language sq
+
+// add this line to remove 'ë' at the end of words
+// replace 00  @/  NULL
+name Persian
+language fa
+maintainer Shadyar Khodayari <shadyar81@gmail.com>
+status mature
+name Persian (Pinglish)
+// Sometimes, Farsi speakers write Farsi words using English characters, particularly in Chat and SMS (texte messages).), called Pinglish
+language fa-latn
+maintainer Shadyar Khodayari <shadyar81@gmail.com>
+status mature
+dictrules 1
+phonemes fa
+
+name Kurdish
+language ku
+
+//words 1 48
+
+name Cherokee //https://github.com/espeak-ng/espeak-ng/blob/master/docs/voices.md
+language chr-US-Qaaa-x-west 5
+
+maintainer Michael Conrad <m.conrad.202@gmail.com>
+status testing
+
+pitch 90 160
+
+voicing 100
+
+consonants 100 100
+
+speed 100
+
+words 2 1
+
+phonemes chr
+
+//stress on all syllables to simulate stress on no syllables
+stressRule 9 
+stressLength 175 175 175 175 175 175 175 175 //all vowels the same length regardless of stress
+stressAmp 10 10 10 10 10 10 10 10  //all vowels the same strength regardless of marked stress
+
+intonation 1
+
+tunes	chrs chrc chrq chre
+
+name Latin
+language la
+stressRule 2 0 2
+// rule=penultimate
+// unstressed_wd1=0
+// unstressed_wd2=2
+stressOpt 0 5 // flags=0100001 (no automatic secondary stress + don't stres monosyllables)
+
+// short gap between words
+words 2
+
+// Note: The Latin voice needs long vowels to be marked with macrons
+name Japanese
+language ja
+phonemes ja
+
+intonation 4
+name Korean
+language ko
+pitch 80 118
+intonation 2
+
+name Hawaiian
+language haw
+status testing
+name Totontepec Mixe
+language mto
+
+maintainer Bill Dengler <codeofdusk@gmail.com> and Elizabeth Resendiz <e.r.resendiz7@gmail.com>
+status testing
+
+lowercaseSentence
+tunes s6 c6 q6 e6
+name K'iche'
+language quc
+status testing
+stressRule 3 // stress on final syllable
+stressAmp 8 8 20 15 0 0 25 25  // reduce unstressed vowels
+stressLength 120 120 200 150 0 0 250 250 // reduce unstressed vowels
+name Indonesian
+language id
+
+stressLength 160 200  180 180  0 0  220 240
+stressAmp    16  18   18  18   0 0  22  21
+
+consonants 80 80
+name Māori
+language mi
+status testing
+
+// https://github.com/espeak-ng/espeak-ng/blob/master/docs/voices.md#words
+words 1 2
+
+// taken from Jacky
+pitch  115 130
+
+formant 0 150 155 100
+formant 1 90 155 70
+formant 2 95 70 64
+formant 3 15 20 30
+formant 4 20 30 40
+formant 5 65 20 65
+formant 6 70 80 100
+formant 7 20 80 100
+formant 8 100 95 80
+voicing 135
+consonants 110
+// Last updated: 14 October 2010, Jason Ong (jason@portalgroove.com)
+name Malay
+language ms
+phonemes id
+
+stressLength 160 200  180 180  0 0  220 240
+stressAmp    16  18   18  18   0 0  22  21
+intonation	3	// Less intonation, and comma does not raise the pitch.
+
+// Nuance - Peninsula Malaysia
+// replace	3 a	@	// change 'saya' to 'saye'
+				// (only the last phoneme of a word, only in unstressed syllables)
+				
+consonants 80 80
+name Quechua
+language qu
+stressRule 2 // stress on penultimate syllable
+status testing
+
+name Aragonese
+language an
+name Catalan
+language ca
+
+dictrules 1
+name Catalan (Balearic)
+language ca-ba
+
+phonemes ca-ba
+
+dictrules 1
+dictrules 4
+name Catalan (North-western)
+language ca-nw
+
+phonemes ca-nw
+
+dictrules 2
+name Catalan (Valencian)
+language ca-va
+
+phonemes ca-va
+
+dictrules 2
+dictrules 3
+name Spanish (Spain)
+language es
+dictrules 1
+tunes s6 c6 q6 e6
+name Spanish (Latin America)
+language es-419
+language es-mx 6
+
+phonemes es-la
+dictrules 2
+intonation 2
+stressLength 170 200  230 180  0 0  250 280
+
+tunes s6 c6 q6 e6
+
+name French (France)
+language fr-fr
+language fr
+
+dictrules 1
+tunes s3 c3 q3 e3
+name French (Belgium)
+language fr-be
+language fr 8
+
+dictrules 2
+tunes s3 c3 q3 e3
+
+
+name French (Switzerland)
+language fr-ch
+language fr 8
+
+dictrules 3
+tunes s3 c3 q3 e3
+name Haitian Creole
+language ht
+status testing
+maintainer  // TODO somebody should take responsibility for this
+
+phonemes ht
+dictionary ht
+
+name Italian
+language it
+
+maintainer Christian Leo M <llajta2012@gmail.com>
+status mature
+
+tunes s4 c4 q4 e4
+name Papiamento
+language pap
+
+status testing
+
+phonemes base2
+
+name Portuguese (Portugal)
+language pt
+language pt-pt
+phonemes pt-pt
+
+dictrules 1
+intonation 2
+name Portuguese (Brazil)
+language pt-br
+language pt 6
+
+dictrules 2
+stressLength 200 115 230 230 0 0 250 270
+
+name Romanian
+language ro
+name Guarani
+language gn
+dictrules 1
+words 0 1
+name Amharic
+language am
+
+status testing
+name Arabic
+language ar
+phonemes ar
+
+stressRule 4
+name Hebrew
+language he
+
+status testing
+name Maltese
+language mt
+
+status testing
+name Tigrinya
+language ti
+
+maintainer Biniam Gebremichael <biniamg@gmail.com>
+status testing
+name Chinese (Mandarin, latin as English)
+language cmn
+language zh-cmn
+language zh
+
+phonemes cmn
+dictionary cmn
+words 1
+pitch 80 118
+
+dict_min 100000
+
+//for some dialects
+
+//[en]: replace ng with n
+//[zh]: �޺�������ng���n
+//replace 0 N n
+
+//[en]: replace rfx consonants
+//[zh]: �޾�������r���l��z��er���e
+//replace 0 ts.h tsh
+//replace 0 ts. ts
+//replace 0 s. s
+//replace 0 i. i[
+//replace 0 z. l
+//replace 0 z. z
+//replace 0 @r @
+
+//[en]: replace beginning n or l
+//[zh]: ����nl��n���l��l���n
+//replace 2 n l
+//replace 2 l n
+
+//[en]: replace beginning w with v
+//[zh]: w���v
+//replace 0 w  v
+name Chinese (Mandarin, latin as Pinyin)
+language cmn-latn-pinyin
+language zh-cmn
+language zh
+
+phonemes cmn
+dictionary cmn
+words 1
+pitch 80 118
+
+dict_min 100000
+name Hakka Chinese
+language hak
+maintainer Chen Chien-ting <yoxem.tem98@nctu.edu.tw>
+status testing
+phonemes hak
+dictionary hak
+name Myanmar (Burmese)
+maintainer Min Maung
+language my
+name Chinese (Cantonese)
+language yue
+language zh-yue
+language zh 8
+
+phonemes yue
+dictionary yue
+
+// interpret English letters as 1=English words, 2=jyutping
+dictrules 1
+
+words 1
+dict_min 10000
+name Chinese (Cantonese, latin as Jyutping)
+language yue
+language zh-yue
+language zh 8
+
+phonemes yue
+dictionary yue
+
+// interpret English letters as 1=English words, 2=jyutping
+dictrules 2
+
+words 1
+dict_min 10000
+name Shan (Tai Yai)
+language shn
+maintainer ronaldaug <contact@ronaldaug.ml>
+status testing
+name Thai
+language th
+status testing
+name Azerbaijani
+language az
+
+status testing
+name Bashkir
+language ba
+name Chuvash
+language cv
+status testing
+name Karakalpak
+language kaaname Kazakh
+language kk
+status testing
+
+name Kyrgyz
+language ky
+
+tunes s3 c3 q3 e3
+name Nogai
+language nog
+status testing
+name Turkmen
+language tk
+name Turkish
+language tr
+name Tatar
+language tt
+name Uyghur
+language ug
+name Uzbek
+language uz
+
+status testing
+name Estonian
+language et
+
+stressAmp 18 16 22 22 20 22 22 22
+stressLength 150 180 200 200 0 0 210 250
+stressOpt 1 2 4 6 // (S_NO_DIM + S_FINAL_DIM = S_FINAL_DIM_ONLY), S_FINAL_NO_2, S_2_TO_HEAVY
+stressRule 0
+
+intonation 3
+spellingStress
+name Finnish
+language fi
+
+
+stressAmp 18 16 22 22 20 22 22 22
+stressLength 150 180 200 200 0 0 210 250
+stressOpt 1 2 4 6 // (S_NO_DIM + S_FINAL_DIM = S_FINAL_DIM_ONLY), S_FINAL_NO_2, S_2_TO_HEAVY
+stressRule 0
+
+intonation 3
+spellingStress
+name Hungarian
+language hu
+brackets 0
+bracketsAnnounced 0
+pitch 81 117
+
+
+name Lule Saami
+language smj
+
+status testing
+name Belarusian
+language be
+dict_min  2000
+speed 95
+name Russian
+language ru
+replace 03 a a#
+dict_min  20000
+name Russian (Latvia)
+language ru-lv 2
+
+maintainer Valdis Vitolins <valdis.vitolins@odo.lv>
+status testing
+
+phonemes ru-lv
+dictrules 2
+dict_min  20000
+speed 95
+
+words 0 2
+tone 150 220 450 255 750 20 3500 255
+stressAmp 12 10 8 8 0 0 16 17
+stressLength 160 140 200 140 0 0 240 160
+
+name Russian (Classic)
+language ru-cl
+replace 03 a a#
+dict_min  20000
+speed 95
+dictrules 3
+name Ukrainian
+language uk
+
+maintainer Andrij Mizyk <andm1zyk@proton.me>
+status testing
+
+speed 80name Bulgarian
+language bg
+
+stressAmp 13 12 17 17 20 22 22 21 
+stressLength 180 170  200 200  200 200  210 220
+name Bosnian
+language bs
+phonemes hr
+
+pitch 81 120
+formant 0 100 100 100
+formant 1  97  97 100
+formant 2  97  97 100
+formant 3  97 102 100
+formant 4  97 102 100
+formant 5  97 102 100
+
+stressAdd 10 10 0 0 0 0 -30 -30
+dictrules 3 4
+name Croatian
+language hr
+language hbs
+
+// attributes towards !variant3
+pitch 81 120
+formant 0 100 100 100
+formant 1  97  97 100
+formant 2  97  97 100
+formant 3  97 102 100
+formant 4  97 102 100
+formant 5  97 102 100
+
+stressAdd 10 10 0 0 0 0 -30 -30
+dictrules 1
+name Macedonian
+language mk
+name Slovenian
+language sl
+
+status testing
+name Serbian
+language sr
+
+// attributes towards !variant3 pitch 80 120
+formant 0 100 100 100
+formant 1  97  97 100
+formant 2  97  97 100
+formant 3  97 102 100
+formant 4  97 102 100
+formant 5  97 102 100
+
+stressAdd 10 10 0 0 0 0 -30 -30
+dictrules 2 4
+name Czech
+language cs
+name Polish
+language pl
+
+intonation 2
+name Slovak
+language sk
+language variant
+name Alex
+
+voicing 70
+pitch 105 115
+flutter 0
+
+formant 1 110 115 100
+formant 2 100 110 100
+formant 3 100 80 75
+language variant
+name Alicia
+gender female
+pitch 180 275
+echo 40 50
+formant 0 115 115 110
+formant 1 130 160 120
+formant 2 150 110 150
+formant 3 135 150 100
+formant 4 120 120 120
+formant 5 120 120 120
+formant 6 100 110 105
+formant 7 100 110 160
+formant 8 200 120 100
+intonation 2
+voicing 38
+consonants 100 20
+roughness 1
+stressAdd 1 64 64 50 50 100 100 200
+stressAmp 12 12 20 20 12 12 20 20
+breathw 150 150 200 200 400 400 600 600
+breath 0 4 5 2 3 13 3 2language variant 
+name Andrea
+gender female 
+
+pitch 200 265
+roughness 0
+
+formant 0 100  100 100
+formant 1 110  100 80
+formant 2 110  80 80
+formant 3 115  110 80
+formant 4 115  80 100
+formant 5 95  50 100
+formant 6 0 0 0
+formant 7 120  100 100
+formant 8 110  100 100
+intonation 3
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+voicing 150language variant
+name Andy
+gender Male
+
+pitch 85 110
+
+flutter 0
+formant 0 80 80 80 80
+formant 1 100 100 100 120
+formant 2 100 88 100
+formant 3 0 0 0
+formant 4 80 80 80
+formant 5 80 80 80
+formant 6 0 0 0
+formant 7 0 0 0
+formant 8 0 0 0
+stressAdd 0 0 0 0 0 0 0 200
+stressAmp 35 35 35 35 35 35 35 35 35
+
+language variant
+name Annie
+gender female
+pitch 120 280
+
+formant 0 105 125 120
+formant 1 120 140 120
+formant 2 120 150 140
+formant 3 130 150 130
+formant 4 120 120 110
+formant 5 120 120 110
+formant 6 120 140 130
+formant 7 120 140 130
+formant 8 120 140 130
+intonation 1
+voicing 30
+consonants 110 120
+language variant
+name anxiousAndy
+gender Male
+
+pitch 115 110
+
+flutter 0
+formant 0 80 80 80 80
+formant 1 100 100 100 120
+formant 2 100 100 100
+formant 3 0 0 0
+formant 4 0 0 0
+formant 5 100 100 100
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+stressAdd 100 100 100 100 100 100 100 300
+stressAmp 35 35 35 35 35 35 35 35 35
+
+##Ten en cuenta que los 2 signos de número en este archivo tienen explicaciones de las comfiguraciones que puede aplicar y cómo comfigurarlas
+## Language Establece el idioma de la voz. Esta opción es necesaria para cualquier comfiguración que realices
+##La siguiente línea es una configuración que puede cambiar. Sin embargo, si no conoce los códigos de idioma, puede ser mejor dejar la configuración tal y como está.
+language variant
+
+## La configuración de nombre es el nombre que aparecerá en la configuración de voz en el cuadro combinado de variante.
+##La siguiente línea es una opción que puede cambiar
+name Demonic
+##La siguiente línea establece el género de la voz. Male or Female (hombre o mujer)
+##La siguiente línea es una opción que puede cambiar
+gender male
+
+flutter 5
+stressAmp 20 18  20 20  20 22  22 22
+##Las opciones de formantes
+##  Formant 0 es usado para dar una baja frecuencia a los sonnidos
+## Los tres números son frecuencia, fuerza y ancho, en orden. Ten en cuenta que los números están separados por espacios
+##La siguiente línea es una opción que puede cambiar
+formant 0 100 100 100
+
+# Formant 1, 2, y 3 son las 3 formantes estándar para definir las vocales.
+##Las siguientes 3 líneas son opciones que puedes cambiar
+formant 1 70 100 100
+formant 2 80 100 90
+formant 3 80 160 90
+
+# Formants 4 y 5 afectan a f3. Esto afectará la calidad de la voz.
+##Las siguientes 2 líneas son comfiguraciones que puede cambiar.
+formant 4 80 85
+formant 5 100 100 80
+
+## Formantes 6, 7 y 8 son opciones que te ofrecen un sonido más claro de las vocales
+##Las siguientes 3 líneas son opciones que puedes cambiar
+formant 6 80 80 100
+formant 7 130 130 110
+formant 8 120 120 150
+
+##Intonation afecta el ascenso y la caída de la voz
+## Las opciones son: 1 predeterminado, 2 entonación media, 3 entonación media y no afecta a las comas, 4 al final de la oración o punto aumenta el tono de la voz.
+##La siguiente línea es una opción que puedes cambiar.
+intonation 10
+
+# Establecer el rango de tono. El primer número le da un tono base a la voz (valor en hz). El segundo número controla el rango de tonos usado por la voz. Poniéndolo igual
+# si los 2 números son iguales, la voz será monótona. Por defecto los ajustes son 82 y 118 
+pitch 43 120
+## La configuración del tono. El primer número en la línea de configuración, 600, es la configuración de frecuencia para la cantidad de graves en la voz.
+## El segundo número en la línea de tono es el volumen de la frecuencia de graves. Puede configurarlo de 0 a 255, siendo 0 la menor cantidad, 255 la mayor.
+##El tercer número en la línea de tono, 1200, es la frecuencia de rango medio. El cuarto número en la línea es la configuración para cambiar el volumen de la frecuencia de rango medio.
+##0 es la menor cantidad y 255 es la mayor.
+## El quinto número en la línea de tono, 2000, es la frecuencia de agudos. El sexto número es el volumen de la frecuencia de agudos. 0 es el mínimo y 255 es el máximo.
+##  Notará que las 3 frecuencias están configuradas en 255.
+###La siguiente línea es una opción que puedes cambiar.
+tone 100 255 1200 255 1500 255
+echo 8 10000
+roughness 3
+breath 20 5 2 10 5 0 27 100
+breathw 255 255 60 180 160 255 255 255
+consonants 194 255
+voicing 65
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 250 350 700 500 450 290 100 225
+stressAmp 16 16 24 24 16 16 20 24
+##Este archivo no incluye todas las configuraciones que se pueden usar para modificar una voz E Speak. Su objetivo es familiarizarlo con lo que hace la configuración.
+##Sin envargo puedes visitar la página http://espeak.sourceforge.net/voices.html y consultar más información acerca de cómo agregar o cambiar otras configuraciones.
+## Espero que te haya servido esta ayuda, y que te hayas divertido.
+language variant
+name Denis
+gender male 35
+pitch  80 115
+flutter 0
+roughness 0
+
+
+formant 0 100 160 160
+formant 1 95 95 95
+formant 2 100 100 100
+formant 3 90 90 90
+formant 4 40 40 40
+formant 5 80 80 80
+formant 6 10 10 10
+formant 7 10 10 10
+formant 8 10 10 10
+voicing 40
+consonants 80 80
+language variant
+name Diogo
+gender male 25
+pitch  82 122
+echo 0 0
+flutter 0
+roughness 0
+stressAmp 20 18  20 20  20 22  22 22
+
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 30 30 30 -100
+formant 5 90 90 90
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 35
+consonants 60 40
+tone 60 250 140 100 1000 50 3500 35
+language variant
+name Gene
+
+pitch  80 110
+
+formant 0 120 120 120
+formant 1 90 100 110
+formant 2 100 100 95
+formant 3 90 100 100
+formant 4 90 100 110
+formant 5 90 110 110
+formant 6 100 70 100
+formant 7 100 70 100
+formant 8 100 80 100
+voicing 120
+consonants 50 110
+
+language variant
+name Gene2
+
+pitch  100 130
+
+formant 0 120 120 120
+formant 1 90 100 110
+formant 2 100 100 95
+formant 3 90 100 100
+formant 4 90 100 110
+formant 5 90 110 110
+formant 6 100 70 100
+formant 7 100 70 100
+formant 8 100 80 100
+voicing 120
+consonants 50 110
+
+language variant
+name Henrique
+gender male 25
+pitch  70 130
+echo 0 0
+flutter 0
+roughness 0
+stressAmp 20 18  20 20  20 22  22 22
+
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 30 30 30 -100
+formant 5 90 90 90
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 35
+consonants 60 40
+tone 70 250 230 80 1100 30 3500 40
+language variant
+name Hugo
+gender male 25
+pitch  70 130
+echo 0 0
+flutter 0
+roughness 0
+stressAmp 20 18  20 20  20 22  22 22
+
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 30 30 30 -100
+formant 5 90 90 90
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 35
+consonants 60 40
+tone 400 160 1100 90 3500 90 150 35
+language variant
+name Jacky
+
+pitch  85 130
+
+formant 0 150 155 100
+formant 1 90 155 70
+formant 2 95 70 64
+formant 3 15 20 30
+formant 4 20 30 40
+formant 5 65 20 65
+formant 6 70 80 100
+formant 7 20 80 100
+formant 8 100 95 80
+voicing 135
+consonants 110
+
+language variant
+name Lee
+gender Male
+
+#echo 230 30
+pitch 85 110
+
+flutter 0
+formant 0 80 80 80 80
+formant 1 80 80 100 100
+formant 2 80 80 80
+formant 3 9 9 9
+formant 4 290 290
+formant 5 130 0 0
+formant 6 90 90 90
+formant 7 90 90 90
+formant 8 90 90 90
+stressAdd 0 0 0 200 0 0 0 100
+stressAmp 30 30 30 30 30 30 30 30 30
+
+language variant
+name Marco
+gender male 30
+intonation 1
+pitch  100 152
+echo 50 80
+flutter 2
+roughness 0
+stressAmp 25 25  24 20  38 31  39 27
+stressAdd 250 125 250 250 225 145 50 256
+
+formant 0 100 120 130
+formant 1 75 180 170
+formant 2 92 120 110
+formant 3 140 120 110
+formant 4 10 20 20 -50
+formant 5 110 70 20
+formant 6 140 100 98
+formant 7 130 120 115
+formant 8 105 120 108
+voicing 38
+consonants 90 140
+tone 420 150 1200 135 3000 70 4700 40
+language variant
+name Mario
+
+pitch  75 125
+
+formant 0 100 111 95
+formant 1 100 111 60
+formant 2 95 90 55
+formant 3 100 50 65
+formant 4 69 65 65
+formant 5 79 60 75
+formant 6 89 60 75
+formant 7 99 0 100
+formant 8 109 0 100
+voicing 135
+consonants 115 120
+
+language variant
+name Michael
+
+pitch  75 125
+
+formant 0 105 111 95
+formant 1 85 111 60
+formant 2 95 90 55
+formant 3 59 50 65
+formant 4 69 65 65
+formant 5 79 60 75
+formant 6 89 60 75
+formant 7 99 0 100
+formant 8 109 0 100
+voicing 135
+consonants 115 120
+
+language variant
+name Mike
+voicing 70
+formant 1 96 97 100
+formant 2 96 97 100
+formant 5 95 103 100
+pitch 67 107
+##Please note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name Mr_Serious
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 100 100 100
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 100 100 100
+formant 2 100 100 100
+formant 3 87 100 100
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 100 100 100
+formant 5 100 100 100
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 1
+
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice. Setting it equal
+# to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 82 118
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice. 
+## The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+##0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 600 255 1200 255 2000 255
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.
+##However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+language variant
+name Nguyen
+
+pitch 95 175
+
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  75 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+tone 100 200 600 150 800 100 2400 80 3600 95 5400 100
+language variant
+name Reed
+klatt 6
+consonants 85 85
+voicing 130
+breath 45
+
+pitch 85 135
+
+formant 1 72 100 90 90
+formant 2 83 100 75 180
+formant 3 98 100 100 90
+formant 4 98 100 90
+formant 5 100 100 90
+
+language variant
+name RicishayMax
+echo 100 10000
+
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+
+
+language variant
+name RicishayMax2
+echo 150 500
+
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+
+roughness 5
+
+intonation 10
+voicing 150
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name RicishayMax3
+echo 200 500
+
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+
+roughness 5
+
+intonation 10
+voicing 150
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+language en-us
+name Storm
+gender male
+formant 0 100 100 100
+formant 1 95 95 95
+formant 2 95 95 95
+formant 3 95 95 95
+formant 4 70 70 70
+formant 5 70 70 70
+formant 6 25 25 25
+formant 7 25 25 25
+formant 8 25 25 25
+breath 0 0 0 0 0 0 0 0
+consonants 100
+echo 0 0
+flutter 0
+intonation 3
+pitch 60 100
+roughness 0
+stressAdd 5 5 3 3 0 0 -15 -15
+tone 500 255 1500 255 2500 255
+voicing 100
+##Please note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name Tweaky
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 100 100 100
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 100 100 100
+formant 2 100 100 100
+formant 3 200 100 100
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 100 100 100
+formant 5 100 100 100
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 1
+
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice. Setting it equal
+# to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 82 118
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice.
+## The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+##0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 600 255 1200 255 2000 255
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.
+##However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+language variant
+name UniversalRobot
+gender male
+klatt 4
+pitch  100 160
+echo 10 10000
+formant 1 75 120 135
+formant 2 90 50 140
+formant 3 70 85 95
+formant 4 150 60 80
+formant 5 100 85 80
+formant 6 112 100 80
+formant 7 110 95 100
+formant 8 105 110 100
+consonants 125 100
+tone 530 250 770 100 215 225
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 120 130 130 90 0 0 120 120
+stressAmp 16 16 24 24 16 16 20 24
+language variant
+name Adam
+klatt 6
+consonants 85 85
+
+formant 1 100 100 130
+language variant
+name anika
+gender female
+pitch 200 300
+flutter 6
+stressAmp 20 18  20 20  20 22  22 22
+
+roughness 0
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 120 120 110
+formant 5 120 120 110
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+intonation 10
+voicing 30
+consonants 60 40
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name anikaRobot
+gender female
+pitch 200 300
+flutter 1
+stressAmp 20 18  20 20  20 22  22 22
+echo 10 10000
+
+roughness 0
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 120 120 110
+formant 5 120 120 110
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+intonation 10
+voicing 30
+consonants 60 40
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+tone 100 255 600 70 1200 22 2000 66 3000 12
+name Half-LifeAnnouncementSystem
+language variant
+pitch 37 83
+klatt 4
+
+formant 1 88 100 100 0
+formant 2 96 100 100 0
+formant 3 98 100 100 0
+formant 4 96 100 100 0
+formant 5 100 100 100 0
+formant 6 100 100 100 0
+formant 7 100 100 100 0
+formant 8 100 100 100 0
+
+voicing 70
+consonants 70 70
+echo 154 26
+language variant 
+name Antonio
+gender male
+
+pitch 82 128
+roughness 0
+
+formant 0 100  150 90
+formant 1 90  130 90
+formant 2 95  120 80
+formant 3 100  50 80
+formant 4 100  40 80
+formant 5 90  70 80
+formant 6 0  0 0
+formant 7 100  100 100
+formant 8 100  100 100
+voicing 150
+tone 600 255 1200 255 2000 80
+intonation 3
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+language variant
+name Auntie
+gender female
+pitch 204 176
+flutter 12
+
+formant 0 88 85 154
+formant 1 115 80 160 -20
+formant 2 130 75 150 -200
+formant 3 123 75 150
+formant 4 125 80 150
+formant 5 125 80 150
+formant 6 110 80 150
+formant 7 110 75 150
+formant 8 110 75 150
+
+stressAdd -20 -20 -20 -20 0 0 20 120
+stressAmp 18 16 20 20 20 20 20 20
+
+language variant
+name Belinda
+gender female
+
+pitch 200 247  
+flutter 3
+
+formant 0 88 85 154
+formant 1 135 58 169 -30
+formant 2 120 70 150 -260
+formant 3 120 39 150
+formant 4 125 57 80
+formant 5 125 80 150
+formant 6 110 80 150
+formant 7 110 75 150
+formant 8 110 75 150
+
+stressAdd -20 -20 -20 -20 0 3 20 12
+stressAmp 18 16 20 20 10 20 27 20
+
+language variant
+name Benjamin
+klatt 6
+consonants 70 70
+
+formant 1 101 100 130
+formant 2 102 100 100
+formant 3 100 100 100
+formant 4 100 100 100 470
+formant 5 100 100 100 350
+formant 6 100 100 100 100
+language variant
+name Boris
+
+formant 0 47 120 100
+formant 1 100 90 75
+formant 2 104 100 75
+formant 3 57 80 75
+formant 4 104 80 75
+formant 5 107 80 75
+formant 6 68 0 75
+formant 7 105 0 75
+formant 8 105 0 75
+
+
+
+language variant
+name Caleb
+klatt 6
+breath 100
+voicing 0
+language variant
+name croak
+gender male 70
+
+pitch 85 117
+flutter 20
+
+formant 0 100 80 110
+
+
+
+language variant
+name David
+klatt 6
+pitch 62 89
+
+formant 1 75 100 100
+formant 2 85 100 100
+formant 3 85 100 100
+language variant
+name Ed
+
+pitch 90 145
+
+formant 0 110 120 200 5
+formant 1 102 100 80
+formant 2 101 120 100
+formant 3 100 80 75
+formant 4 150 30 80
+formant 5 95 95 155
+formant 6 167 100 75
+formant 7 100 200 75
+formant 8 60 200 95
+consonants 55 80
+voicing 100
+tone 650 250 1000 130 240 255language variant
+name Edward
+klatt 5
+voicing 100
+consonants 70 80
+
+formant 1 92 100 130
+formant 2 103 100 80
+formant 3 103 100 70
+formant 4 114 100 60
+language variant
+name Edward2
+klatt 6
+voicing 100
+consonants 70 80
+
+formant 1 92 100 130
+formant 2 103 100 80
+formant 3 103 100 70
+formant 4 114 100 60
+language variant
+name female1
+gender female 70
+
+pitch 140 200
+flutter 8
+roughness 4
+formant 0 115  80 150
+formant 1 120  80 180
+formant 2 100  70 150  150
+formant 3 115  70 150
+formant 4 110  80 150
+formant 5 110  90 150
+formant 6 105  80 150
+formant 7 110  70 150
+formant 8 110  70 150
+
+stressAdd -10 -10 -20 -20 0 0 40 60
+language variant
+name female2
+gender female
+
+pitch 142 220
+roughness 3
+
+formant 0 105  80 150
+formant 1 110  80 160
+formant 2 110  70 150
+formant 3 110  70 150
+formant 4 115  80 150
+formant 5 115  80 150
+formant 6 110  70 150
+formant 7 110  70 150
+formant 8 110  70 150
+
+stressAdd 0 0 -10 -10 0 0 10 40
+breath 0 2 3 3 3 3 3 2
+echo 140 10
+consonants 125 125
+language variant
+name female3
+gender female
+
+pitch 140 240
+formant 0 105  80 150
+formant 1 120  75 150 -50
+formant 2 135  70 150 -250
+formant 3 125  80 150
+formant 4 125  80 150
+formant 5 125  80 150
+formant 6 120  70 150
+formant 7 110  70 150
+formant 8 110  70 150
+
+stressAmp 18 18 20 20 20 20 20 20
+//breath 0 2 4 4 4 4 4 4
+breath 0 2 3 3 3 3 3 2
+echo 120 10
+roughness 4
+
+
+language variant
+name female4
+gender female
+
+echo 130 15
+pitch 142 200
+formant 0 120  80 150
+formant 1 115  80 160 -20
+formant 2 130  75 150 -200
+formant 3 123  75 150
+formant 4 125  80 150
+formant 5 125  80 150
+formant 6 110  80 150
+formant 7 110  75 150
+formant 8 110  75 150
+
+stressAdd -20 -20 -20 -20 0 0 20 120
+stressAmp 18 16 20 20 20 20 20 20
+language variant 
+name female5
+gender female 
+
+pitch 160 228
+roughness 0
+
+formant 0 105  80 150 
+formant 1 110  80 160 
+formant 2 110  70 150 
+formant 3 110  70 150 
+formant 4 115  80 200 
+formant 5 115  80 100 
+formant 6 110  70 150 
+formant 7 110  70 100 
+formant 8 110  70 150 
+
+stressAdd 0 0 -10 -10 0 0 10 40 
+breath 0 4  6   6   6   6  0 10 
+echo 140 10 
+voicing 75 
+consonants 150 150
+breathw 150 150 200 200 400 400 600 600
+language variant
+name fast_test
+
+// Try decreasing these values to make eSpeak's fastest speed faster.
+// This is currently unstable.
+
+fast_test2 15
+language variant
+
+name grandma
+gender female 90
+pitch 120 230
+
+flutter 20
+formant 0 105 150 150
+formant 1 100 80 100
+formant 2 105 105 105
+formant 3 80 80 80
+formant 4 60 60 60
+formant 5 90 90 90
+formant 6 10 10 10
+formant 7 10 10 10
+formant 8 20 20 20
+voicing 50language variant
+name grandpa
+pitch 80 120
+flutter 20
+formant 0 100 100 100
+formant 1 100 100 100
+formant 2 100 100 100
+formant 3 100 100 100
+formant 4 100 100 100
+formant 5 100 100 100
+formant 6 10 10 10
+formant 7 10 10 10
+formant 8 10 10 10
+intonation 1
+language variant
+name Gustave
+
+pitch  80 123
+
+formant 0 85 141 135
+formant 1 77 131 45
+formant 2 92 70 55
+formant 3 59 50 65
+formant 4 69 65 65
+formant 5 79 60 75
+formant 6 89 60 75
+formant 7 99 0 100
+formant 8 109 0 100
+voicing 135
+consonants 115 120
+
+##Please note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name Ian
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 20 120 50
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 80 80 80
+formant 2 80 80 80
+formant 3 80 80 80
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 50 50 50
+formant 5 50 50 50
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 200 50 200
+formant 8 200 50 200
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 2
+
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice.
+# Setting it equal to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 69 96
+
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice.
+##The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+##0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 1000 127 1200 127 2000 127
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.
+##However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+language variant
+name Iven
+pitch  74 118
+formant 0 52 133 88
+formant 1 87 82 76
+formant 2 94 56 42
+formant 3 93 52 130
+formant 4 110 76 65
+formant 5  102 45 20
+formant 6  40 50 50
+formant 7 60 50 60
+formant 8 100 50 40
+voicing 530
+tone 600 255 1200 255 2000 160language variant
+name Iven2
+pitch  74 118
+formant 0 52 133 88
+formant 1 87 82 76
+formant 2 94 56 42
+formant 3 93 52 130
+formant 4 110 76 65
+formant 5  102 45 20
+formant 6  40 50 50
+formant 7 60 50 60
+formant 8 100 50 40
+voicing 220
+consonants 28 42
+tone 600 255 1200 255 2000 150language variant
+name Iven3
+pitch  74 118
+formant 0 52 133 88
+formant 1 87 82 76
+formant 2 94 56 42
+formant 3 93 52 130
+formant 4 110 76 65
+formant 5  102 45 20
+formant 6  40 50 50
+formant 7 60 50 60
+formant 8 100 50 40
+voicing 165
+tone 600 255 1200 255 2000 160language variant
+name Iven4
+pitch  74 118
+formant 0 52 133 88
+formant 1 87 82 76
+formant 2 94 56 42
+formant 3 93 52 130
+formant 4 110 76 65
+formant 5  102 45 20
+formant 6  40 50 50
+formant 7 60 50 60
+formant 8 100 50 40
+voicing 165
+tone 600 170 1200 100 2000 40##Please note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name John
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 100 100 100
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 100 100 100
+formant 2 100 100 100
+formant 3 100 100 100
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 100 100 100
+formant 5 100 100 100
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 1
+
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice.
+# Setting it equal to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 82 118
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice.
+##The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+##0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 600 255 1200 255 2000 255
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.
+##However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+language variant 
+name Kaukovalta
+formant 0 80    80 100   
+formant 1 40 80 100     
+formant 2 70 100  130      
+formant 3 80    100 60    
+formant 4 70 90 100 
+formant 5 70  90  100  
+formant 6 70  100  90 
+   formant 7 100   90 110   
+formant 8 100   95 100 
+pitch 70 120 
+tone 100 130  800  130 2000  130 
+consonants 70 70      
+roughness 4
+  language variant
+name klatt
+klatt 1
+ 
+language variant
+name klatt2
+klatt 2
+
+language variant
+name klatt3
+klatt 3
+ 
+language variant
+name klatt4
+klatt 4
+ 
+language variant
+name klatt5
+klatt 5
+ 
+language variant
+name klatt6
+klatt 6
+ 
+language variant
+name Linda
+gender female
+
+#echo 130 15
+pitch 200 247
+flutter 3
+formant 0 88 85 154
+formant 1 135 58 169 -30
+formant 2 131 75 152 -260
+formant 3 123 75 150
+formant 4 125 80 150
+formant 5 125 80 150
+formant 6 110 80 150
+formant 7 110 75 150
+formant 8 110 75 150
+
+stressAdd -20 -20 -20 -20 0 3 20 120
+stressAmp 18 16 20 20 20 20 27 20
+
+language variant
+name male1
+gender male 70
+
+pitch 75 109
+flutter 5
+roughness 4
+consonants 80 100
+
+formant 0  98 100 100
+formant 1  97 100 100
+formant 2  97  95 100
+formant 3  97  95 100
+formant 4  97  85 100
+formant 5 105  80 100
+formant 6  95  80 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+//stressAdd -10 -10 -20 -20 0 0 40 70
+language variant
+name male2
+gender male
+
+pitch 88 115
+echo 130 15
+formant 0 100  80 120
+formant 1  90  85 120
+formant 2 110  85 120
+formant 3 105  90 120
+formant 4 100  90 120
+formant 5 100  90 120
+formant 6 100  90 120
+formant 7 100  90 120
+formant 8 100  90 120
+language variant
+name male3
+gender male
+
+pitch 80 122
+formant 0 100 100 100
+formant 1  96  97 100
+formant 2  96  97 100
+formant 3  96 103 100
+formant 4  95 103 100
+formant 5  95 103 100
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+consonants 100
+stressAdd 10 10 0 0 0 0 -30 -30
+language variant
+name male4
+gender male
+
+pitch 70 110
+
+formant 0 103 100 100
+formant 1 103 100 100
+formant 2 103 100 100
+formant 3 103 100 100
+formant 4 106 100 100
+formant 5 106 100 100
+formant 6 106 100 100
+formant 7 103 100 100
+formant 8 103 100 100
+
+stressAdd -10 -10 -30 -30 0 0 60 90
+language variant
+name male5
+gender male
+
+formant 0 100  85 130
+formant 1  90  85 130  40
+formant 2  80  85 130  310
+formant 3 105  85 130
+formant 4 105  85 130
+formant 5 105  85 130
+formant 6 105  85 150
+formant 7 105  85 150
+formant 8 105  85 150
+
+intonation 2
+language variant
+name male6
+gender male
+
+pitch 82 117
+
+formant 0 100  90 120
+formant 1 100  90 140
+formant 2 100  70 140
+formant 3 100  75 140
+formant 4 100  80 140
+formant 5 100  80 140
+
+language variant
+name male7
+gender male
+
+pitch  75 125
+
+formant 0 100 125 100
+formant 1 100 90 80
+formant 2 100 70 90
+formant 3 100 60 90
+formant 4 100 60 90
+formant 5  75 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+voicing 155
+
+language variant
+name male8
+gender male 50
+
+pitch 65 102
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Marcelo
+
+pitch  65 115
+
+formant 0 65 161 35
+formant 1 75 131 65
+formant 2 90 60 40
+formant 3 59 50 55
+formant 4 69 65 35
+formant 5 69 60 25
+formant 6 59 60 35
+formant 7 149 0 10
+formant 8 199 0 90
+voicing 135
+consonants 115 120
+
+language variant
+name Max
+
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+
+
+language variant
+name Michel
+gender male 25
+pitch  82 122
+echo 0 0
+flutter 0
+roughness 0
+stressAmp 20 18  20 20  20 22  22 22
+
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 30 30 30 -100
+formant 5 90 90 90
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 35
+consonants 60 40
+tone 400 160 1500 100 3000 70 4500 40
+language variant
+name Miguel
+gender male 25
+pitch  80 130
+echo 0 0
+flutter 0
+roughness 0
+stressAmp 20 18  20 20  20 22  22 22
+
+
+formant 0 105 200 140
+formant 1 95 150 120
+formant 2 100 120 140
+formant 3 95 95 140
+formant 4 30 30 30 -100
+formant 5 90 90 90
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 35
+consonants 60 40
+tone 300 240 400 160 1500 100 3000 70
+language variant
+name Mike2
+klatt 6
+voicing 170
+pitch 67 107
+formant 1 95 100 100
+formant 2 95 100 100
+formant 3 105 100 100
+formant 4 115 100 100
+formant 5 115 100 100
+
+consonants 70 150
+##Please note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name norbert
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 100 100 100
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 100 100 100
+formant 2 75  50 100
+formant 3 100 100 100
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 100 100 100
+formant 5 100 100 100
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 1
+
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice. Setting it equal
+# to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 82 118
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice.
+## The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+##0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 600 255 1000 100 5000 255
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.
+##However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+##Pleas note the 2 number signs, or pound signs in this file are for comments to help you to understand what the settings are and how to set them.  
+## Language sets the language of your voice.  This setting is required for every voice that you make.
+##The next line is a setting you can change.  However if you don't know the language codes it may be best to leave the setting as it is.
+language variant
+
+## The name setting is the name that will show up in the voice settings in the variant combo box.
+##The next line is a setting you can change
+name Pablo
+
+##The formant settings
+##  Formant 0 is used to give a low frequency component to the sounds.
+## The three numbers are frequency, strength, and Width, in that order.  Please note, the numbers are seperated by a space.
+##The next line is a setting you can change
+formant 0 90 100 90
+
+# Formants 1,2, and 3 are the standard three formants which define vowels. 
+##The next 3 lines are settings you can change
+formant 1 95 100 80
+formant 2 97 100 80
+formant 3 98 90 80
+
+# Formants 4,5 are higher than F3. They affect the quality of the voice. 
+##The next 2 lines are settings that you can change.
+formant 4 110 100 100
+formant 5 110 100 100
+
+## Formants 6, 7, and 8 are weak, high frequency, additions to vowels to give a clearer sound. 
+##The next 3 lines are settings that you can change.
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+##Intonation affects the rise and fall of the voice	
+## The settings are 1 default, 2 less intonation, 3 less intonation and commas do not raise the pitch, 4 the pitch rises at the end of a sentence rather than falling.
+##The next line is a setting you can change.
+intonation 3
+echo 30 30
+# Setting the pitch range.  The first number gives a base pitch to the voice (value in Hertz).  The second number controls the range of pitches used by the voice. Setting it equal
+# to the first number will give a monotone sounding voice.  The default values are 82 and 118. 
+pitch 82 130
+## The tone setting.  The first number on the setting line, 600, is the frequency setting for the amount of bass in the voice.
+## The second number on the tone line is the volume of the bass frequency.  You can set it from 0 to 255, 0 being the least amount, 255 being the most.
+##The third number on the tone line, 1200, is the mid range frequency.  The fourth number on the line is the setting to change the volume of the mid range frequency.
+## 0 being the least amount and 255 being the maximum.
+## The fifth number on the tone line, 2000, is the treble frequency.  The sixth number is the volume of the treble frequency.  0 is the minimum and 255 is the maximum.
+##  You will notice that all 3 frequencies are set to 255.
+##The next line is a setting that you can change.
+tone 600 255 1200 200 2000 255
+
+##This file does not include all of the settings that can be used to modify an E Speak voice.  It is intended to get you familiar with what the settings do.  
+#However, you can go to http://espeak.sourceforge.net/voices.html and read further information about other settings that can be added and changed.  I hope this helps, and Have fun.
+
+language variant
+name Paul
+
+pitch 70 100
+
+formant 0 90 120 100
+formant 1 103 100 75
+formant 2 98 100 75
+formant 3 100 80 75
+formant 4 102 30 100
+formant 5 100 80 100
+formant 6 100 80 75
+formant 7 100 0 75
+formant 8 100 60 75
+consonants 90 60
+voicing 230
+tone 420 255 1300 130 4000 100language variant
+
+name Pedro
+
+formant 0 100 150 100
+
+formant 1 95 100 80
+formant 2 95 100 80
+formant 3 100 100 90
+
+formant 4 100 100 100
+formant 5 100 100 100
+
+formant 6 100 100 100
+formant 7 100 100 100
+formant 8 100 100 100
+
+intonation 3
+
+pitch 82 118
+tone 600 255 1200 255 2000 255
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+language variant
+name Quincy
+
+pitch  67 100
+
+formant 0 85 108 106 3
+formant 1 97 110 56
+formant 2 96 80 60
+formant 3 101 50 50
+formant 4 110 33 55
+formant 5 110 22 65
+formant 6 77 60 60 65
+formant 7 66 0 100
+formant 8 100 0 100
+voicing 99
+consonants 66 90
+
+roughness 0
+tone 600 170 1200 100 2000 70
+stressAmp 16 16 24 20 20 16 28 24 
+language variant
+name Rob
+
+pitch  50 130
+formant 0 100 100 100
+formant 1 95 100 60
+formant 2 97 90 50
+formant 3 101 70 50
+formant 4 110 65 55 
+formant 5 110 70 65
+formant 6 110 70 65
+formant 7 0 0 0
+formant 8 0 0 0
+
+voicing 115
+consonants 110 120
+
+language variant
+name Robert
+
+pitch  65 115
+
+formant 0 85 108 100
+formant 1 95 110 60
+formant 2 97 90 50
+formant 3 101 50 50
+formant 4 110 65 55
+formant 5 110 60 65
+formant 6 110 60 65
+formant 7 100 0 100
+formant 8 100 0 100
+voicing 115
+consonants 110 120
+
+language variant
+name Robosoft
+echo 30 1000
+klatt 5
+
+pitch 60 90
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+roughness 50
+
+intonation 0
+voicing 80
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft2
+echo 10 600
+klatt 4
+
+pitch 70 100
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+roughness 75
+
+intonation -25
+voicing 80
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft3
+echo 10 10000
+klatt 4
+
+pitch 75 115
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+roughness 5
+
+intonation 10
+voicing 150
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft4
+echo 10 10000
+
+pitch 75 115
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+roughness 5
+
+intonation 10
+voicing 150
+consonants 110 120
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft5
+echo 10 10000
+
+pitch 75 115
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+roughness 0
+
+intonation 10
+voicing 150
+consonants 60 40
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+stressAmp 16 16 24 24 16 16 20 24
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft6
+echo 40 10000
+pitch 150 150
+formant 0 100 125 100
+formant 1 96 90 80
+formant 2 97 70 90
+formant 3 97 60 90
+formant 4 97 60 90
+formant 5  100 50 90
+formant 6  90 50 100
+formant 7 100 50 100
+formant 8 100 50 100
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft7
+echo 10 10000
+
+pitch 75 115
+
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+roughness 0
+
+intonation 10
+voicing 150
+consonants 60 40
+stressLength 0 1 2 3 4 5 6 7
+stressAdd 130 140 140 100 0 0 130 160
+
+tone 100 255 600 70 1200 22 2000 66 3000 12
+language variant
+name Robosoft8
+echo 40 10000
+pitch 150 150
+formant 0 90 120 100
+formant 1 100 100 75
+formant 2 100 100 75
+formant 3 100 80 75
+formant 4 100 80 75
+formant 5 100 80 75
+formant 6 100 0 75
+formant 7 100 0 75
+formant 8 100 0 75
+
+
+
+// This file is UTF-8 encoded
+// Variant sandro (ver.25-3) for eSpeak-ng Copyright (C)2019 by Lolo vmanolo301@gmail.com
+
+language variant
+name sandro
+gender male
+
+formant 0 95 146 100
+formant 1 98 90 100 
+formant 2 103 98 100
+formant 3 100 90 100
+formant 4 100 101 100
+formant 5 110 120 100 2123
+formant 6 100 100 100 1200
+formant 7 32 125 80 600
+formant 8 34 95 30 49
+
+voicing 165
+consonants 194 255
+pitch 78 115
+roughness 3
+breath 20 5 2 10 5 0 27 100
+breathw 255 255 60 180 160 255 255 255
+
+tone 500 210 470 70 160 155 2985 32
+language variant
+name shelby
+flutter 0
+roughness 0
+
+formant 0 100 160 190
+formant 1 90 90 90
+formant 2 140 140 140
+formant 3 130 150 130
+formant 4 110 110 110
+formant 5 120 120 110
+formant 6 10 10 10
+formant 7 10 10 10
+formant 8 10 10 10
+
+pitch 100 210
+voicing 40
+consonants 90 70language variant
+name Steph
+gender female
+
+pitch 166 200
+flutter 1
+roughness 0
+tone 100 255 600 70 1200 22 2000 66 3000 12
+
+formant 0 99  80 150
+formant 1 120 60 160
+formant 2 99 70 110 150
+formant 3 116 77 150
+formant 4 9 59 110
+formant 5 100 50 2
+formant 6 104 80 150
+formant 7 110 70 150
+formant 8 110 70 150
+
+stressAmp 16 16 24 24 16 16 20 24
+consonants 55 90
+language variant
+name Steph2
+gender female
+
+pitch 166 200
+flutter 1
+roughness 0
+tone 100 255 600 70 1200 22 2000 66 3000 12
+
+formant 0 99  100 150
+formant 1 120 80 160
+formant 2 99 90 110 150
+formant 3 116 97 150
+formant 4 9 73 116
+formant 5 100 70 2
+formant 6 104 100 150
+formant 7 110 90 150
+formant 8 110 90 150
+
+stressAmp 16 16 24 24 16 16 20 24
+consonants 55 90
+language variant
+name Steph3
+gender female
+
+pitch 166 200
+flutter 1
+roughness 0
+voicing 200
+tone 100 255 600 70 1200 22 2000 66 3000 12
+
+formant 0 99  80 150
+formant 1 120 60 160
+formant 2 99 70 110 150
+formant 3 116 77 150
+formant 4 9 59 110
+formant 5 100 50 2
+formant 6 104 80 150
+formant 7 110 70 150
+formant 8 110 70 150
+
+stressAmp 16 16 24 24 16 16 20 24
+consonants 70 90
+language variant
+name travis
+gender male 30
+
+pitch 75 120
+
+formant 0 90 90 90 90 
+formant 1 50 100 80 95
+formant 2 90 60 90 100
+formant 3 80 80 90 100
+formant 4 50 90 100 100
+formant 5 100 95 100 55
+formant 6 80 50 100 85
+formant 7 60 60 60 120
+formant 8 80 80 140 100
+
+tone 600 100 1000 200 1500 50 
+flutter 1 
+
+roughness 3 
+
+voicing 200 
+consonants 120 190 
+language variant
+name victor
+gender male 25
+
+formant 0 100 100 100
+formant 1 95 95 95
+formant 2 90 90 90
+formant 3 90 90 90
+formant 4 40 40 40
+formant 5 80 80 80
+formant 6 20 20 20
+formant 7 20 20 20
+formant 8 20 20 20
+pitch 80 110
+voicing 60
+breath 2 4language variant
+name whisper
+gender male
+
+pitch 82 117
+flutter 20
+
+formant 0 100  0 100
+formant 1 100 80 100
+
+voicing 17
+breath   75  75  50  40  15  10
+breathw 150 150 200 200 400 400
+language variant
+name female_whisper
+gender female
+
+pitch 160 220
+roughness 3
+
+formant 0 105   0 150
+formant 1 110  40 160
+formant 2 110  70 150
+formant 3 110  70 150
+formant 4 115  80 150
+formant 5 115  80 150
+formant 6 110  70 150
+formant 7 110  70 150
+formant 8 110  70 150
+
+stressAdd 0 0 -10 -10 0 0 10 40
+
+// whisper
+voicing 20
+breath 75 75 50 40 15 10
+breathw 150 150 200 200 400 400
+ 
+language variant
+name Zac
+flutter 5
+
+pitch 240 390
+formant 0 145 100 145
+formant 1 145 100 145
+formant 2 145 100 145
+formant 3 145 100 145
+formant 4 145 100 145
+formant 5 145 120 145
+formant 6 145 120 145
+formant 7 145 120 145
+formant 8 145 120 145
+voicing 80
+name afrikaans-mbrola-1
+language af 7
+gender male
+
+pitch 82 117
+mbrola af1 af1_phtrans
+
+name en-afrikaans
+language en 11
+gender male
+
+pitch 82 117
+mbrola af1 af1_phtrans
+
+name arabic-mbrola-1
+language ar 1
+gender male
+
+pitch 82 117
+mbrola ar1 ar1_phtrans
+name arabic-mbrola-2
+language ar 2
+gender male
+
+pitch 82 117
+mbrola ar2 ar2_phtrans
+language pt-br 6
+language pt 8
+name brazil-mbrola-1
+gender male
+
+pitch 82 117
+voicing 80
+
+dictrules 2 3 4
+
+mbrola br1 ptbr_phtrans
+
+language xex 2
+name brazil-xextan-1
+gender male
+
+phonemes pt-br
+phonemes pt
+pitch 82 117
+voicing 80
+speed 80
+
+dictrules 2 4
+
+tunes s7 c7 q7 e7
+
+mbrola br1 ptbrxex_phtrans
+
+language pt-br 6
+language pt 8
+name brazil-mbrola-2
+gender female
+
+pitch 115 195
+voicing 120
+
+dictrules 2 3 4
+
+mbrola br2 ptbr_phtrans
+
+language xex 4
+name brazil-xextan-2
+gender female
+
+phonemes pt-br
+phonemes pt
+pitch 115 195
+voicing 120
+speed 80
+
+dictrules 2 5
+
+tunes s7 c7 q7 e7
+
+mbrola br2 ptbr2xex_phtrans
+
+language pt-br 6
+language pt 8
+name brazil-mbrola-3
+gender male
+pitch 80 120
+
+dictrules 2 3 4
+voicing 120
+
+mbrola br3 ptbr_phtrans
+
+language xex 5
+name brazil-xextan-3
+gender male
+
+phonemes pt-br
+phonemes pt
+pitch 80 120
+voicing 120
+speed 80
+
+dictrules 2 5
+
+tunes s7 c7 q7 e7
+
+mbrola br3 ptbr2xex_phtrans
+
+language pt-br 6
+language pt 8
+name brazil-mbrola-4
+gender female
+
+pitch 140 220
+voicing 80
+
+dictrules 2 3 4
+
+mbrola br4 ptbr4_phtrans
+
+language xex 3
+name brazil-xextan-4
+gender female
+
+phonemes pt-br
+phonemes pt
+
+pitch 140 220
+voicing 80
+speed 80
+
+dictrules 2 3
+
+tunes s7 c7 q7 e7
+
+mbrola br4 ptbr4xex_phtrans
+
+language fr-ca 6
+language fr 10
+name fr-canadian-mbrola-1
+gender male
+pitch 82 117
+mbrola ca1 ca_phtrans
+language fr-ca 6
+language fr 10
+name fr-canadian-mbrola-2
+gender male
+pitch 82 117
+mbrola ca2 ca_phtrans
+name chinese-mb-cn1
+language zh
+mbrola cn1 zh_phtrans
+pitch 100 280
+speed 90
+status testing
+name croatian-mbrola-1
+language hr 7
+gender male
+
+dictrules 1
+
+voicing 150
+pitch 82 117
+mbrola cr1 cr1_phtrans
+name czech-mbrola-1
+language cs 1
+gender female
+mbrola cz1 cs_phtrans
+name czech-mbrola-2
+language cs 2
+gender male
+
+pitch 82 117
+mbrola cz2 cs_phtrans
+name german-mbrola-1
+language de 6
+gender female
+voicing 80
+pitch 140 220
+
+stressLength 400 400 400 400 500 500 500 500
+mbrola de1 de2_phtrans
+
+name en-german-1
+language en 9
+gender female
+
+voicing 80
+pitch 140 220
+
+mbrola de1 de2_phtrans
+
+name german-mbrola-2
+language de 6
+gender male
+voicing 80
+stressLength 400 400 400 400 500 500 500 500
+
+mbrola de2 de2_phtrans
+
+name en-german-2
+language en 9
+gender male
+
+voicing 80
+
+mbrola de2 de2_phtrans
+
+name german-mbrola-3
+language de 6
+gender female
+voicing 80
+pitch 140 220
+
+mbrola de3 de2_phtrans
+
+name en-german-3
+language en 9
+gender female
+
+voicing 80
+pitch 140 220
+
+mbrola de3 de2_phtrans
+
+name german-mbrola-4
+language de 6
+gender male
+
+voicing 130
+
+mbrola de4 de4_phtrans
+stressLength 400 400 400 400 500 500 500 500
+name en-german-4
+language en 9
+gender male
+
+voicing 130
+
+mbrola de4 de4_phtrans
+
+name german-mbrola-5
+language de 7
+gender female
+stressLength 400 400 400 400 500 500 500 500
+pitch 140 220
+mbrola de5 de6_phtrans 22050
+
+// avoid glottal stops. de5 assumes [?] between pause and vowel
+replace 00 _!  _
+replace 00 _|  _
+name en-german-5
+language en 9
+gender female
+
+pitch 140 220
+mbrola de5 de6_phtrans 22050
+
+name german-mbrola-6
+language de 6
+gender male
+stressLength 400 400 400 400 500 500 500 500
+mbrola de6 de6_phtrans 22050
+
+name en-german-6
+language en 9
+gender male
+
+mbrola de6 de6_phtrans 22050
+
+name german-mbrola-6
+language grc 6
+gender male
+
+mbrola de6 grc-de6_phtrans 22050
+
+name german-mbrola-7
+language de 7
+gender female
+stressLength 400 400 400 400 500 500 500 500
+voicing 150
+pitch 140 220
+mbrola de7 de6_phtrans 22050
+
+name german-mbrola-8
+language de 8
+gender male
+mbrola de8 de8_phtrans
+
+name estonian-mbrola-1
+language et
+gender male
+
+pitch 75 125
+voicing 80
+mbrola ee1 ee1_phtrans
+ 
+name english-mb-en1
+language en-uk  3
+language en-gb  3
+language en 2
+gender male
+
+voicing 150
+pitch 82 117
+mbrola en1 en1_phtrans
+language es-es 7
+language es 7
+name spanish-mbrola-1
+gender male
+pitch 82 117
+
+mbrola es1 es_phtrans
+voicing 120
+
+language es-es 7
+language es 7
+name spanish-mbrola-2
+gender male
+pitch 82 117
+
+mbrola es2 es_phtrans 22050
+
+language es-es 3
+language es 3
+name spanish-mbrola-3
+gender female
+pitch 140 260
+mbrola es3 es3_phtrans
+language es-es 4
+language es 4
+name spanish-mbrola-4
+gender male
+mbrola es4 es4_phtrans
+language fr-fr 7
+language fr 7
+name french-mbrola-1
+gender male
+
+dictrules 1
+stressLength 180 180 180 180 0 0 220 220
+pitch 82 117
+voicing 70
+
+mbrola fr1 fr_phtrans
+
+name en-french-1
+language en 10
+gender male
+
+dictrules 1
+pitch 82 117
+voicing 70
+mbrola fr1 fr_phtrans
+
+language fr-fr 8
+language fr 8
+name french-mbrola-2
+gender female
+pitch 140 220
+mbrola fr2 fr_phtrans
+
+language fr-fr 8
+language fr 8
+name french-mbrola-3
+gender male
+pitch 82 117
+mbrola fr3 fr_phtrans
+
+language fr-fr 7
+language fr 7
+name french-mbrola-4
+gender female
+
+dictrules 1
+pitch 140 220
+voicing 90
+mbrola fr4 fr_phtrans
+
+language en 10
+name en-french-4
+gender female
+
+dictrules 1
+pitch 140 220
+voicing 90
+mbrola fr4 fr_phtrans
+
+language fr-be 6
+language fr 9
+name french-mbrola-5
+gender male
+pitch 82 117
+mbrola fr5 fr_phtrans
+
+language fr-fr 8
+language fr 8
+name french-mbrola-6
+gender male
+pitch 82 117
+mbrola fr6 fr_phtrans
+
+language fr 8
+name french-mbrola-7
+gender male
+pitch 82 117
+mbrola fr7 fr_phtrans
+
+name greek-mbrola-1
+language el 7
+gender male
+
+pitch 82 117
+voicing 65
+mbrola gr1 gr1_phtrans
+name greek-mbrola-2
+language el 2
+gender male
+
+pitch 82 117
+voicing 65
+mbrola gr2 gr2_phtrans
+name en-greek
+language en 9
+gender male
+
+pitch 82 117
+voicing 65
+mbrola gr2 gr2_phtrans
+name hebrew-mbrola-1
+language he
+gender male
+
+mbrola hb1 he_phtrans
+name hebrew-mbrola-2
+language he
+gender female
+pitch 180 220
+mbrola hb2 he_phtrans
+name hungarian-mbrola-1
+language hu 7
+gender female
+
+pitch 140 220
+voicing 160
+mbrola hu1 hu1_phtrans
+name en-hungarian
+language en 10
+gender female
+
+pitch 140 220
+voicing 160
+mbrola hu1 hu1_phtrans
+name icelandic-mbrola-1
+language is 6
+gender male
+
+voicing 180
+mbrola ic1 ic1_phtrans
+ 
+name indonesian-mbrola-1
+language id 7
+gender male
+
+pitch 82 117
+voicing 120
+mbrola id1 id1_phtrans
+
+name hindi-mbrola-1
+language hi 1
+gender male
+mbrola in1 in_phtrans
+
+name hindi-mbrola-2
+language hi 2
+gender female
+pitch 140 220
+mbrola in2 in_phtrans
+
+name persian-mb-ir1
+language fa
+gender male
+phonemes fa
+mbrola ir1 ir1_phtrans
+
+// "speed 82" adjust default speed of "mb-ir1" with eSpeak "fa". 
+speed 82
+// Please don't change this value. It's result of several tests.
+
+// "voicing 125" adjust output volume of "mb-ir1" with eSpeak "fa". 
+voicing 125	
+// Please don't change this value. It's result of several tests.
+
+// "pitch 82 118" adjust default pitch of "mb-ir1" like other male voices.
+pitch 82 118
+// Please don't change this value. The result male voice is good and natural.
+
+// If you want use Pinglish instead of English for reading, just delete // from start of next line. 
+// dictrules 1
+// "dictrules 1" read English text as Pinglish (Persian text that written with English alphabets). 
+
+name italian-mbrola-1
+language it 8
+gender male
+pitch 82 117
+mbrola it1 it1_phtrans
+name italian-mbrola-2
+language it 8
+gender female
+pitch 140 220
+mbrola it2 it1_phtrans
+name italian-mbrola-3
+language it 7
+gender male
+
+pitch 82 117
+voicing 65
+mbrola it3 it3_phtrans
+
+replace 03 i I       // final unstressed "i"
+name italian-mbrola-4
+language it 7
+gender female
+
+pitch 140 220
+voicing 60
+mbrola it4 it3_phtrans
+
+replace 03 i I       // final unstressed "i"
+name japanese-mbrola-1
+language ja 1
+gender male
+mbrola jp1 jp_phtrans
+pitch 120 260
+name japanese-mbrola-2
+language ja 2
+gender female
+pitch 160 300
+mbrola jp2 jp_phtrans
+name japanese-mbrola-3
+language ja 3
+gender female
+pitch 160 300
+mbrola jp3 jp_phtrans
+name latin-mbrola-1
+language la 7
+gender male
+
+pitch 82 117
+mbrola la1 la1_phtrans
+name lithuanian-mbrola-1
+language lt 7
+gender male
+
+pitch 82 117
+mbrola lt1 lt_phtrans
+name lithuanian-mbrola-2
+language lt 7
+gender male
+
+pitch 82 117
+mbrola lt2 lt_phtrans
+name malay-mbrola-1
+language ms 1
+gender female
+pitch 140 260
+phonemes id
+mbrola ma1 ma1_phtrans
+
+language es-mx 7
+language es  8
+name mexican-mbrola-1
+gender male
+pitch 82 117
+
+mbrola mx1 mx1_phtrans
+
+replace 00 T s
+
+language es-mx 7
+language es  8
+name mexican-mbrola-2
+gender male
+pitch 82 117
+
+mbrola mx2 mx2_phtrans
+
+replace 00 T s
+
+name dutch-mbrola-1
+language nl 9
+gender male
+mbrola nl1 nl_phtrans
+
+language nl 7
+name dutch-mbrola-2
+gender male
+
+pitch 82 117
+voicing 130
+
+mbrola nl2 nl_phtrans
+
+language en 10
+name en-dutch
+gender male
+
+pitch 82 117
+voicing 130
+
+mbrola nl2 nl_phtrans
+
+name dutch-mbrola-3
+language nl 9
+gender female
+pitch 130 200
+mbrola nl3 nl_phtrans
+
+name maori-mbrola-1
+language mi
+gender male
+mbrola nz1 nz1_phtrans
+
+name polish-mbrola-1
+language pl 7
+gender female
+
+pitch 140 220
+voicing 120
+mbrola pl1 pl1_phtrans
+name en-polish
+language en 11
+gender female
+
+pitch 140 220
+mbrola pl1 pl1_phtrans
+language pt-pt 7
+language pt 7
+name portugal-mbrola-1
+gender female
+pitch 145 240
+
+dictrules 1
+voicing 70
+
+mbrola pt1 pt1_phtrans
+
+name romanian-mbrola-1
+language ro 7
+gender male
+
+pitch 82 117
+mbrola ro1 ro1_phtrans
+
+name en-romanian
+language en 9
+gender male
+
+pitch 82 117
+mbrola ro1 ro1_phtrans
+
+name swedish-mbrola-1
+language sv 7
+gender male
+
+pitch 82 117
+voicing 120
+
+mbrola sw1 sv_phtrans
+
+name en-swedish
+language en 11
+gender male
+
+pitch 82 117
+voicing 120
+
+mbrola sw1 sv_phtrans
+
+name swedish-mbrola-2
+language sv 8
+gender female
+
+pitch 140 220
+voicing 130
+
+mbrola sw2 sv2_phtrans
+
+name en-swedish-f
+language en 10
+gender female
+
+pitch 140 220
+voicing 130
+
+mbrola sw2 sv2_phtrans
+
+name telugu-mbrola-1
+language te
+gender female
+pitch 160 260
+mbrola tl1 tl1_phtrans
+
+name turkish-mbrola-1
+language tr 7
+gender male
+
+mbrola tr1 tr1_phtrans
+dictrules 1
+
+name turkish-mbrola-1
+language tr 7
+gender female
+
+pitch 160 230
+voicing 170
+
+mbrola tr2 tr1_phtrans
+dictrules 1
+
+name us-mbrola-1
+language en-us
+language en 8
+gender female
+
+phonemes en-us
+dictrules 3 6
+
+stressLength 170 135 205 205 0 0  245 275
+
+pitch 140 220
+mbrola us1 us_phtrans
+name us-mbrola-2
+language en-us
+language en 7
+gender male
+
+phonemes en-us
+dictrules 3 6
+
+stressLength 170 135 205 205 0 0  245 275
+
+pitch 82 117
+voicing 80
+mbrola us2 us_phtrans
+name us-mbrola-3
+language en-us
+language en 8
+gender male
+
+phonemes en-us
+dictrules 3 6
+
+stressLength 170 135 205 205 0 0  245 275
+
+voicing 150
+pitch 82 117
+mbrola us3 us3_phtrans
+language es-vz 7
+language es  8
+name venezuala-mbrola-1
+gender male
+pitch 82 117
+
+mbrola vz1 vz_phtrans
+
+dictrules 3
+replace 00 T s
+voicing 200
