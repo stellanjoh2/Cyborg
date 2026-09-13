@@ -44,7 +44,7 @@ export const PALETTE_LABELS: Record<PaletteKey, string> = {
 }
 
 export const DEFAULT_STROKE_OPACITY = 0.1
-export const DEFAULT_GRAIN_OPACITY = 0.48
+export const DEFAULT_GRAIN_OPACITY = 0.5
 export const DEFAULT_RADIUS_PANEL = 48
 export const RADIUS_PANEL_MAX = 64
 

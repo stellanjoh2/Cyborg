@@ -7,7 +7,7 @@ import './Hint.css'
 
 gsap.registerPlugin(useGSAP)
 
-const HOLD_MS = 9000
+const HOLD_MS = 4000
 
 export type HintMessage = {
   title: string
@@ -42,12 +42,6 @@ export function Hint({
     }
     setOpen(false)
   }, [message])
-
-  const dismiss = () => {
-    if (!open) return
-    playUiSound('close')
-    onDismissRef.current()
-  }
 
   useEffect(() => {
     if (!open) return
@@ -153,7 +147,7 @@ export function Hint({
     <div
       ref={tipRef}
       className="hint"
-      role="dialog"
+      role="status"
       aria-labelledby="hint-title"
       aria-describedby="hint-body"
     >
@@ -165,9 +159,6 @@ export function Hint({
       <p id="hint-body" className="hint__body">
         {shown.body}
       </p>
-      <button type="button" className="hint__dismiss" onClick={dismiss}>
-        OK
-      </button>
     </div>,
     document.body,
   )

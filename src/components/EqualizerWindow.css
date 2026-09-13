@@ -64,12 +64,19 @@
   min-height: 56px;
   padding: 0 20px;
   background: var(--eq-chrome);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   transition: background-color 0.18s ease;
 }
 
 .eq-window__head:hover,
 .eq-window__head.is-dragging {
   --eq-chrome: color-mix(in srgb, var(--window-chrome) 97%, white);
+}
+
+.eq-window__head.is-dragging {
+  cursor: grabbing;
 }
 
 .eq-window__head::before {
@@ -87,18 +94,11 @@
 
 .eq-window__drag {
   align-self: stretch;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-
-.eq-window__drag:active {
-  cursor: grabbing;
 }
 
 .eq-window__grip {
@@ -127,6 +127,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
+  cursor: default;
 }
 
 .eq-window__switch {
@@ -233,6 +235,7 @@
 
 .eq-window__switch input:checked + .eq-window__switch-slider {
   background: var(--switch-checked-bg);
+  box-shadow: var(--glow-outer);
 }
 
 .eq-window__switch input:checked + .eq-window__switch-slider .eq-window__switch-check {
@@ -417,6 +420,7 @@
 
 .eq-point__number {
   fill: var(--accent);
+  filter: var(--glow-filter);
   font-family: var(--font-ui);
   font-size: 17px;
   font-weight: 600;
@@ -425,6 +429,7 @@
   transform-origin: center;
   transition:
     fill 0.22s ease,
+    filter 0.22s ease,
     transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -450,6 +455,8 @@
 .eq-point:focus-visible .eq-point__number,
 .eq-point.is-selected .eq-point__number {
   fill: var(--on-chrome);
+  /* Ring already blooms; drop-shadow on dark ink reads muddy. */
+  filter: none;
   transform: scale(1.06);
 }
 
@@ -485,7 +492,9 @@
   transition:
     color 0.22s ease,
     border-color 0.22s ease,
-    background-color 0.22s ease;
+    background-color 0.22s ease,
+    text-shadow 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .eq-band-tab span:first-child {
@@ -512,6 +521,11 @@
   border-color: var(--accent);
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 7%, var(--black));
+  box-shadow: var(--glow-outer);
+}
+
+.eq-band-tab.is-selected span:first-child {
+  text-shadow: var(--glow-outer);
 }
 
 .eq-band-tab.is-selected span:last-child {

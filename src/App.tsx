@@ -115,7 +115,7 @@ import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
 
-const DEFAULT_TEXT = `August 29, 1997 came and went. Nothing much happened. Michael Jackson turned 40. There was no Judgment Day. People went to work as they always do. Laughed, complained, watched TV, made love. I wanted to run to through the street yelling to grab them all and say, "Every day from this day on is a gift. Use it well.`
+const DEFAULT_TEXT = `Her fingers found a random second stud and she was catapulted through the static wall, into cluttered vastness, the notional void of cyberspace, the bright grid of the matrix ranged around her like an infinite cage.`
 
 const SPLASH_CREDIT =
   'Larynx™ Industries — LX01™ is created by Stellan Johansson.'

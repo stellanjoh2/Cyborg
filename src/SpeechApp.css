@@ -1266,6 +1266,7 @@ html.is-splash-void .scale-nav-bleed {
   border: none;
   background: transparent;
   color: var(--accent);
+  text-shadow: var(--glow-outer);
 }
 
 .speech-app .secondary.section-reset:hover:not(:disabled)::before {

@@ -302,8 +302,15 @@ export function EqualizerWindow({
     onChange(updateBand(value, index, patch))
   }
 
-  const beginWindowDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const beginWindowDrag = (event: ReactPointerEvent<HTMLElement>) => {
     if (event.button !== 0) return
+    const target = event.target
+    if (
+      target instanceof Element &&
+      target.closest('button, label, input, a')
+    ) {
+      return
+    }
     const panel = windowRef.current
     const app = panel?.parentElement
     if (!panel || !app) return
@@ -326,11 +333,11 @@ export function EqualizerWindow({
     panel.style.top = '0'
     panel.style.translate = `${left}px ${top}px`
     panel.style.willChange = 'translate'
-    event.currentTarget.parentElement?.classList.add('is-dragging')
+    event.currentTarget.classList.add('is-dragging')
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
-  const dragWindow = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const dragWindow = (event: ReactPointerEvent<HTMLElement>) => {
     const drag = windowDragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     pendingPositionRef.current = {
@@ -354,7 +361,7 @@ export function EqualizerWindow({
     })
   }
 
-  const endWindowDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const endWindowDrag = (event: ReactPointerEvent<HTMLElement>) => {
     const drag = windowDragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     if (dragFrameRef.current !== null) {
@@ -369,7 +376,7 @@ export function EqualizerWindow({
     pendingPositionRef.current = null
     windowDragRef.current = null
     if (panel) panel.style.willChange = ''
-    event.currentTarget.parentElement?.classList.remove('is-dragging')
+    event.currentTarget.classList.remove('is-dragging')
   }
 
   const selectBand = (index: number) => {
@@ -389,14 +396,14 @@ export function EqualizerWindow({
       aria-hidden={!open}
       onPointerDownCapture={onActivate}
     >
-      <header className="eq-window__head">
-        <div
-          className="eq-window__drag"
-          onPointerDown={beginWindowDrag}
-          onPointerMove={dragWindow}
-          onPointerUp={endWindowDrag}
-          onPointerCancel={endWindowDrag}
-        >
+      <header
+        className="eq-window__head"
+        onPointerDown={beginWindowDrag}
+        onPointerMove={dragWindow}
+        onPointerUp={endWindowDrag}
+        onPointerCancel={endWindowDrag}
+      >
+        <div className="eq-window__drag">
           <span className="eq-window__grip" aria-hidden="true">••••••</span>
           <h2>Master EQ</h2>
         </div>

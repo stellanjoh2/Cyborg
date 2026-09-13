@@ -145,20 +145,6 @@
     box-shadow 0.18s ease;
 }
 
-.morph-knob__ring::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: calc(var(--grain-opacity) * var(--panel-grain, 1));
-  background-image: var(--grain-image);
-  background-size: var(--grain-size) var(--grain-size);
-  background-repeat: repeat;
-  mix-blend-mode: soft-light;
-  transition: opacity 0.18s ease;
-}
-
 .morph-knob__core {
   position: absolute;
   inset: 14%;
@@ -209,7 +195,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .morph-knob__ring,
-  .morph-knob__ring::before,
   .morph-knob__core,
   .morph-readout__bar > span {
     transition: none;
