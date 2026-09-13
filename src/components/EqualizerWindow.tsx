@@ -8,7 +8,7 @@ import {
 } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
+import { RotateCcw } from 'lucide-react'
 import {
   EQ_MAX_FREQUENCY,
   EQ_MAX_GAIN,
@@ -400,19 +400,42 @@ export function EqualizerWindow({
           <span className="eq-window__grip" aria-hidden="true">••••••</span>
           <h2>Master EQ</h2>
         </div>
-        <div className="eq-window__actions">
-          <button
-            type="button"
-            className={`eq-window__action${value.enabled ? ' is-active' : ''}`}
-            onPointerDown={onButtonPointerDown}
-            onKeyDown={onButtonKeyDown}
-            onClick={() => onChange({ ...value, enabled: !value.enabled })}
-            aria-pressed={value.enabled}
-          >
-            <span className="eq-window__action-label">
-              {value.enabled ? 'On' : 'Bypass'}
+        <label
+          className="eq-window__switch"
+          data-tooltip={value.enabled ? 'On' : 'Bypass'}
+        >
+          <input
+            type="checkbox"
+            checked={value.enabled}
+            onChange={() => onChange({ ...value, enabled: !value.enabled })}
+            aria-label={value.enabled ? 'Equalizer on' : 'Equalizer bypassed'}
+          />
+          <span className="eq-window__switch-slider">
+            <span className="eq-window__switch-circle" aria-hidden="true">
+              <svg
+                className="eq-window__switch-cross"
+                viewBox="0 0 365.696 365.696"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="currentColor"
+                  d="M243.164 182.86L356.404 69.645c7.809-7.809 7.809-20.475 0-28.284-7.809-7.809-20.475-7.809-28.284 0l-113.24 113.218L101.644 41.361c-7.809-7.809-20.474-7.809-28.284 0-7.809 7.809-7.809 20.475 0 28.284l113.218 113.218L73.36 296.078c-7.809 7.809-7.809 20.475 0 28.284 7.809 7.809 20.475 7.809 28.284 0l113.218-113.218 113.218 113.218c7.809 7.809 20.475 7.809 28.284 0 7.809-7.809 7.809-20.475 0-28.284L243.164 182.86z"
+                />
+              </svg>
+              <svg
+                className="eq-window__switch-check"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="currentColor"
+                  d="M9.707 19.121a.997.997 0 0 1-1.414 0l-5.646-5.647a1.5 1.5 0 0 1 0-2.121.997.997 0 0 1 1.414 0l4.939 4.939L18.121 6.879a.997.997 0 0 1 1.414 0 .997.997 0 0 1 0 1.414l-9.828 10.828z"
+                />
+              </svg>
             </span>
-          </button>
+          </span>
+        </label>
+        <div className="eq-window__actions">
           <button
             type="button"
             className="eq-window__reset"
@@ -423,7 +446,7 @@ export function EqualizerWindow({
             aria-label="Reset equalizer"
             data-tooltip="Reset EQ"
           >
-            <ArrowCounterClockwiseIcon weight="bold" />
+            <RotateCcw absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             type="button"
@@ -544,8 +567,6 @@ export function EqualizerWindow({
               role="tab"
               aria-selected={index === selectedIndex}
               className={`eq-band-tab${index === selectedIndex ? ' is-selected' : ''}`}
-              onPointerDown={onButtonPointerDown}
-              onKeyDown={onButtonKeyDown}
               onClick={() => selectBand(index)}
             >
               <span>{index + 1} · {band.label}</span>

@@ -1,5 +1,5 @@
-.pro-tip {
-  --pro-tip-gap: 20px;
+.hint {
+  --hint-gap: 20px;
   position: fixed;
   z-index: 90;
   isolation: isolate;
@@ -9,7 +9,7 @@
   width: max-content;
   max-width: min(380px, calc(100vw - 48px));
   margin: 0;
-  padding: var(--pro-tip-gap);
+  padding: var(--hint-gap);
   border: none;
   border-radius: var(--radius-floating);
   background: var(--fill);
@@ -19,7 +19,7 @@
   box-shadow: var(--floating-shadow);
 }
 
-.pro-tip::before {
+.hint::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -33,11 +33,11 @@
   mix-blend-mode: soft-light;
 }
 
-.pro-tip__head {
-  margin: 0 0 var(--pro-tip-gap);
+.hint__head {
+  margin: 0 0 var(--hint-gap);
 }
 
-.pro-tip__title {
+.hint__title {
   margin: 0;
   font-size: var(--font-m);
   font-weight: 400;
@@ -46,16 +46,17 @@
   text-shadow: var(--glow-outer);
 }
 
-.pro-tip__body {
-  margin: 0 0 var(--pro-tip-gap);
+.hint__body {
+  margin: 0 0 var(--hint-gap);
   font-size: var(--font-s);
   font-weight: 400;
   line-height: 1.35;
   text-transform: none;
+  white-space: pre-line;
   color: var(--text);
 }
 
-.pro-tip__dismiss {
+.hint__dismiss {
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -76,13 +77,13 @@
   cursor: pointer;
 }
 
-.pro-tip__dismiss:hover {
+.hint__dismiss:hover {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--synth-border));
   background: color-mix(in srgb, var(--accent) 12%, var(--black));
 }
 
-.pro-tip__dismiss:focus-visible {
+.hint__dismiss:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

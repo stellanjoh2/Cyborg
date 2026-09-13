@@ -8,7 +8,7 @@ import {
 } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
+import { RotateCcw } from 'lucide-react'
 import { CloseIcon } from './icons'
 import './MorphPadWindow.css'
 import './EqualizerWindow.css'
@@ -93,6 +93,7 @@ export function MorphPadWindow({
   x,
   y,
   onChange,
+  onLiveChange,
   onClose,
   onReset,
   canReset,
@@ -104,7 +105,10 @@ export function MorphPadWindow({
   onModeChange: (mode: MorphModeId) => void
   x: MorphAxis
   y: MorphAxis
+  /** Commits UI/knob state — call on release (and keyboard), not every drag frame. */
   onChange: (nextX: number, nextY: number) => void
+  /** Realtime audio (and pad-local paint) while dragging. */
+  onLiveChange?: (nextX: number, nextY: number) => void
   onClose: () => void
   onReset: () => void
   canReset: boolean
@@ -130,16 +134,38 @@ export function MorphPadWindow({
   const dragFrameRef = useRef<number | null>(null)
   const padRectRef = useRef<DOMRect | null>(null)
   const pendingAxesRef = useRef<{ x: number; y: number } | null>(null)
-  const commitFrameRef = useRef<number | null>(null)
-  const axesRef = useRef({ x, y, onChange })
-  axesRef.current = { x, y, onChange }
+  const lastAxesRef = useRef<{ x: number; y: number } | null>(null)
+  const paintedUnitRef = useRef({ x: 0, y: 0 })
+  const liveFrameRef = useRef<number | null>(null)
+  const axesRef = useRef({ x, y, onChange, onLiveChange })
+  axesRef.current = { x, y, onChange, onLiveChange }
   const [grabbing, setGrabbing] = useState(false)
+  const grabbingRef = useRef(false)
 
   const xUnit = axisToUnit(x.value, x.min, x.max)
   const yUnit = axisToUnit(y.value, y.min, y.max)
+  if (!grabbing) {
+    paintedUnitRef.current = { x: xUnit, y: yUnit }
+  }
 
   useEffect(() => {
-    if (!open) setGrabbing(false)
+    if (open) return
+    if (!grabbingRef.current) {
+      setGrabbing(false)
+      return
+    }
+    grabbingRef.current = false
+    if (liveFrameRef.current !== null) {
+      cancelAnimationFrame(liveFrameRef.current)
+      liveFrameRef.current = null
+      const pending = pendingAxesRef.current
+      pendingAxesRef.current = null
+      if (pending) axesRef.current.onLiveChange?.(pending.x, pending.y)
+    }
+    const last = lastAxesRef.current
+    lastAxesRef.current = null
+    if (last) axesRef.current.onChange(last.x, last.y)
+    setGrabbing(false)
   }, [open])
 
   useEffect(() => {
@@ -158,8 +184,8 @@ export function MorphPadWindow({
       if (dragFrameRef.current !== null) {
         cancelAnimationFrame(dragFrameRef.current)
       }
-      if (commitFrameRef.current !== null) {
-        cancelAnimationFrame(commitFrameRef.current)
+      if (liveFrameRef.current !== null) {
+        cancelAnimationFrame(liveFrameRef.current)
       }
     },
     [],
@@ -231,24 +257,36 @@ export function MorphPadWindow({
   )
 
   const paintMorph = (nextXUnit: number, nextYUnit: number) => {
+    paintedUnitRef.current = { x: nextXUnit, y: nextYUnit }
     const body = bodyRef.current
     if (!body) return
     body.style.setProperty('--morph-x', (nextXUnit * 100).toFixed(2))
     body.style.setProperty('--morph-y', (nextYUnit * 100).toFixed(2))
   }
 
-  const flushCommit = () => {
-    commitFrameRef.current = null
+  const flushLive = () => {
+    liveFrameRef.current = null
     const pending = pendingAxesRef.current
     if (!pending) return
     pendingAxesRef.current = null
-    axesRef.current.onChange(pending.x, pending.y)
+    axesRef.current.onLiveChange?.(pending.x, pending.y)
   }
 
-  const scheduleCommit = (nextX: number, nextY: number) => {
+  const scheduleLive = (nextX: number, nextY: number) => {
+    lastAxesRef.current = { x: nextX, y: nextY }
     pendingAxesRef.current = { x: nextX, y: nextY }
-    if (commitFrameRef.current !== null) return
-    commitFrameRef.current = requestAnimationFrame(flushCommit)
+    if (liveFrameRef.current !== null) return
+    liveFrameRef.current = requestAnimationFrame(flushLive)
+  }
+
+  const settleAxes = () => {
+    if (liveFrameRef.current !== null) {
+      cancelAnimationFrame(liveFrameRef.current)
+      flushLive()
+    }
+    const last = lastAxesRef.current
+    lastAxesRef.current = null
+    if (last) axesRef.current.onChange(last.x, last.y)
   }
 
   const moveFromClient = (clientX: number, clientY: number) => {
@@ -274,13 +312,14 @@ export function MorphPadWindow({
     )
     if (xOutRef.current) xOutRef.current.textContent = String(nextX)
     if (yOutRef.current) yOutRef.current.textContent = String(nextY)
-    scheduleCommit(nextX, nextY)
+    scheduleLive(nextX, nextY)
   }
 
   const beginPadDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
     padRectRef.current = event.currentTarget.getBoundingClientRect()
     event.currentTarget.setPointerCapture(event.pointerId)
+    grabbingRef.current = true
     setGrabbing(true)
     moveFromClient(event.clientX, event.clientY)
   }
@@ -294,10 +333,8 @@ export function MorphPadWindow({
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
     event.currentTarget.releasePointerCapture(event.pointerId)
     padRectRef.current = null
-    if (commitFrameRef.current !== null) {
-      cancelAnimationFrame(commitFrameRef.current)
-      flushCommit()
-    }
+    grabbingRef.current = false
+    settleAxes()
     setGrabbing(false)
   }
 
@@ -421,7 +458,7 @@ export function MorphPadWindow({
             aria-label="Reset morph axes"
             data-tooltip="Reset"
           >
-            <ArrowCounterClockwiseIcon weight="bold" />
+            <RotateCcw absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             type="button"
@@ -440,7 +477,10 @@ export function MorphPadWindow({
       <div
         className="eq-window__body morph-window__body"
         ref={bodyRef}
-        style={morphCssVars(xUnit, yUnit)}
+        style={morphCssVars(
+          grabbing ? paintedUnitRef.current.x : xUnit,
+          grabbing ? paintedUnitRef.current.y : yUnit,
+        )}
       >
         <div
           ref={padRef}
@@ -488,8 +528,6 @@ export function MorphPadWindow({
               role="tab"
               aria-selected={mode === entry.id}
               className={`eq-band-tab${mode === entry.id ? ' is-selected' : ''}`}
-              onPointerDown={onButtonPointerDown}
-              onKeyDown={onButtonKeyDown}
               onClick={() => onModeChange(entry.id)}
             >
               <span>{entry.label}</span>

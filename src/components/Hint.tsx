@@ -3,44 +3,57 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { playUiSound } from '../ui/sounds'
-import './ProTip.css'
+import './Hint.css'
 
 gsap.registerPlugin(useGSAP)
 
-const SHOW_DELAY_MS = 5000
 const HOLD_MS = 9000
+
+export type HintMessage = {
+  title: string
+  body: string
+}
 
 function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-export function ProTip({ ready }: { ready: boolean }) {
+export function Hint({
+  message,
+  onDismiss,
+}: {
+  message: HintMessage | null
+  onDismiss: () => void
+}) {
   const tipRef = useRef<HTMLDivElement>(null)
-  const doneRef = useRef(false)
+  const onDismissRef = useRef(onDismiss)
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
+  const [shown, setShown] = useState<HintMessage | null>(null)
+
+  onDismissRef.current = onDismiss
+
+  useEffect(() => {
+    if (message) {
+      setShown(message)
+      setMounted(true)
+      setOpen(true)
+      return
+    }
+    setOpen(false)
+  }, [message])
 
   const dismiss = () => {
     if (!open) return
     playUiSound('close')
-    setOpen(false)
+    onDismissRef.current()
   }
 
   useEffect(() => {
-    if (!ready || doneRef.current) return
-    const id = window.setTimeout(() => {
-      if (doneRef.current) return
-      setMounted(true)
-      setOpen(true)
-    }, SHOW_DELAY_MS)
-    return () => window.clearTimeout(id)
-  }, [ready])
-
-  useEffect(() => {
     if (!open) return
-    const id = window.setTimeout(() => setOpen(false), HOLD_MS)
+    const id = window.setTimeout(() => onDismissRef.current(), HOLD_MS)
     return () => window.clearTimeout(id)
-  }, [open])
+  }, [open, shown])
 
   useEffect(() => {
     if (!open) return
@@ -48,7 +61,7 @@ export function ProTip({ ready }: { ready: boolean }) {
       if (event.key !== 'Escape') return
       event.preventDefault()
       playUiSound('close')
-      setOpen(false)
+      onDismissRef.current()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
@@ -56,17 +69,17 @@ export function ProTip({ ready }: { ready: boolean }) {
 
   useGSAP(
     () => {
-      if (!mounted) return
+      if (!mounted || !shown) return
       const tip = tipRef.current
       if (!tip) return
 
-      const head = tip.querySelector<HTMLElement>('.pro-tip__head')
-      const body = tip.querySelector<HTMLElement>('.pro-tip__body')
+      const head = tip.querySelector<HTMLElement>('.hint__head')
+      const body = tip.querySelector<HTMLElement>('.hint__body')
       const parts = [tip, head, body].filter(Boolean) as HTMLElement[]
 
       const unmount = () => {
-        doneRef.current = true
         setMounted(false)
+        setShown(null)
       }
 
       if (prefersReducedMotion()) {
@@ -131,30 +144,28 @@ export function ProTip({ ready }: { ready: boolean }) {
         '-=0.08',
       )
     },
-    { dependencies: [open, mounted] },
+    { dependencies: [open, mounted, shown] },
   )
 
-  if (!mounted) return null
+  if (!mounted || !shown) return null
 
   return createPortal(
     <div
       ref={tipRef}
-      className="pro-tip"
+      className="hint"
       role="dialog"
-      aria-labelledby="pro-tip-title"
-      aria-describedby="pro-tip-body"
+      aria-labelledby="hint-title"
+      aria-describedby="hint-body"
     >
-      <div className="pro-tip__head">
-        <h2 id="pro-tip-title" className="pro-tip__title">
-          Pro Tip
+      <div className="hint__head">
+        <h2 id="hint-title" className="hint__title">
+          {shown.title}
         </h2>
       </div>
-      <p id="pro-tip-body" className="pro-tip__body">
-        You can change voice engine in
-        <br />
-        the Settings
+      <p id="hint-body" className="hint__body">
+        {shown.body}
       </p>
-      <button type="button" className="pro-tip__dismiss" onClick={dismiss}>
+      <button type="button" className="hint__dismiss" onClick={dismiss}>
         OK
       </button>
     </div>,

@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import {
-  ArrowCounterClockwiseIcon,
-  InfoIcon,
-  JoystickIcon,
-  SlidersIcon,
-} from '@phosphor-icons/react'
+import { Activity, Info, Joystick, RotateCcw } from 'lucide-react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { EqualizerWindow } from './components/EqualizerWindow'
@@ -15,7 +10,7 @@ import {
   type MorphModeId,
 } from './components/MorphPadWindow'
 import { FpsMeter } from './components/FpsMeter'
-import { ProTip } from './components/ProTip'
+import { Hint, type HintMessage } from './components/Hint'
 import { FieldSelect } from './components/FieldSelect'
 import { Knob } from './components/Knob'
 import {
@@ -257,6 +252,8 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [hint, setHint] = useState<HintMessage | null>(null)
+  const proTipShownRef = useRef(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutTextActive, setAboutTextActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1386,6 +1383,19 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!introComplete || proTipShownRef.current) return
+    const id = window.setTimeout(() => {
+      if (proTipShownRef.current) return
+      proTipShownRef.current = true
+      setHint({
+        title: 'Pro Tip',
+        body: 'You can change voice engine in\nthe Settings',
+      })
+    }, 5000)
+    return () => window.clearTimeout(id)
+  }, [introComplete])
+
+  useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false
       return (
@@ -1976,6 +1986,68 @@ export default function App() {
     setFormant(nextY)
   }
 
+  const morphLiveRef = useRef({
+    isSpeaking,
+    morphMode,
+    speed,
+    pitch,
+    vocoderUi,
+    formant,
+    voiceEngine,
+  })
+  morphLiveRef.current = {
+    isSpeaking,
+    morphMode,
+    speed,
+    pitch,
+    vocoderUi,
+    formant,
+    voiceEngine,
+  }
+
+  /** Push audio params while dragging; knobs settle via handleMorphChange on release. */
+  const handleMorphLive = (nextX: number, nextY: number) => {
+    const ctx = morphLiveRef.current
+    if (!ctx.isSpeaking) return
+
+    if (ctx.morphMode === 'vocoder') {
+      updateSamLiveParams({
+        vocoder: mapUiToVocoder(
+          { ...ctx.vocoderUi, cutoff: nextX, resonance: nextY },
+          ctx.formant,
+        ),
+      })
+      return
+    }
+    if (ctx.morphMode === 'carrier') {
+      updateSamLiveParams({
+        vocoder: mapUiToVocoder(
+          {
+            ...ctx.vocoderUi,
+            carrierCutoff: nextX,
+            carrierResonance: nextY,
+          },
+          ctx.formant,
+        ),
+      })
+      return
+    }
+
+    const plan = resolveHumanRobotBlend(nextX, ctx.speed, ctx.pitch)
+    updateSamLiveParams(
+      {
+        speed: plan.rate,
+        pitch: plan.pitch,
+        metallic: plan.metallic,
+        vocoder: mapUiToVocoder(ctx.vocoderUi, nextY),
+      },
+      {
+        applySourceRate:
+          ctx.voiceEngine !== 'sam' && ctx.voiceEngine !== 'lx',
+      },
+    )
+  }
+
   const handleResetMorph = () => {
     if (morphMode === 'vocoder') {
       setVocoderUi((current) => ({
@@ -2177,6 +2249,9 @@ export default function App() {
       masterVolume: masterVolume / 100,
       masterGainDb,
     })
+      .then(() => {
+        setHint({ title: 'Hint', body: 'Export successful' })
+      })
       .catch((err: unknown) => {
         const message =
           err instanceof Error ? err.message : 'WAV export failed.'
@@ -2277,7 +2352,7 @@ export default function App() {
             data-tooltip="Reset all"
             aria-label="Reset all sections to the selected template"
           >
-            <ArrowCounterClockwiseIcon weight="bold" />
+            <RotateCcw absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             className={`speech-top__eq${equalizerOpen ? ' is-active' : ''}`}
@@ -2291,7 +2366,7 @@ export default function App() {
             aria-expanded={equalizerOpen}
             aria-controls="master-equalizer"
           >
-            <SlidersIcon weight="bold" />
+            <Activity absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             className={`speech-top__morph${morphOpen ? ' is-active' : ''}`}
@@ -2305,7 +2380,7 @@ export default function App() {
             aria-expanded={morphOpen}
             aria-controls="morph-pad"
           >
-            <JoystickIcon weight="bold" />
+            <Joystick absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             className={`speech-top__legal-trigger${aboutOpen ? ' is-active' : ''}`}
@@ -2316,7 +2391,7 @@ export default function App() {
             aria-expanded={aboutOpen}
             aria-controls="legal-view"
           >
-            <InfoIcon weight="bold" />
+            <Info absoluteStrokeWidth strokeWidth={2} />
           </button>
           <VoiceFileMenu
             onLoad={handleLoadLxVoiceClick}
@@ -2345,7 +2420,7 @@ export default function App() {
           title="Render full mix with FX tails to WAV"
         >
           <span className="speech-top__btn-label">
-            {isExporting ? 'EXPORTING...' : 'EXPORT'}
+            {isExporting ? 'EXPORTING' : 'EXPORT'}
           </span>
         </button>
       </div>
@@ -2367,6 +2442,7 @@ export default function App() {
         x={morphAxes.x}
         y={morphAxes.y}
         onChange={handleMorphChange}
+        onLiveChange={handleMorphLive}
         onClose={() => setMorphOpen(false)}
         onReset={handleResetMorph}
         canReset={morphCanReset}
@@ -3006,7 +3082,7 @@ export default function App() {
           </div>
         </div>
       ) : null}
-      <ProTip ready={introComplete} />
+      <Hint message={hint} onDismiss={() => setHint(null)} />
       </main>
       <DevMode />
       <FpsMeter />

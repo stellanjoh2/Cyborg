@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { FloppyDiskIcon } from '@phosphor-icons/react'
+import { Save } from 'lucide-react'
 import { playUiSound } from '../ui/sounds'
 import './VoiceFileMenu.css'
 
@@ -218,7 +218,7 @@ export function VoiceFileMenu({
           setOpen((current) => !current)
         }}
       >
-        <FloppyDiskIcon weight="bold" />
+        <Save absoluteStrokeWidth strokeWidth={2} />
       </button>
       {menu}
     </div>

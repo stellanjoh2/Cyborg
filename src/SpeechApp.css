@@ -268,8 +268,13 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 .speech-top {
-  /* 2560px design space: 1090px centered scope. */
-  --scope-inset: 735px;
+  /* 7 nav icons × control size + 6 × 12px gaps. */
+  --nav-utils-w: calc(7 * var(--nav-control-h) + 6 * var(--u));
+  /* Equal insets: app-pad + EXPORT(132) + 48 + utils + 48 → centered scope. */
+  --scope-inset: calc(
+    var(--app-pad) + 132px + var(--nav-theme-gap) + var(--nav-utils-w) +
+      var(--nav-theme-gap)
+  );
   position: relative;
   z-index: 2;
   isolation: isolate;
@@ -364,7 +369,7 @@ html.is-splash-void .scale-nav-bleed {
   justify-self: end;
 }
 
-/* Center utility icons between scope end and EXPORT. */
+/* Center utility icons between scope end and EXPORT (~48px gutters). */
 .speech-top__utils {
   position: absolute;
   z-index: 2;
@@ -377,7 +382,7 @@ html.is-splash-void .scale-nav-bleed {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: var(--section-gap);
+  gap: var(--u);
   min-width: 0;
   pointer-events: none;
 }
@@ -484,6 +489,7 @@ html.is-splash-void .scale-nav-bleed {
   .theme-picker__trigger,
   .voice-file-menu__trigger,
   .settings-menu__trigger,
+  .eq-window__switch,
   .eq-window__reset,
   .eq-window__close
 )[data-tooltip] {
@@ -498,6 +504,7 @@ html.is-splash-void .scale-nav-bleed {
   .theme-picker__trigger,
   .voice-file-menu__trigger,
   .settings-menu__trigger,
+  .eq-window__switch,
   .eq-window__reset,
   .eq-window__close
 )[data-tooltip]::after {
@@ -536,9 +543,10 @@ html.is-splash-void .scale-nav-bleed {
   .theme-picker__trigger,
   .voice-file-menu__trigger,
   .settings-menu__trigger,
+  .eq-window__switch,
   .eq-window__reset,
   .eq-window__close
-)[data-tooltip]:is(:hover, :focus-visible)::after {
+)[data-tooltip]:is(:hover, :focus-visible, :focus-within)::after {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, 0);

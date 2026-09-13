@@ -8,7 +8,7 @@ import {
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { GearIcon } from '@phosphor-icons/react'
+import { Settings } from 'lucide-react'
 import { FieldSelect } from './FieldSelect'
 import {
   applyGrainEnabled,
@@ -414,7 +414,7 @@ export function SettingsMenu({
           }
         }}
       >
-        <GearIcon weight="bold" />
+        <Settings absoluteStrokeWidth strokeWidth={2} />
       </button>
       {modal}
     </div>
