@@ -130,15 +130,15 @@
 }
 
 .eq-window__switch {
-  /* switch — 20px tall to match title / chrome icons */
-  --switch-width: 38px;
-  --switch-height: 20px;
+  /* switch — white knob matches reset/close (20px); pill peeks past it */
+  --switch-width: 46px;
+  --switch-height: 24px;
   --switch-bg: var(--muted-solid);
   --switch-checked-bg: var(--accent);
   --switch-offset: calc((var(--switch-height) - var(--circle-diameter)) / 2);
   --switch-transition: all 0.2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
   /* circle */
-  --circle-diameter: 14px;
+  --circle-diameter: 20px;
   --circle-bg: var(--on-chrome);
   --circle-shadow: 1px 1px 2px color-mix(in srgb, var(--black) 45%, transparent);
   --circle-checked-shadow: -1px 1px 2px
@@ -147,9 +147,9 @@
   /* icon */
   --icon-transition: all 0.2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
   --icon-cross-color: var(--switch-bg);
-  --icon-cross-size: 5px;
+  --icon-cross-size: 7px;
   --icon-checkmark-color: var(--switch-checked-bg);
-  --icon-checkmark-size: 8px;
+  --icon-checkmark-size: 11px;
   /* effect line */
   --effect-width: calc(var(--circle-diameter) / 2);
   --effect-height: calc(var(--effect-width) / 2 - 1px);
@@ -161,7 +161,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  height: 20px;
+  height: 24px;
   cursor: pointer;
 }
 
