@@ -10,7 +10,7 @@ export const VOICE_ENGINE_OPTIONS: {
   { value: 'lx', label: 'LARYNX' },
 ]
 
-export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'piper'
+export const DEFAULT_VOICE_ENGINE: VoiceEngineId = 'sam'
 
 /** Per-engine pitch when you switch to that voice. */
 export const DEFAULT_PITCH_BY_ENGINE: Record<VoiceEngineId, number> = {
