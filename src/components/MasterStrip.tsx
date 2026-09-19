@@ -242,6 +242,8 @@ export function MasterStrip({
   const [clockLabel, setClockLabel] = useState(IDLE_CLOCK)
   const ridgesRef = useRef(ridges)
   ridgesRef.current = ridges
+  const isPlayingRef = useRef(isPlaying)
+  isPlayingRef.current = isPlaying
   const volumeAnim = useAnimatedNumber(volume)
   const gainAnim = useAnimatedNumber(gain)
   // Prop gates empty→live handoff; introBoot paints fill/label imperatively mid-tween.
@@ -331,7 +333,8 @@ export function MasterStrip({
         inYellow = false
         isLive = false
       } else {
-        const instant = readMasterPeak()
+        // Stop/suspend freezes the analyser buffer; don't treat that as live level.
+        const instant = isPlayingRef.current ? readMasterPeak() : 0
         displayed.current =
           instant > displayed.current
             ? instant
@@ -342,7 +345,11 @@ export function MasterStrip({
         const instantMeterDb = linearToMeterDb(instant)
         const instantLit = meterDbToLit(instantMeterDb, ridgesCount)
 
-        if (instantLit >= peakHeldLit.current) {
+        if (!isPlayingRef.current) {
+          // Drop peak hold on stop so the meter can fall all the way to zero.
+          peakHeldLit.current = lit
+          peakHoldUntil.current = 0
+        } else if (instantLit >= peakHeldLit.current) {
           peakHeldLit.current = instantLit
           peakHoldUntil.current = now + PEAK_HOLD_MS
         } else if (now >= peakHoldUntil.current) {
