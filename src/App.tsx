@@ -5,6 +5,7 @@ import { Activity, Info, Joystick, RotateCcw } from 'lucide-react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { EqualizerWindow } from './components/EqualizerWindow'
+import { VoiceInitOverlay } from './components/VoiceInitOverlay'
 import {
   MorphPadWindow,
   type MorphModeId,
@@ -99,6 +100,7 @@ import {
   writePiperVoice,
   type PiperVoiceId,
 } from './piperVoices'
+import { dismissPiperInitUi, subscribePiperInit } from './piperSpeech'
 import {
   ESPEAK_VOICE_OPTIONS,
   readEspeakVoice,
@@ -251,6 +253,12 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
+  const [voiceInitOpen, setVoiceInitOpen] = useState(false)
+  const [voiceInitProgress, setVoiceInitProgress] = useState(0)
+  const [voiceInitLoadedBytes, setVoiceInitLoadedBytes] = useState(0)
+  const [voiceInitTotalBytes, setVoiceInitTotalBytes] = useState(0)
+  const voiceInitOpenTimerRef = useRef<number | null>(null)
+  const voiceInitEpochRef = useRef(0)
   const [isExporting, setIsExporting] = useState(false)
   const [hint, setHint] = useState<HintMessage | null>(null)
   const proTipShownRef = useRef(false)
@@ -1458,6 +1466,42 @@ export default function App() {
   useEffect(() => () => stopSamSpeech(), [])
 
   useEffect(() => {
+    return subscribePiperInit((event) => {
+      if (event.type === 'progress') {
+        setVoiceInitProgress(event.percent)
+        setVoiceInitLoadedBytes(event.loadedBytes)
+        setVoiceInitTotalBytes(event.totalBytes)
+        // Completion tick is paired with `done` in the same turn — scheduling
+        // an open here races React's batched updater and can leave the overlay stuck.
+        if (event.percent >= 100) return
+        setVoiceInitOpen((open) => {
+          if (!open && voiceInitOpenTimerRef.current == null) {
+            const epoch = voiceInitEpochRef.current
+            voiceInitOpenTimerRef.current = window.setTimeout(() => {
+              voiceInitOpenTimerRef.current = null
+              // Ignore stale timers that fired after a done/cancel.
+              if (voiceInitEpochRef.current !== epoch) return
+              setVoiceInitOpen(true)
+            }, 180)
+          }
+          return open
+        })
+        return
+      }
+
+      voiceInitEpochRef.current += 1
+      if (voiceInitOpenTimerRef.current != null) {
+        window.clearTimeout(voiceInitOpenTimerRef.current)
+        voiceInitOpenTimerRef.current = null
+      }
+      setVoiceInitOpen(false)
+      setVoiceInitProgress(0)
+      setVoiceInitLoadedBytes(0)
+      setVoiceInitTotalBytes(0)
+    })
+  }, [])
+
+  useEffect(() => {
     if (!isSpeaking) {
       return
     }
@@ -2120,6 +2164,16 @@ export default function App() {
 
   const handleStop = () => {
     speechLoadEpochRef.current += 1
+    voiceInitEpochRef.current += 1
+    if (voiceInitOpenTimerRef.current != null) {
+      window.clearTimeout(voiceInitOpenTimerRef.current)
+      voiceInitOpenTimerRef.current = null
+    }
+    dismissPiperInitUi()
+    setVoiceInitOpen(false)
+    setVoiceInitProgress(0)
+    setVoiceInitLoadedBytes(0)
+    setVoiceInitTotalBytes(0)
     stopSamSpeech()
     setIsLooping(false)
     setSamLoop(false)
@@ -3041,6 +3095,14 @@ export default function App() {
         onClose={() => setAboutOpen(false)}
       />
       </div>
+
+      <VoiceInitOverlay
+        open={voiceInitOpen}
+        progress={voiceInitProgress}
+        loadedBytes={voiceInitLoadedBytes}
+        totalBytes={voiceInitTotalBytes}
+        onCancel={handleStop}
+      />
 
       {error ? (
         <div
