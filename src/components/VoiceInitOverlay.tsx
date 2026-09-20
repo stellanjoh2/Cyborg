@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import './VoiceInitOverlay.css'
 
-/** Match master fader ridge density at this bar width. */
-const RIDGES = 40
+/** 50 segments → 2% each; snaps cleanly to 100%. */
+const RIDGES = 50
 
 type VoiceInitOverlayProps = {
   open: boolean
@@ -18,6 +19,11 @@ function formatMb(loaded: number, total: number): string {
   return `${mb(loaded)}/${totalMb.toFixed(1)}mb`
 }
 
+function litFromProgress(progress: number): number {
+  if (progress <= 0) return 0
+  return Math.min(RIDGES, Math.round((progress / 100) * RIDGES))
+}
+
 export function VoiceInitOverlay({
   open,
   progress,
@@ -25,100 +31,25 @@ export function VoiceInitOverlay({
   totalBytes = 0,
   onCancel,
 }: VoiceInitOverlayProps) {
-  const [displayPct, setDisplayPct] = useState(0)
-  const [displayLoaded, setDisplayLoaded] = useState(0)
-  const [displayTotal, setDisplayTotal] = useState(0)
-  const displayRef = useRef({ pct: 0, loaded: 0, total: 0 })
-  const targetRef = useRef({ pct: 0, loaded: 0, total: 0 })
-  const propsRef = useRef({ progress, loadedBytes, totalBytes })
-  const rafRef = useRef(0)
+  const [host, setHost] = useState<Element | null>(null)
 
-  propsRef.current = { progress, loadedBytes, totalBytes }
+  useLayoutEffect(() => {
+    // Portal outside .scale-stage — transform ancestors break backdrop-filter.
+    setHost(document.querySelector('.scale-viewport'))
+  }, [])
 
-  const kickEase = () => {
-    if (rafRef.current !== 0) return
+  if (!open || !host) return null
 
-    const tick = () => {
-      const d = displayRef.current
-      const t = targetRef.current
-      const nextPct = d.pct + (t.pct - d.pct) * 0.22
-      const nextLoaded = d.loaded + (t.loaded - d.loaded) * 0.22
-      const snappedPct = Math.abs(t.pct - nextPct) < 0.05 ? t.pct : nextPct
-      const snappedLoaded =
-        Math.abs(t.loaded - nextLoaded) < 40_000 ? t.loaded : nextLoaded
-      const nextTotal = t.total > 0 ? t.total : d.total
-
-      displayRef.current = {
-        pct: snappedPct,
-        loaded: snappedLoaded,
-        total: nextTotal,
-      }
-      setDisplayPct(snappedPct)
-      setDisplayLoaded(snappedLoaded)
-      setDisplayTotal(nextTotal)
-
-      if (snappedPct !== t.pct || snappedLoaded !== t.loaded) {
-        rafRef.current = requestAnimationFrame(tick)
-      } else {
-        rafRef.current = 0
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(tick)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    targetRef.current = {
-      pct: Math.max(0, Math.min(100, progress)),
-      loaded: Math.max(0, loadedBytes),
-      total: Math.max(0, totalBytes),
-    }
-    kickEase()
-  }, [open, progress, loadedBytes, totalBytes])
-
-  useEffect(() => {
-    if (!open) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = 0
-      displayRef.current = { pct: 0, loaded: 0, total: 0 }
-      targetRef.current = { pct: 0, loaded: 0, total: 0 }
-      setDisplayPct(0)
-      setDisplayLoaded(0)
-      setDisplayTotal(0)
-      return
-    }
-
-    const { progress: p, loadedBytes: loaded, totalBytes: total } =
-      propsRef.current
-    const seed = {
-      pct: Math.max(0, Math.min(100, p)),
-      loaded: Math.max(0, loaded),
-      total: Math.max(0, total),
-    }
-    displayRef.current = seed
-    targetRef.current = seed
-    setDisplayPct(seed.pct)
-    setDisplayLoaded(seed.loaded)
-    setDisplayTotal(seed.total)
-    kickEase()
-
-    return () => {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = 0
-    }
-  }, [open])
-
-  if (!open) return null
-
-  const pct = Math.max(0, Math.min(100, Math.round(displayPct)))
-  const fill = Math.max(0, Math.min(1, displayPct / 100))
+  const lit = litFromProgress(progress)
+  const pct = Math.round((lit / RIDGES) * 100)
+  // Snap fill to whole segments so ridges never clip mid-bar.
+  const fill = lit / RIDGES
   const meterStyle = {
     '--ridges': RIDGES,
     '--voice-fill': String(fill),
   } as CSSProperties
 
-  return (
+  return createPortal(
     <div
       className="voice-init-overlay"
       role="alertdialog"
@@ -139,7 +70,7 @@ export function VoiceInitOverlay({
             DOWNLOADING VOICE PACK
             <span className="voice-init__mb">
               {' '}
-              ({formatMb(displayLoaded, displayTotal || totalBytes)})
+              ({formatMb(loadedBytes, totalBytes)})
             </span>
           </h2>
         </div>
@@ -159,6 +90,7 @@ export function VoiceInitOverlay({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    host,
   )
 }

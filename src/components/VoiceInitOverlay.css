@@ -1,7 +1,8 @@
 .voice-init-overlay {
   position: absolute;
   inset: 0;
-  z-index: 190;
+  /* Above .scale-viewport__dirt (20); below nothing critical. */
+  z-index: 30;
   display: grid;
   place-items: center;
   padding: var(--app-pad);
@@ -14,14 +15,17 @@
 
 .voice-init {
   --meter-h: 56px;
-  --meter-w: min(720px, 68vw);
+  --meter-w: 720px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 14px;
   width: calc(var(--meter-w) + 0.85em * 3.2);
-  max-width: 100%;
+  max-width: none;
+  /* Portaled to .scale-viewport (screenspace) — match the scaled stage. */
+  transform: scale(var(--stage-scale, 1));
+  transform-origin: center center;
 }
 
 .voice-init__head {
@@ -65,14 +69,13 @@
 .voice-init__meter {
   --ridge-gap: 2px;
   --ridge-stroke: var(--black);
-  --period: calc(100% / var(--ridges, 40));
+  --period: calc(100% / var(--ridges, 50));
   --ridge: calc(var(--period) - var(--ridge-gap));
   /* --voice-fill: avoid global @property --fill (a color token). */
   --voice-fill: 0;
   position: relative;
   flex: 0 0 var(--meter-w);
   width: var(--meter-w);
-  max-width: calc(100% - 4.5rem);
   height: var(--meter-h);
   box-sizing: border-box;
   /* Horizontal pad only — full-height ridges; tips bleed like VU LEDs. */
@@ -83,7 +86,7 @@
   box-shadow: var(--section-recess-shadow);
 }
 
-/* Lime level — clip-path only (scaleX + overflow:radius flattens the tips). */
+/* Level fill — snapped in 2% steps via --voice-fill. */
 .voice-init__fill {
   position: absolute;
   inset: 0;
@@ -93,7 +96,7 @@
   pointer-events: none;
 }
 
-/* Static ridge mask — clipped to the fill so the empty well stays solid. */
+/* Ridges only over the lit fill — empty well stays a solid dark pill. */
 .voice-init__meter::before {
   content: '';
   position: absolute;
@@ -144,8 +147,8 @@
 }
 
 html.is-safari .voice-init-overlay {
-  /* Safari backdrop-filter can shimmer over scaled UI; keep the dim plate. */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  /* Soften Safari shimmer; keep a light blur so the live dim still reads. */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--bg) 52%, transparent);
 }
