@@ -772,20 +772,20 @@ export default function App() {
               '.knob-label, .knob-hints, .knob__ink, .knob-value__ink',
             ),
           )
-          // Keep the field box visible so the cyan flash can show.
-          gsap.set(el, { autoAlpha: 1, y: 0 })
+          // Whole field (sphere + dials) fades in together — flash rides along so
+          // empty discs never show before the arms/track.
+          ui.from(
+            el,
+            {
+              autoAlpha: 0,
+              y: 12,
+              duration: leafDuration,
+              immediateRender: true,
+            },
+            t,
+          )
           if (flash.length) {
-            ui.fromTo(
-              flash,
-              { autoAlpha: 0, y: 12 },
-              {
-                autoAlpha: 1,
-                y: 0,
-                duration: leafDuration,
-                immediateRender: true,
-              },
-              t,
-            )
+            gsap.set(flash, { autoAlpha: 1, y: 0 })
             ui.to(
               flash,
               {
@@ -799,10 +799,9 @@ export default function App() {
           if (ink.length) {
             ui.fromTo(
               ink,
-              { autoAlpha: 0, y: 12 },
+              { autoAlpha: 0 },
               {
                 autoAlpha: 1,
-                y: 0,
                 duration: leafDuration,
                 immediateRender: true,
               },

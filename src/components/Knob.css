@@ -200,7 +200,8 @@ html.glow-off .knob__arc-bloom {
   bottom: 50%;
   left: 50%;
   width: var(--knob-stroke);
-  height: calc(var(--knob-track-r) + var(--knob-stroke) / 2);
+  /* Tip at stroke centerline — outer-edge length overshoots ~1px with square butt. */
+  height: var(--knob-track-r);
   margin-left: calc(var(--knob-stroke) / -2);
   transform-origin: 50% 100%;
 }
