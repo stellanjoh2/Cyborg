@@ -1377,7 +1377,9 @@ function buildSynthGraph(
   const outputClipDrive = context.createGain()
   outputClipDrive.gain.value = 1 / OUTPUT_CEILING_DRIVE
   const outputClip = context.createWaveShaper()
-  outputClip.curve = makeOutputCeilingCurve(OUTPUT_CEILING_DRIVE)
+  outputClip.curve = new Float32Array(
+    makeOutputCeilingCurve(OUTPUT_CEILING_DRIVE),
+  )
   const outputClipMakeup = context.createGain()
   outputClipMakeup.gain.value = OUTPUT_CEILING_DRIVE
   outputGain.connect(outputClipDrive)
