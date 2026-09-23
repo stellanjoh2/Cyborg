@@ -121,9 +121,9 @@
   align-items: center;
   justify-content: flex-start;
   height: var(--meter-h);
-  overflow: hidden;
-  /* Clip the top hairline Ac437 can grow under fractional stage scale. */
-  clip-path: inset(1px 0 0 0);
+  overflow: visible;
+  /* Glow on the wrapper so it can bleed. A clip here would square it off. */
+  filter: var(--glow-filter);
 }
 
 .voice-init__pct-text {
@@ -136,7 +136,9 @@
   letter-spacing: 0;
   color: var(--lime);
   text-shadow: none;
-  filter: var(--glow-filter);
+  /* Clip the top hairline Ac437 can grow under fractional stage scale.
+     Ink only — the wrapper filter paints the glow outside this clip. */
+  clip-path: inset(1px 0 0 0);
   user-select: none;
   -webkit-font-smoothing: none;
 }
