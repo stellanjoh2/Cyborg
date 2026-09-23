@@ -17,6 +17,13 @@ export type { VocoderParams } from './vocoderParams'
 
 const SAM_SAMPLE_RATE = 22050
 export const OFFLINE_SAMPLE_RATE = 44100
+/** Clean vocoder voice, before Robot FX. +8 dB over the unboosted bank. */
+const CLEAN_VOICE_GAIN = 10 ** (8 / 20)
+/** Hold that boost across the quiet end of the Robot slider, then let it go. */
+const CLEAN_VOICE_FADE_START = 0.28
+const CLEAN_VOICE_FADE_END = 0.72
+/** Keeps carrier-at-100 peaks inside the waveshaper, then restores the linear level. */
+const OUTPUT_CEILING_DRIVE = 1.45
 const EXPORT_TAIL_FLOOR_SECONDS = 0.12
 const NOISE_GAIN_MAX = 0.12
 const NOISE_ENVELOPE_POINTS = 512
@@ -268,6 +275,34 @@ function tryDisconnect(from: AudioNode, to: AudioNode | AudioParam) {
   } catch {
     // Already disconnected.
   }
+}
+
+function cleanVoiceMakeup(intensity: number): number {
+  const span = CLEAN_VOICE_FADE_END - CLEAN_VOICE_FADE_START
+  const t = Math.min(
+    1,
+    Math.max(0, (intensity - CLEAN_VOICE_FADE_START) / span),
+  )
+  return CLEAN_VOICE_GAIN + (1 - CLEAN_VOICE_GAIN) * t
+}
+
+function makeOutputCeilingCurve(drive: number): Float32Array {
+  const samples = 2048
+  const curve = new Float32Array(samples)
+  const knee = 0.93 / drive
+  const ceiling = 0.98 / drive
+  const span = Math.max(1e-6, ceiling - knee)
+
+  for (let i = 0; i < samples; i += 1) {
+    const x = (i / (samples - 1)) * 2 - 1
+    const sign = x < 0 ? -1 : 1
+    const abs = Math.abs(x)
+    const y =
+      abs <= knee ? abs : knee + span * Math.tanh((abs - knee) / span)
+    curve[i] = sign * y
+  }
+
+  return curve
 }
 
 function makeDistortionCurve(amount: number): Float32Array {
@@ -1108,10 +1143,12 @@ function applyIntensityToGraph(
   const context = nodes.context
   const now = context.currentTime
   const i = clamp(intensity, 0, 1) * 0.88
+  const dry = intensity < 0.02 ? 1 : Math.max(0.12, 1 - i * 0.88)
+  const makeup = cleanVoiceMakeup(intensity)
 
   setAudioParam(
     nodes.dryGain.gain,
-    intensity < 0.02 ? 1 : Math.max(0.12, 1 - i * 0.88),
+    dry * makeup,
     now,
     rampSeconds,
   )
@@ -1337,7 +1374,16 @@ function buildSynthGraph(
     DEFAULT_POST_PROCESS.distortion.tone,
   )
 
-  outputGain.connect(bitcrushIn)
+  const outputClipDrive = context.createGain()
+  outputClipDrive.gain.value = 1 / OUTPUT_CEILING_DRIVE
+  const outputClip = context.createWaveShaper()
+  outputClip.curve = makeOutputCeilingCurve(OUTPUT_CEILING_DRIVE)
+  const outputClipMakeup = context.createGain()
+  outputClipMakeup.gain.value = OUTPUT_CEILING_DRIVE
+  outputGain.connect(outputClipDrive)
+  outputClipDrive.connect(outputClip)
+  outputClip.connect(outputClipMakeup)
+  outputClipMakeup.connect(bitcrushIn)
   bitcrushIn.connect(bitcrushDry)
   bitcrushDry.connect(bitcrushOut)
   // Bitcrush / radio / chorus / distortion / compressor wet paths stay

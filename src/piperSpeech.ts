@@ -7,6 +7,8 @@ import {
 } from './piperVoices'
 
 const readyPromises = new Map<PiperVoiceId, Promise<void>>()
+/** Piper arrives quieter than the other engines through the same vocoder path. */
+const PIPER_GAIN = 10 ** (4 / 20)
 let renderedCache:
   | { voiceId: PiperVoiceId; text: string; samples: Float32Array }
   | undefined
@@ -163,6 +165,9 @@ export async function renderPiperSamples(
 
     const samples = await decodeWavBlobToSpeechSamples(wav)
     if (!samples) return null
+    for (let i = 0; i < samples.length; i += 1) {
+      samples[i] *= PIPER_GAIN
+    }
     renderedCache = { voiceId, text, samples }
     return samples
   } catch {
