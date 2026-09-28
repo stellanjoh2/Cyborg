@@ -275,6 +275,9 @@ html.is-splash-void .scale-nav-bleed {
     var(--app-pad) + 132px + var(--nav-theme-gap) + var(--nav-utils-w) +
       var(--nav-theme-gap)
   );
+  /* Disabled chrome icons — glyph matches .knob__track (muted-solid @ 0.25). */
+  --nav-icon-muted: var(--muted-solid);
+  --nav-icon-muted-well: color-mix(in srgb, var(--black) 35%, transparent);
   position: relative;
   z-index: 2;
   isolation: isolate;
@@ -369,6 +372,24 @@ html.is-splash-void .scale-nav-bleed {
   justify-self: end;
 }
 
+/* Undo / redo — 48px left of the scope (mirrors utils gutter on the right). */
+.speech-top__history {
+  position: absolute;
+  z-index: 2;
+  top: var(--section-gap);
+  right: calc(100% - var(--scope-inset) + var(--nav-theme-gap));
+  height: var(--nav-control-h);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--u);
+  pointer-events: none;
+}
+
+.speech-top__history > * {
+  pointer-events: auto;
+}
+
 /* Center utility icons between scope end and EXPORT (~48px gutters). */
 .speech-top__utils {
   position: absolute;
@@ -399,6 +420,8 @@ html.is-splash-void .scale-nav-bleed {
   min-width: 0;
 }
 
+.speech-top__undo,
+.speech-top__redo,
 .speech-top__reset,
 .speech-top__eq,
 .speech-top__morph,
@@ -427,6 +450,8 @@ html.is-splash-void .scale-nav-bleed {
   z-index: 2;
 }
 
+.speech-top__undo svg,
+.speech-top__redo svg,
 .speech-top__reset svg,
 .speech-top__eq svg,
 .speech-top__morph svg,
@@ -437,6 +462,8 @@ html.is-splash-void .scale-nav-bleed {
   transition: transform 0.18s ease;
 }
 
+.speech-top__undo:hover:not(:disabled),
+.speech-top__redo:hover:not(:disabled),
 .speech-top__reset:hover:not(:disabled),
 .speech-top__eq:hover,
 .speech-top__morph:hover,
@@ -444,6 +471,7 @@ html.is-splash-void .scale-nav-bleed {
   color: var(--accent);
 }
 
+.speech-top__reset.is-active,
 .speech-top__eq.is-active,
 .speech-top__morph.is-active,
 .speech-top__legal-trigger.is-active {
@@ -452,6 +480,8 @@ html.is-splash-void .scale-nav-bleed {
   box-shadow: var(--glow-outer);
 }
 
+.speech-top__undo:hover:not(:disabled) svg,
+.speech-top__redo:hover:not(:disabled) svg,
 .speech-top__reset:hover:not(:disabled) svg,
 .speech-top__eq:hover svg,
 .speech-top__morph:hover svg,
@@ -460,6 +490,7 @@ html.is-splash-void .scale-nav-bleed {
   filter: var(--glow-filter);
 }
 
+.speech-top__reset.is-active svg,
 .speech-top__eq.is-active svg,
 .speech-top__morph.is-active svg,
 .speech-top__legal-trigger.is-active svg {
@@ -467,12 +498,22 @@ html.is-splash-void .scale-nav-bleed {
   filter: none;
 }
 
+.speech-top__undo:disabled,
+.speech-top__redo:disabled,
 .speech-top__reset:disabled {
-  color: var(--muted);
-  background: color-mix(in srgb, var(--muted-solid) 14%, transparent);
+  color: var(--nav-icon-muted);
+  background: var(--nav-icon-muted-well);
   cursor: not-allowed;
 }
 
+.speech-top__undo:disabled svg,
+.speech-top__redo:disabled svg,
+.speech-top__reset:disabled svg {
+  opacity: 0.25;
+}
+
+.speech-top__undo:focus-visible,
+.speech-top__redo:focus-visible,
 .speech-top__reset:focus-visible,
 .speech-top__eq:focus-visible,
 .speech-top__morph:focus-visible,
@@ -482,6 +523,8 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 :is(
+  .speech-top__undo,
+  .speech-top__redo,
   .speech-top__reset,
   .speech-top__eq,
   .speech-top__morph,
@@ -497,6 +540,8 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 :is(
+  .speech-top__undo,
+  .speech-top__redo,
   .speech-top__reset,
   .speech-top__eq,
   .speech-top__morph,
@@ -536,6 +581,8 @@ html.is-splash-void .scale-nav-bleed {
 }
 
 :is(
+  .speech-top__undo,
+  .speech-top__redo,
   .speech-top__reset,
   .speech-top__eq,
   .speech-top__morph,
@@ -556,6 +603,7 @@ html.is-splash-void .scale-nav-bleed {
   .speech-top__eq,
   .speech-top__morph,
   .speech-top__legal-trigger,
+  .speech-top__reset,
   .theme-picker__trigger,
   .voice-file-menu__trigger,
   .settings-menu__trigger
@@ -1080,6 +1128,148 @@ html.is-splash-void .scale-nav-bleed {
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.48);
   pointer-events: auto;
+}
+
+.confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: var(--app-pad);
+  box-sizing: border-box;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.confirm-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.confirm-modal {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(100%, 420px);
+  padding: 36px;
+  border: 0;
+  border-radius: var(--radius-floating);
+  background: var(--fill);
+  box-shadow: var(--floating-shadow);
+  color: var(--text);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.confirm-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.confirm-modal::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: var(--grain-image);
+  background-size: var(--grain-size) var(--grain-size);
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+}
+
+.confirm-modal__title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--font-m);
+  line-height: 1;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.confirm-modal__body {
+  margin: 0;
+  color: var(--muted-solid);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1.35;
+  font-weight: 400;
+}
+
+.confirm-modal__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.confirm-modal__actions.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.confirm-modal__action {
+  appearance: none;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 11px 10px 9px;
+  border: 2px solid var(--synth-border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--black);
+  font-family: var(--font-ui);
+  font-size: var(--font-s);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease,
+    text-shadow 0.18s ease;
+}
+
+.confirm-modal__action:disabled {
+  cursor: default;
+}
+
+.confirm-modal__action-label.typewriter-reveal {
+  display: block;
+  white-space: nowrap;
+}
+
+.confirm-modal__action:hover {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  color: var(--accent);
+  text-shadow: var(--glow-outer);
+  background: color-mix(in srgb, var(--accent) 10%, var(--black));
+}
+
+.confirm-modal__action--danger:hover {
+  border-color: color-mix(in srgb, var(--error) 70%, transparent);
+  color: var(--error);
+  text-shadow: 0 0 var(--glow-blur-tight)
+    color-mix(in srgb, var(--error) var(--glow-mix-tight), transparent);
+  background: color-mix(in srgb, var(--error) 12%, var(--black));
+}
+
+.confirm-modal__action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .error-modal {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { Activity, Info, Joystick, RotateCcw } from 'lucide-react'
+import { Activity, Info, Joystick, Redo2, Undo2, X } from 'lucide-react'
 import { AboutOverlay } from './components/AboutOverlay'
 import { DevMode } from './components/DevMode'
 import { EqualizerWindow } from './components/EqualizerWindow'
@@ -26,6 +26,7 @@ import { SettingsMenu } from './components/SettingsMenu'
 import { ThemePicker } from './components/ThemePicker'
 import { VoiceFileMenu } from './components/VoiceFileMenu'
 import { Logotype, type LogotypeHandle } from './components/Logotype'
+import { ConfirmModal } from './components/ConfirmModal'
 import { TypewriterReveal } from './components/TypewriterReveal'
 import {
   DEFAULT_POST_PROCESS_UI,
@@ -113,6 +114,16 @@ import {
   parseLxVoiceFile,
   saveLxVoiceFile,
 } from './lxVoiceFile'
+import {
+  clonePatchSnapshot,
+  PATCH_HISTORY_COALESCE_MS,
+  PATCH_HISTORY_LIMIT,
+  patchSnapshotsEqual,
+  POST_HISTORY_LABELS,
+  VOCODER_HISTORY_LABELS,
+  type PatchHistoryEntry,
+  type PatchSnapshot,
+} from './patchHistory'
 import './SpeechApp.css'
 
 gsap.registerPlugin(useGSAP)
@@ -266,6 +277,7 @@ export default function App() {
   const [aboutTextActive, setAboutTextActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errorOkReady, setErrorOkReady] = useState(false)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const [emptyWarning, setEmptyWarning] = useState(false)
   const [inputTouched, setInputTouched] = useState(false)
   const [spokenWordIndex, setSpokenWordIndex] = useState<number | null>(null)
@@ -295,8 +307,113 @@ export default function App() {
   const [splashVersionActive, setSplashVersionActive] = useState(false)
   const [splashYearActive, setSplashYearActive] = useState(false)
   const [introComplete, setIntroComplete] = useState(false)
+  const [historyRevision, setHistoryRevision] = useState(0)
+  const patchHistoryRef = useRef<{
+    past: PatchHistoryEntry[]
+    future: PatchHistoryEntry[]
+  }>({ past: [], future: [] })
+  const patchCoalesceRef = useRef<{ label: string | null; at: number }>({
+    label: null,
+    at: 0,
+  })
+  const undoRef = useRef<() => void>(() => {})
+  const redoRef = useRef<() => void>(() => {})
   const masterGainDb = (masterGain / 100) * MASTER_GAIN_MAX_DB
   const liveMasterVolume = isMuted ? 0 : masterVolume / 100
+
+  const readPatchSnapshot = (): PatchSnapshot => ({
+    voiceId,
+    speed,
+    pitch,
+    humanRobot,
+    formant,
+    vocoder: vocoderUi,
+    postProcess: postUi,
+    equalizer,
+    masterVolume,
+    masterGain,
+  })
+
+  const applyPatchSnapshot = (snapshot: PatchSnapshot) => {
+    setVoiceId(snapshot.voiceId)
+    setSpeed(snapshot.speed)
+    setPitch(snapshot.pitch)
+    setHumanRobot(snapshot.humanRobot)
+    setFormant(snapshot.formant)
+    setVocoderUi({ ...snapshot.vocoder })
+    setPostUi({ ...snapshot.postProcess })
+    setEqualizer(cloneEqualizer(snapshot.equalizer))
+    setMasterVolume(snapshot.masterVolume)
+    setMasterGain(snapshot.masterGain)
+    if (isSpeaking) {
+      bakedVoiceRef.current = null
+    }
+  }
+
+  const recordPatchChange = (label: string, options?: { force?: boolean }) => {
+    const now = performance.now()
+    if (
+      !options?.force &&
+      patchCoalesceRef.current.label === label &&
+      now - patchCoalesceRef.current.at < PATCH_HISTORY_COALESCE_MS
+    ) {
+      patchCoalesceRef.current.at = now
+      return
+    }
+
+    const snapshot = clonePatchSnapshot(readPatchSnapshot())
+    const past = patchHistoryRef.current.past
+    const last = past[past.length - 1]
+    if (last && patchSnapshotsEqual(last.snapshot, snapshot)) {
+      patchCoalesceRef.current = { label, at: now }
+      return
+    }
+
+    past.push({ label, snapshot })
+    if (past.length > PATCH_HISTORY_LIMIT) {
+      past.shift()
+    }
+    patchHistoryRef.current.future = []
+    patchCoalesceRef.current = { label, at: now }
+    setHistoryRevision((value) => value + 1)
+  }
+
+  const handleUndo = () => {
+    const { past, future } = patchHistoryRef.current
+    const entry = past.pop()
+    if (!entry) return
+    future.push({
+      label: entry.label,
+      snapshot: clonePatchSnapshot(readPatchSnapshot()),
+    })
+    applyPatchSnapshot(entry.snapshot)
+    patchCoalesceRef.current = { label: null, at: 0 }
+    setHint({ title: 'Undo', body: `Undone: ${entry.label}` })
+    setHistoryRevision((value) => value + 1)
+  }
+
+  const handleRedo = () => {
+    const { past, future } = patchHistoryRef.current
+    const entry = future.pop()
+    if (!entry) return
+    past.push({
+      label: entry.label,
+      snapshot: clonePatchSnapshot(readPatchSnapshot()),
+    })
+    if (past.length > PATCH_HISTORY_LIMIT) {
+      past.shift()
+    }
+    applyPatchSnapshot(entry.snapshot)
+    patchCoalesceRef.current = { label: null, at: 0 }
+    setHint({ title: 'Redo', body: `Redone: ${entry.label}` })
+    setHistoryRevision((value) => value + 1)
+  }
+
+  undoRef.current = handleUndo
+  redoRef.current = handleRedo
+  const canUndo = historyRevision >= 0 && patchHistoryRef.current.past.length > 0
+  const canRedo =
+    historyRevision >= 0 && patchHistoryRef.current.future.length > 0
 
   useGSAP(
     () => {
@@ -831,6 +948,7 @@ export default function App() {
       const navEls = gsap.utils.toArray<HTMLElement>(
         [
           '.speech-top__brand',
+          '.speech-top__history > *',
           '.speech-scope',
           '.speech-top__utils > *',
           '.speech-top__export',
@@ -1414,8 +1532,22 @@ export default function App() {
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return
       if (isTypingTarget(event.target)) return
+
+      const mod = event.metaKey || event.ctrlKey
+      if (mod && event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) redoRef.current()
+        else undoRef.current()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'y') {
+        event.preventDefault()
+        redoRef.current()
+        return
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
       if (event.code === 'Space' || event.key === ' ') {
         event.preventDefault()
@@ -1452,15 +1584,52 @@ export default function App() {
   )
 
   const setVocoderKnob =
-    (key: keyof VocoderUiState) =>
+    (key: keyof typeof vocoderUi) =>
     (value: number) => {
+      recordPatchChange(VOCODER_HISTORY_LABELS[key])
       setVocoderUi((current) => ({ ...current, [key]: value }))
     }
 
   const setPostKnob =
-    (key: keyof PostProcessUiState) => (value: number) => {
+    (key: keyof typeof postUi) => (value: number) => {
+      recordPatchChange(POST_HISTORY_LABELS[key])
       setPostUi((current) => ({ ...current, [key]: value }))
     }
+
+  const setTrackedHumanRobot = (value: number) => {
+    recordPatchChange('Robot')
+    setHumanRobot(value)
+  }
+
+  const setTrackedSpeed = (value: number) => {
+    recordPatchChange('Speed')
+    setSpeed(value)
+  }
+
+  const setTrackedPitch = (value: number) => {
+    recordPatchChange('Pitch')
+    setPitch(value)
+  }
+
+  const setTrackedFormant = (value: number) => {
+    recordPatchChange('Formant')
+    setFormant(value)
+  }
+
+  const setTrackedEqualizer = (value: EqualizerState) => {
+    recordPatchChange('Equalizer')
+    setEqualizer(value)
+  }
+
+  const setTrackedMasterVolume = (value: number) => {
+    recordPatchChange('Volume')
+    setMasterVolume(value)
+  }
+
+  const setTrackedMasterGain = (value: number) => {
+    recordPatchChange('Gain')
+    setMasterGain(value)
+  }
 
   useEffect(() => () => stopSamSpeech(), [])
 
@@ -1790,7 +1959,9 @@ export default function App() {
     void file
       .text()
       .then((text) => {
-        applyLoadedVoice(parseLxVoiceFile(text))
+        const loaded = parseLxVoiceFile(text)
+        recordPatchChange('Load voice', { force: true })
+        applyLoadedVoice(loaded)
         setError(null)
       })
       .catch((err: unknown) => {
@@ -1845,10 +2016,12 @@ export default function App() {
       return
     }
 
+    recordPatchChange(getPresetById(nextVoiceId).label, { force: true })
     applyVoicePreset(nextVoiceId)
   }
 
   const handleResetVoice = () => {
+    recordPatchChange('Voice reset', { force: true })
     const nextSpeed = voiceDefaults.speed
     const nextPitch = voiceDefaults.pitch
     const nextHumanRobot = voiceDefaults.humanRobot
@@ -1874,6 +2047,7 @@ export default function App() {
   }
 
   const handleResetVocoder = () => {
+    recordPatchChange('Vocoder reset', { force: true })
     const preset = clonePresetVocoder(activePreset)
     const next = {
       ...vocoderUi,
@@ -1892,6 +2066,7 @@ export default function App() {
   }
 
   const handleResetCarrier = () => {
+    recordPatchChange('Carrier reset', { force: true })
     const preset = clonePresetVocoder(activePreset)
     const next = {
       ...vocoderUi,
@@ -1910,6 +2085,7 @@ export default function App() {
   }
 
   const handleResetPostProcess = () => {
+    recordPatchChange('FX reset', { force: true })
     const next = { ...DEFAULT_POST_PROCESS_UI }
     setPostUi(next)
     if (isSpeaking) {
@@ -1921,6 +2097,7 @@ export default function App() {
   }
 
   const handleResetEqualizer = () => {
+    recordPatchChange('Equalizer reset', { force: true })
     const next = cloneEqualizer(DEFAULT_EQUALIZER)
     setEqualizer(next)
     if (isSpeaking) {
@@ -2009,6 +2186,7 @@ export default function App() {
   }, [activePreset, formant, humanRobot, morphMode, vocoderUi])
 
   const handleMorphChange = (nextX: number, nextY: number) => {
+    recordPatchChange('Morph')
     if (morphMode === 'vocoder') {
       setVocoderUi((current) => ({
         ...current,
@@ -2092,6 +2270,7 @@ export default function App() {
   }
 
   const handleResetMorph = () => {
+    recordPatchChange('Morph reset', { force: true })
     if (morphMode === 'vocoder') {
       setVocoderUi((current) => ({
         ...current,
@@ -2113,6 +2292,7 @@ export default function App() {
   }
 
   const handleResetMaster = () => {
+    recordPatchChange('Master reset', { force: true })
     setMasterVolume(100)
     setMasterGain(0)
     updateSamLiveParams(
@@ -2122,6 +2302,7 @@ export default function App() {
   }
 
   const handleResetTemplate = () => {
+    recordPatchChange('Reset all', { force: true })
     const preset = getPresetById(activePresetId)
     const nextVocoder = clonePresetVocoder(preset)
     const nextPost = { ...DEFAULT_POST_PROCESS_UI }
@@ -2159,6 +2340,15 @@ export default function App() {
       )
       bakedVoiceRef.current = null
     }
+    setResetConfirmOpen(false)
+  }
+
+  const handleResetTemplateRequest = () => {
+    setResetConfirmOpen(true)
+  }
+
+  const handleResetTemplateCancel = () => {
+    setResetConfirmOpen(false)
   }
 
   const handleStop = () => {
@@ -2394,18 +2584,44 @@ export default function App() {
         hidden
         onChange={handleLoadLxVoiceFile}
       />
+      <div className="speech-top__history">
+        <button
+          className="speech-top__undo"
+          type="button"
+          onClick={handleUndo}
+          disabled={!canUndo}
+          data-tooltip="Undo"
+          aria-label="Undo last change"
+        >
+          <Undo2 absoluteStrokeWidth strokeWidth={2} />
+        </button>
+        <button
+          className="speech-top__redo"
+          type="button"
+          onClick={handleRedo}
+          disabled={!canRedo}
+          data-tooltip="Redo"
+          aria-label="Redo last undone change"
+        >
+          <Redo2 absoluteStrokeWidth strokeWidth={2} />
+        </button>
+      </div>
       <Oscilloscope isPlaying={isSpeaking} />
       <div className="speech-top__right">
         <div className="speech-top__utils">
           <button
-            className="speech-top__reset"
+            className={`speech-top__reset${resetConfirmOpen ? ' is-active' : ''}`}
             type="button"
-            onClick={handleResetTemplate}
+            onClick={handleResetTemplateRequest}
             disabled={!templateDirty}
             data-tooltip="Reset all"
+            data-ui-sound="drop"
             aria-label="Reset all sections to the selected template"
+            aria-haspopup="dialog"
+            aria-expanded={resetConfirmOpen}
+            aria-controls="reset-confirm-dialog"
           >
-            <RotateCcw absoluteStrokeWidth strokeWidth={2} />
+            <X absoluteStrokeWidth strokeWidth={2} />
           </button>
           <button
             className={`speech-top__eq${equalizerOpen ? ' is-active' : ''}`}
@@ -2482,7 +2698,7 @@ export default function App() {
       <EqualizerWindow
         open={equalizerOpen}
         value={equalizer}
-        onChange={setEqualizer}
+        onChange={setTrackedEqualizer}
         onClose={() => setEqualizerOpen(false)}
         onReset={handleResetEqualizer}
         zIndex={frontFloating === 'eq' ? floatingZ.front : floatingZ.base}
@@ -2509,8 +2725,8 @@ export default function App() {
         volume={masterVolume}
         gain={masterGain}
         volumeFill={volumeFill}
-        onVolumeChange={setMasterVolume}
-        onGainChange={setMasterGain}
+        onVolumeChange={setTrackedMasterVolume}
+        onGainChange={setTrackedMasterGain}
         onReset={handleResetMaster}
         canReset={masterDirty}
         isPlaying={isSpeaking}
@@ -2936,7 +3152,7 @@ export default function App() {
             max={100}
             step={1}
             size="md"
-            onChange={setHumanRobot}
+            onChange={setTrackedHumanRobot}
             format={(value) => String(Math.round(value))}
           />
           <Knob
@@ -2946,7 +3162,7 @@ export default function App() {
             max={2.5}
             step={0.01}
             size="md"
-            onChange={setSpeed}
+            onChange={setTrackedSpeed}
             format={(value) => value.toFixed(2)}
           />
           <Knob
@@ -2956,7 +3172,7 @@ export default function App() {
             max={2}
             step={0.01}
             size="md"
-            onChange={setPitch}
+            onChange={setTrackedPitch}
             format={(value) => value.toFixed(2)}
           />
           <Knob
@@ -2966,7 +3182,7 @@ export default function App() {
             max={100}
             step={1}
             size="md"
-            onChange={setFormant}
+            onChange={setTrackedFormant}
             format={(value) => String(Math.round(value))}
           />
         </div>
@@ -3101,6 +3317,16 @@ export default function App() {
         loadedBytes={voiceInitLoadedBytes}
         totalBytes={voiceInitTotalBytes}
         onCancel={handleStop}
+      />
+
+      <ConfirmModal
+        open={resetConfirmOpen}
+        title="Are you sure?"
+        body="Reset all sections to the selected template."
+        cancelLabel="Cancel"
+        confirmLabel="Reset"
+        onCancel={handleResetTemplateCancel}
+        onConfirm={handleResetTemplate}
       />
 
       {error ? (
