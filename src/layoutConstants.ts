@@ -1,4 +1,5 @@
-/** Target 16:9 canvas (2560×1440). ScaleViewport only scales down from this.
+/** Target 16:9 canvas (2560×1440). ScaleViewport scales uniformly to fit
+ *  the window (down on smaller displays, up on larger ones such as 4K).
  *  Stage is top-aligned; letterbox gutters are --stage-bleed-x and
  *  --stage-bleed-y-top / --stage-bleed-y-bottom so plates can extend. */
 export const DESIGN_WIDTH = 2560

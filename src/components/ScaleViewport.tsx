@@ -23,8 +23,8 @@ interface ScaleLayout {
 }
 
 function measureLayout(): ScaleLayout {
+  // Uniform fit: shrink below design size and grow above it (e.g. 1.5× on 4K).
   const scale = Math.min(
-    1,
     window.innerWidth / DESIGN_WIDTH,
     window.innerHeight / DESIGN_HEIGHT,
   )
