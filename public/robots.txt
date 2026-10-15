@@ -1,0 +1,8 @@
+# Served at /Cyborg/robots.txt on GitHub Project Pages.
+# Note: crawlers fetch robots.txt from the host root
+# (https://stellanjoh2.github.io/robots.txt). Submit the sitemap in
+# Search Console if host-root robots.txt is unavailable.
+User-agent: *
+Allow: /
+
+Sitemap: https://stellanjoh2.github.io/Cyborg/sitemap.xml
